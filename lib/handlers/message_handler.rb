@@ -30,7 +30,7 @@ module Axial
             nick.message(Constants::ACCESS_DENIED)
             return
           end
-          nick.message("Sending command: #{command}")
+          nick.message("sending command: #{command}")
           send_raw(command)
         end
       end
@@ -51,11 +51,18 @@ module Axial
 
         log_channel_message(nick.name, channel.name, msg)
 
-        if (msg.downcase =~ /^\?about$/)
+        if (msg.downcase =~ /^\?about$/ || msg.downcase =~ /^\?help$/)
           channel.message("#{AXIAL_NAME} version #{AXIAL_VERSION} by #{AXIAL_AUTHOR}")
           if (@addons.count > 0)
             @addons.each do |addon|
-              channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}")
+              puts addon[:object].listeners.inspect
+              channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel}
+              listener_string = ""
+              if (channel_listeners.count > 0)
+                commands = channel_listeners.collect{|foo| foo[:command]}
+                listener_string = " (" + commands.join(', ') + ")"
+              end
+              channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{listener_string}")
             end
           end
           return
