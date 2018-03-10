@@ -13,6 +13,7 @@ module Axial
         @version = '1.0.0'
 
         on_channel '?weather', :handle_weather
+        on_channel '?w', :handle_weather
       end
       
       def weather_color(temp)
@@ -59,7 +60,7 @@ module Axial
               msg += "visibility: #{conditions.visibility_mi}mi"
               msg += " #{$irc_gray}|#{$irc_reset} "
               if (conditions.wind_mph > 0)
-                msg += "wind: #{conditions.wind_mph}mph from #{conditions.wind_dir}"
+                msg += "winds: #{conditions.wind_mph}mph from #{conditions.wind_dir.downcase}"
                 if (conditions.wind_gust_mph > 0)
                   msg += " (gusts up to #{conditions.wind_gust_mph}mph)"
                 end

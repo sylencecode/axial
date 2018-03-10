@@ -12,7 +12,6 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?w',         :handle_wikipedia
         on_channel '?wiki',      :handle_wikipedia
         on_channel '?wikipedia', :handle_wikipedia
       end
