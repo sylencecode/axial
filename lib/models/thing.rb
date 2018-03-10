@@ -22,8 +22,9 @@ module Axial
           thing_model.thing = thing.downcase
           thing_model.pretty_thing = thing
           thing_model.explanation = explanation
-          thing_model.nicks_id = nick_model[:id]
+          thing_model.nick_id = nick_model[:id]
           thing_model.learned_at = Time.now
+          thing_model.save
         end
         return thing_model
       end
