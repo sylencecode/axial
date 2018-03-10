@@ -58,6 +58,11 @@ module Axial
 
       def forget(channel, nick, command)
         begin
+          nick_model = Models::Nick.get_if_valid(nick)
+          if (nick_model.nil?)
+            channel.message("Access denied. Sorry, #{nick.name}.")
+            return
+          end
           thing = command.args.strip
           if (thing.empty?)
             channel.message("#{nick.name}: try ?explain <thing> instead of whatever you just did.")
