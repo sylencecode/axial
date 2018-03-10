@@ -19,10 +19,11 @@ module Axial
           if (!Models::Nick.get_if_valid(nick).nil?)
             # this needs to get a lot smarter about setting modes...somehow needs to consolidate pending modes into one transaction
             channel.op(nick)
+            log "auto-opped #{nick.uhost} in #{channel.name}"
           end
         rescue Exception => ex
-          channel.message("AutoOp error: #{ex.class}: #{ex.message}")
-          log "AutoOp error: #{ex.class}: #{ex.message}"
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          log "#{self.class} error: #{ex.class}: #{ex.message}"
           ex.backtrace.each do |i|
             log i
           end

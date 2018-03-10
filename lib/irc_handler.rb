@@ -4,6 +4,7 @@ require 'socket'
 
 require 'channel.rb'
 require 'command.rb'
+require 'constants.rb'
 
 # handlers...need eventing
 require 'handlers/logging.rb'
@@ -73,7 +74,7 @@ module Axial
         { file: 'addons/auto_op.rb', class: 'Axial::Addons::AutoOp' },
         { file: 'addons/google_search.rb', class: 'Axial::Addons::GoogleSearch' },
         { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
-        { file: 'addons/trump.rb', class: 'Axial::Addons::Trump' },
+        { file: 'addons/maga.rb', class: 'Axial::Addons::MakeAmericaGreatAgain' },
         { file: 'addons/weather.rb', class: 'Axial::Addons::Weather' },
         { file: 'addons/wikipedia.rb', class: 'Axial::Addons::Wikipedia' }
       ]

@@ -23,8 +23,15 @@ module Axial
   
       def handle_privmsg(nick, msg)
         log_privmsg(nick.name, msg)
-        if (msg =~ /axial (.*)/)
-          send_raw($1)
+        if (msg =~ /exec (.*)/)
+          command = Regexp.last_match[1].strip
+          nick_model = Models::Nick.get_if_valid(nick)
+          if (nick_model.nil?)
+            nick.message(Constants::ACCESS_DENIED)
+            return
+          end
+          nick.message("Sending command: #{command}")
+          send_raw(command)
         end
       end
   

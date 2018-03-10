@@ -17,7 +17,7 @@ module Axial
       def google_search(channel, nick, command)
         query = command.args.strip
         if (query.empty?)
-          channel.message("#{nick.name}: Please provide a topic for a google custom search.")
+          channel.message("#{nick.name}: please provide a search term.")
           return
         end
         log "google request from #{nick.uhost}: #{query}"
@@ -44,8 +44,8 @@ module Axial
             channel.message("#{nick.name}: No search results.")
           end
         rescue Exception => ex
-          channel.message("Google CustomSearchV1 error: #{ex.class}: #{ex.message}")
-          log "Google CustomSearchV1 error: #{ex.class}: #{ex.message}"
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          log "#{self.class} error: #{ex.class}: #{ex.message}"
           ex.backtrace.each do |i|
             log i
           end

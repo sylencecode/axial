@@ -20,7 +20,7 @@ module Axial
       def handle_wikipedia(channel, nick, command)
         query = command.args.strip
         if (query.empty?)
-          channel.message("#{nick.name}: Please provide a topic for a wikipedia search.")
+          channel.message("#{nick.name}: please provide a search term.")
           return
         end
         log "wikipedia request from #{nick.uhost}: #{query}"
@@ -44,11 +44,11 @@ module Axial
             msg += link
             channel.message(msg)
           else
-            channel.message("#{nick.name}: No results, or the wikipedia API sucks. Try ?g instead to perform a google search.")
+            channel.message("#{nick.name}: no results, or the wikipedia API sucks. try ?g instead to perform a google search.")
           end
         rescue Exception => ex
-          channel.message("Wikipedia error: #{ex.class}: #{ex.message}")
-          log "Wikipedia error: #{ex.class}: #{ex.message}"
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          log "#{self.class} error: #{ex.class}: #{ex.message}"
           ex.backtrace.each do |i|
             log i
           end

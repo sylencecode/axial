@@ -22,7 +22,7 @@ module Axial
         begin
           nick_model = Models::Nick.get_if_valid(nick)
           if (nick_model.nil?)
-            channel.message("Access denied. Sorry, #{nick.name}.")
+            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
           if (command.args.strip =~ /(.*)=(.*)/)
@@ -38,15 +38,16 @@ module Axial
           end
           
           if (thing.length > 64)
-            channel.message("Sorry #{nick.name}, your thing name is too long (<= 64 characters).")
+            channel.message("#{nick.name}: your thing name is too long (<= 64 characters).")
             return
           elsif (explanation.length > 255)
-            channel.message("Sorry #{nick.name}, your thing explanation is too long (<= 255 characters).")
+            channel.message("#{nick.name}: your thing explanation is too long (<= 255 characters).")
             return
           end
 
           Models::Thing.learn(thing, explanation, nick_model)
-          channel.message("Okay #{nick.name}, #{thing} = #{explanation}.")
+          log "learned: #{thing} = #{explanation} from #{nick.uhost}"
+          channel.message("#{nick.name}: ok, I've learned about #{thing}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
           log "#{self.class} error: #{ex.class}: #{ex.message}"
@@ -60,7 +61,7 @@ module Axial
         begin
           nick_model = Models::Nick.get_if_valid(nick)
           if (nick_model.nil?)
-            channel.message("Access denied. Sorry, #{nick.name}.")
+            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
           thing = command.args.strip
@@ -68,14 +69,14 @@ module Axial
             channel.message("#{nick.name}: try ?explain <thing> instead of whatever you just did.")
             return
           end
-          log "thing request from #{nick.uhost}: #{thing}"
           thing_model = Models::Thing[thing: thing.downcase]
+          log "forgot: #{thing_model.pretty_thing} = #{thing_model.explanation} from #{nick.uhost}"
           if (thing_model.nil?)
             channel.message("#{nick.name}: I don't know about #{thing}.")
             return
           end
           thing_model.delete
-          channel.message("Okay #{nick.name}, I've forgotten about #{thing}.")
+          channel.message("#{nick.name}: ok, I've forgotten about #{thing}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
           log "#{self.class} error: #{ex.class}: #{ex.message}"
@@ -92,12 +93,12 @@ module Axial
             channel.message("#{nick.name}: try ?explain <thing> instead of whatever you just did.")
             return
           end
-          log "thing request from #{nick.uhost}: #{thing}"
           thing_model = Models::Thing[thing: thing.downcase]
           if (thing_model.nil?)
             channel.message("#{nick.name}: I don't know about #{thing}.")
             return
           end
+          log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}"
           learned_at = ::TimeSpan.new(thing_model.learned_at, Time.now)
           msg  = "#{$irc_gray}[#{$irc_blue}thing#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkblue}#{nick.name}#{$irc_gray}]#{$irc_reset} "
           msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.nick.pretty_nick} #{learned_at.approximate_to_s} ago)"

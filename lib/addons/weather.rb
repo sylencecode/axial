@@ -31,7 +31,7 @@ module Axial
       def handle_weather(channel, nick, command)
         query = command.args.strip
         if (query.empty?)
-          channel.message("#{nick.name}: Please provide either a zip code (US) or any location name.")
+          channel.message("#{nick.name}: provide a zip code (US) or any location name.")
           return
         end
 
@@ -40,6 +40,7 @@ module Axial
         end
 
         begin
+          log "weather request from #{nick.uhost}: #{query}"
           location_search = ::GeoNames::API::SearchJSON.new
           geonames_location = location_search.search(query)
           if (geonames_location.found)
@@ -67,18 +68,18 @@ module Axial
               end
               channel.message(msg)
             else
-              channel.message("#{nick}: No weather data found for \"#{query}\".")
+              channel.message("#{nick.name}: no weather data found for \"#{query}\".")
             end
           else
-            channel.message("#{nick}: Couldn't find a location matching \"#{query}\".")
+            channel.message("#{nick.name}: couldn't find a location matching \"#{query}\".")
           end
         rescue Exception => ex
-          channel.message("WUnderground Exception: #{ex.class}: #{ex.message}")
-          log "WUnderground Exception: #{ex.class}: #{ex.message}"
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          log "#{self.class} error: #{ex.class}: #{ex.message}"
           ex.backtrace.each do |i|
             log i
           end
-          channel.message("#{nick}: The weather guys can't issue a response for \"#{query}\" right now.")
+          channel.message("#{nick.name}: the weather guys can't report the weather for \"#{query}\" right now.")
         end
       end
     end
