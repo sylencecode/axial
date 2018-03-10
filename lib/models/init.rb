@@ -12,6 +12,9 @@ DB_OPTIONS = {
 
 DB = Sequel.connect(DB_OPTIONS)
 
+class DatabaseError < Exception
+end
+
 # if (DB.adapter_scheme == :postgres)
 #   DB.drop_table?(:masks_nicks, :seens, :nicks, :masks, cascade: true)
 # else
@@ -36,4 +39,10 @@ DB = Sequel.connect(DB_OPTIONS)
 #   String :mask, size: 128
 # end
 # 
+#DB.create_table :things do
+#  primary_key :id
+#  String :thing, size: 64
+#  String :explanation, size: 255
+#  DateTime :learned_at
+#end
 # DB.create_join_table(nick_id: :nicks, mask_id: :masks)

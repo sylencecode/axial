@@ -26,11 +26,11 @@ module Axial
   # sample nick registration with mask
   uhosts.each_with_index do |uhost, i|
     nick = ::Axial::Nick.from_uhost(nil, uhost)
-    if (Models::Nick.exists?(nick))
-      puts "Nick #{nick.name} already exists"
-    else
+    if (Models::Nick.get_from_nick(nick).nil?)
       puts "Nick #{nick.name} does not exist, creating"
       Models::Nick.create_from_nick(nick)
+    else
+      puts "Nick #{nick.name} already exists"
     end
   end
   

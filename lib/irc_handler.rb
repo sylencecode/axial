@@ -23,6 +23,9 @@ AXIAL_NAME    = 'axial'
 AXIAL_VERSION = '1.0.0'
 AXIAL_AUTHOR  = 'sylence <sylence@sylence.org>'
 
+class AccessDenied < Exception
+end
+
 module Axial
   class Addon
     include Axial::Handlers::Logging
@@ -69,6 +72,7 @@ module Axial
       @addon_list = [
         { file: 'addons/auto_op.rb', class: 'Axial::Addons::AutoOp' },
         { file: 'addons/google_search.rb', class: 'Axial::Addons::GoogleSearch' },
+        { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
         { file: 'addons/trump.rb', class: 'Axial::Addons::Trump' },
         { file: 'addons/weather.rb', class: 'Axial::Addons::Weather' },
         { file: 'addons/wikipedia.rb', class: 'Axial::Addons::Wikipedia' }

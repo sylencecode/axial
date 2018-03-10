@@ -12,6 +12,17 @@ DB_OPTIONS = {
 
 DB = Sequel.connect(DB_OPTIONS)
 
+DB.drop_table?(:things)
+DB.create_table :things do
+  primary_key :id
+  foreign_key :nick_id, :nicks, null: false
+  String :thing, size: 64
+  String :pretty_thing, size: 64
+  String :explanation, size: 255
+  DateTime :learned_at, null: false
+end
+exit 0
+
 if (DB.adapter_scheme == :postgres)
   DB.drop_table?(:masks_nicks, :seens, :nicks, :masks, cascade: true)
 else
