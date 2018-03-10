@@ -52,10 +52,9 @@ module Axial
         log_channel_message(nick.name, channel.name, msg)
 
         if (msg.downcase =~ /^\?about$/ || msg.downcase =~ /^\?help$/)
-          channel.message("#{AXIAL_NAME} version #{AXIAL_VERSION} by #{AXIAL_AUTHOR}")
+          channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR}")
           if (@addons.count > 0)
             @addons.each do |addon|
-              puts addon[:object].listeners.inspect
               channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel}
               listener_string = ""
               if (channel_listeners.count > 0)
