@@ -33,7 +33,7 @@ module Axial
         DB[:rss_feeds].update(last_ingest: Time.now)
         @thread = Thread.new do
           begin
-            sleep 3
+            sleep 15
             while (true)
               Models::RSSFeed.where(enabled: true).each do |feed|
                 prev_last = feed.last_ingest
@@ -76,7 +76,7 @@ module Axial
                   end
                 end
               end
-              sleep 3
+              sleep 30
             end
           rescue Exception => ex
             send_channel(channel, "RSS error: #{ex.message}: #{ex.inspect}")
