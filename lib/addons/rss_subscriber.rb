@@ -15,12 +15,13 @@ module Axial
       def initialize()
         super
 
-        @name    = 'RSS subscriber'
+        @name    = 'rss feed ingest'
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?rss',  :handle_rss_command
+        on_channel '?feed', :handle_rss_command
         on_channel '?news', :handle_rss_command
+        on_channel '?rss',  :handle_rss_command
 
         @ingest_thread = start_ingest_thread('#lulz')
       end
@@ -53,7 +54,7 @@ module Axial
                   else
                     link = article_url
                   end
-                  msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed.name}#{$irc_gray}]#{$irc_reset} "
+                  msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed.pretty_name}#{$irc_gray}]#{$irc_reset} "
                   msg += title
                   if (!summary.empty?)
                     msg += " #{$irc_gray}|#{$irc_reset} "
@@ -130,7 +131,7 @@ module Axial
         end
       end
 
-      def list_feeds(channel)
+      def list_feeds(channel, nick)
         feeds = Models::RSSFeed.all
         if (feeds.count > 0)
           log "RSS: #{nick.uhost} listed feeds"
@@ -236,7 +237,7 @@ module Axial
               delete_feed(channel, nick, Regexp.last_match[1].strip)
               return
             when /^list$/i, /^list\s+/i
-              list_feeds(channel)
+              list_feeds(channel, nick)
               return
             when /^disable\s+(\S+.*)/i
               disable_feed(channel, nick, Regexp.last_match[1].strip)

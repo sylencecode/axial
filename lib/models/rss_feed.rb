@@ -23,9 +23,9 @@ module Axial
           rss_model = self[url: url.downcase] # find by matching url
         end
         if (rss_model.nil?) # insert
-          rss_model = self.create(url: url.downcase, pretty_url: url, name: feed_name.downcase, pretty_name: feed_name, nick_id: nick_model[:id], enabled: true)
+          rss_model = self.create(url: url.downcase, pretty_url: url, name: feed_name.downcase, pretty_name: feed_name, nick_id: nick_model[:id], enabled: true, last_ingest: Time.now)
         else # update
-          rss_model.update(url: url.downcase, pretty_url: url, name: feed_name.downcase, pretty_name: feed_name)
+          rss_model.update(url: url.downcase, pretty_url: url, name: feed_name.downcase, pretty_name: feed_name, last_ingest: Time.now)
         end
         return rss_model
       end
