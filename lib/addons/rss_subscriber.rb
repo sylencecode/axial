@@ -79,7 +79,7 @@ module Axial
                   end
                 end
               end
-              sleep 15
+              sleep 60
             end
           rescue Exception => ex
             send_channel(channel, "RSS error: #{ex.message}: #{ex.inspect}")
