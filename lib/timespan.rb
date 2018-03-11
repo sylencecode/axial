@@ -23,6 +23,20 @@ class TimeSpan
     remaining = @total_seconds % minute
     @seconds = remaining
   end
+
+  def short_to_s()
+    elapsed = "#{@seconds}s"
+    if ( @hours > 0 || @minutes > 0)
+      elapsed = "#{@minutes}m#{elapsed}"
+    end
+    if ( @days > 0 || @hours > 0)
+      elapsed = "#{@hours}h#{elapsed}"
+    end
+    if ( @days > 0)
+      elapsed = "#{@days}d#{elapsed}"
+    end
+    return elapsed
+  end
   
   def approximate_to_s()
     # order largest to smallest

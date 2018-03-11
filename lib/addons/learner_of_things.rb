@@ -46,7 +46,7 @@ module Axial
             return
           end
 
-          Models::Thing.learn(thing, explanation, nick_model)
+          Models::Thing.upsert(thing, explanation, nick_model)
           log "learned: #{thing} = #{explanation} from #{nick.uhost}"
           channel.message("#{nick.name}: ok, I've learned about #{thing}.")
         rescue Exception => ex
@@ -117,7 +117,7 @@ module Axial
         begin
           thing_model = Models::Thing[thing: nick.name.downcase]
           if (!thing_model.nil?)
-            channel.message("[#{thing_model.pretty_thing}] #{thing_model.explanation}")
+            channel.message("#{$irc_gray}<#{$irc_reset}#{thing_model.pretty_thing}#{$irc_gray}>#{$irc_reset} #{thing_model.explanation}")
             log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{channel.name} after #{nick.uhost} joined."
           end
         rescue Exception => ex

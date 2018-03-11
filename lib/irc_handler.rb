@@ -22,7 +22,6 @@ require 'models/init.rb'
 require 'models/nick.rb'
 require 'models/mask.rb'
 require 'models/seen.rb'
-require 'rss.rb'
 
 class AccessDenied < Exception
 end
@@ -31,12 +30,14 @@ module Axial
   class Addon
     include Axial::Handlers::Logging
     attr_reader :listeners, :name, :version, :author
+    attr_accessor :irc
 
     def initialize()
       @listeners = []
       @name = "unnamed"
       @author = "unknown author"
       @version = "unknown version"
+      @irc = nil
     end
 
     def on_channel(command, method)
@@ -56,7 +57,6 @@ module Axial
     include Axial::Handlers::Logging
     include Axial::Handlers::ServerHandler
     include Axial::Handlers::MessageHandler
-    include Axial::RSS
     def initialize(connect_address, server_port, ssl = false)
       @server_name = connect_address
       @connect_address = connect_address
@@ -76,6 +76,7 @@ module Axial
         { file: 'addons/google_search.rb', class: 'Axial::Addons::GoogleSearch' },
         { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
         { file: 'addons/maga.rb', class: 'Axial::Addons::MakeAmericaGreatAgain' },
+        { file: 'addons/rss_subscriber.rb', class: 'Axial::Addons::RSSSubscriber' },
         { file: 'addons/weather.rb', class: 'Axial::Addons::Weather' },
         { file: 'addons/who_from.rb', class: 'Axial::Addons::WhoFrom' },
         { file: 'addons/wikipedia.rb', class: 'Axial::Addons::Wikipedia' }
@@ -96,6 +97,7 @@ module Axial
       @addon_list.each do |addon|
         require addon[:file]
         addon_object = Object.const_get(addon[:class]).new
+        addon_object.irc = self
         @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
         addon_object.listeners.each do |listener|
           if (listener[:type] == :channel)
@@ -109,7 +111,6 @@ module Axial
     
     def run()
       load_addons
-      start_rss
       while (@bot_running)
         begin
           while (!@connected_to_server)

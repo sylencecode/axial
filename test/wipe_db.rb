@@ -11,7 +11,22 @@ DB_OPTIONS = {
 
 
 DB = Sequel.connect(DB_OPTIONS)
+DB.drop_table?(:rss)
+DB.drop_table?(:rss_feeds)
+DB.create_table :rss_feeds do
+  primary_key :id
+  foreign_key :nick_id, :nicks, null: false
+  String      :url, size: 128, null: false
+  String      :pretty_url, size: 128, null: false
+  String      :name, size: 32, null: false
+  String      :pretty_name, size: 32, null: false
+  Integer     :ingest_count, default: 0
+  DateTime    :added, default: Time.now
+  DateTime    :last_ingest, default: Time.now
+  Boolean     :enabled, default: false
+end
 
+exit 0
 DB.drop_table?(:things)
 DB.create_table :things do
   primary_key :id

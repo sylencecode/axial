@@ -188,9 +188,7 @@ nicks.each_with_index do |nickname, i|
     nick = Nick.create(nick: nickname.downcase, prettynick: nickname)
     nick.seen = Seen.create(status: statuses[i], last: Time.now)
   else
-    nick.seen.status = statuses[i]
-    nick.seen.last = Time.now
-    nick.seen.save
+    nick.seen.update(status: statuses[i], last: Time.now)
   end
   mask = Mask[mask: masks[i]]
   if mask.nil?

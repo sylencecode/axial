@@ -23,6 +23,7 @@ module Axial
 
       many_to_many :masks
       one_to_many :things
+      one_to_many :rss_feeds
       one_to_one :seen
       # many_to_many :masks, left_key: :nick_id, right_key: :mask_id, join_table: :masks_nicks
       def possible_masks()
@@ -84,7 +85,7 @@ module Axial
         #    update_seen here
     #      nick.seen.status = statuses[i]
     #      nick.seen.last = Time.now
-    #      nick.seen.save
+    #      nick.seen.update(status: statuses[i], last: Time.now)
     #    end
     #    db_mask = Mask[mask: Mask.gen_wildcard_mask(masks[i])]
     #    if (mask.nil?)

@@ -7,5 +7,7 @@ module Axial
     class Seen < Sequel::Model
       many_to_one :nick
     end
+
+    # remember to run self.something.update instead of save and such
   end
 end
