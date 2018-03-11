@@ -52,7 +52,7 @@ module Axial
                 else
                   link = article_url
                 end
-                msg =  "#{$irc_gray}[#{$irc_cyan}news update#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed_name}#{$irc_gray}]#{$irc_reset} "
+                msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed_name}#{$irc_gray}]#{$irc_reset} "
                 msg += title
                 msg += " #{$irc_gray}|#{$irc_reset} "
                 if (summary.length > 299)
