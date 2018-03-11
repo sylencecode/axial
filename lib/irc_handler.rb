@@ -1,4 +1,7 @@
 $:.unshift(File.expand_path(File.join(File.dirname('.'), 'lib')))
+$stdout.sync = true
+$stderr.sync = true
+
 require 'timeout'
 require 'socket'
 
@@ -19,6 +22,7 @@ require 'models/init.rb'
 require 'models/nick.rb'
 require 'models/mask.rb'
 require 'models/seen.rb'
+require 'rss.rb'
 
 class AccessDenied < Exception
 end
@@ -52,6 +56,7 @@ module Axial
     include Axial::Handlers::Logging
     include Axial::Handlers::ServerHandler
     include Axial::Handlers::MessageHandler
+    include Axial::RSS
     def initialize(connect_address, server_port, ssl = false)
       @server_name = connect_address
       @connect_address = connect_address
@@ -103,6 +108,7 @@ module Axial
     
     def run()
       load_addons
+      start_rss
       while (@bot_running)
         begin
           while (!@connected_to_server)

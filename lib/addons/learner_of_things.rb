@@ -16,6 +16,7 @@ module Axial
         on_channel '?explain', :explain
         on_channel '?learn',   :learn
         on_channel '?forget',  :forget
+        on_join                :explain_on_join
       end
 
       def learn(channel, nick, command)
@@ -106,6 +107,21 @@ module Axial
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
           log "#{self.class} error: #{ex.class}: #{ex.message}"
+          ex.backtrace.each do |i|
+            log i
+          end
+        end
+      end
+
+      def explain_on_join(channel, nick)
+        begin
+          thing_model = Models::Thing[thing: nick.name.downcase]
+          if (!thing_model.nil?)
+            channel.message("[#{thing_model.pretty_thing}] #{thing_model.explanation}")
+            log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{channel.name} after #{nick.uhost} joined."
+          end
+        rescue Exception => ex
+          log "#{self.class} error on join of #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}"
           ex.backtrace.each do |i|
             log i
           end
