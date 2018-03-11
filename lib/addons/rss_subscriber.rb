@@ -37,15 +37,17 @@ module Axial
             sleep 15
             while (true)
               Models::RSSFeed.where(enabled: true).each do |feed|
-                prev_last = feed.last_ingest
-                feed.update(last_ingest: Time.now)
                 rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
-                rss_content.entries.select {|tmp_entry| tmp_entry.published > prev_last}.each do |entry|
-                  feed.update(ingest_count: feed.ingest_count + 1)
+                rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}.each do |entry|
+                  if (published > Time.now)
+                    next
+                  end
                   published = entry.published
+                  feed.update(last_ingest: published)
                   title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
                   summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                   article_url = entry.url
+                  feed.update(ingest_count: feed.ingest_count + 1)
   
                   url_shortener = ::Google::API::URLShortener::V1::URL.new
                   short_url = url_shortener.shorten(article_url)
@@ -77,7 +79,7 @@ module Axial
                   end
                 end
               end
-              sleep 30
+              sleep 15
             end
           rescue Exception => ex
             send_channel(channel, "RSS error: #{ex.message}: #{ex.inspect}")

@@ -49,9 +49,7 @@ module Axial
       def match_mask?(in_mask)
         masks.each do |mask|
           re_mask = MaskUtils::get_mask_regexp(mask.mask)
-          puts "checking #{in_mask} against #{re_mask.source}"
           if (re_mask.match(in_mask))
-            puts "match|#{self.pretty_nick}|#{in_mask}|#{mask.mask}"
             return true
           end
         end
