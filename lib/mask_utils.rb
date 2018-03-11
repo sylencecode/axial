@@ -9,6 +9,17 @@ module Axial
     def self.get_mask_regexp(mask)
       return Regexp.new('^' + Regexp.escape(mask).gsub(/\\\*/, '.*').gsub(/\\\?/, '?') + '$')
     end
+
+    def self.get_mask_string_db(mask)
+      if (mask !~ /^\S+@/)
+        mask = "*@" + mask
+      end
+      if (mask !~ /^\S+!/)
+        mask = "*!" + mask
+      end
+      #return Regexp.new('^' + Regexp.escape(mask).gsub(/\\\*/, '%').gsub(/\\\?/, '%').gsub(/\\\./, '.') + '$')
+      return mask.gsub(/\*/, '%').gsub(/\?/, '%')
+    end
   
     def self.mask_ipv4(host)
       host_parts = host.split(/\./)

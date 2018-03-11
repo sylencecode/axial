@@ -19,6 +19,8 @@ module Axial
 
     def start_rss()
       log "Starting RSS feed."
+      # TODO: change location of this class/model
+      # TODO: move the list of feeds to the database and allow adding/removing via command?
       Thread.new do
         begin
           feeds = [
@@ -27,24 +29,24 @@ module Axial
             Axial::RSS::Feed.new('https://www.cnbc.com/id/15837362/device/rss/rss.html'),
             Axial::RSS::Feed.new('https://www.cnbc.com/id/15839069/device/rss/rss.html'),
             Axial::RSS::Feed.new('https://www.cnbc.com/id/10000664/device/rss/rss.html'),
-            Axial::RSS::Feed.new('https://www.cnbc.com/id/19854910/device/rss/rss.html')
+            Axial::RSS::Feed.new('https://www.cnbc.com/id/19854910/device/rss/rss.html'),
+            Axial::RSS::Feed.new('http://rss.cnn.com/rss/cnn_latest.rss')
           ]
           while (true)
-            sleep 30
+            sleep 60
           
             feeds.each do |feed|
+              old_last = feed.last
               rss_content = Feedjira::Feed.fetch_and_parse(feed.url)
+              feed.last = Time.now
               feed_name = Nokogiri::HTML(rss_content.title).text.gsub(/\s+/, ' ').strip
-              published = rss_content.entries.first.published
-              title = Nokogiri::HTML(rss_content.entries.first.title).text.gsub(/\s+/, ' ').strip
-              summary = Nokogiri::HTML(rss_content.entries.first.summary).text.gsub(/\s+/, ' ').strip
-              article_url = rss_content.entries.first.url
-            
-              if (feed.last.nil?)
-                feed.last = published - 1
-              end
-              
-              if (published > feed.last)
+
+              rss_content.entries.select {|tmp_entry| tmp_entry.published > old_last}.each do |entry|
+                published = entry.published
+                title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
+                summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
+                article_url = entry.url
+
                 url_shortener = ::Google::API::URLShortener::V1::URL.new
                 short_url = url_shortener.shorten(article_url)
                 if (!short_url.empty?)
@@ -54,16 +56,19 @@ module Axial
                 end
                 msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed_name}#{$irc_gray}]#{$irc_reset} "
                 msg += title
-                msg += " #{$irc_gray}|#{$irc_reset} "
-                if (summary.length > 299)
-                  msg += summary[0..296] + "..."
-                else
-                  msg += summary
+                if (!summary.empty?)
+                  msg += " #{$irc_gray}|#{$irc_reset} "
+                  if (summary.length > 299)
+                    msg += summary[0..296] + "..."
+                  else
+                    msg += summary
+                  end
                 end
                 msg += " #{$irc_gray}|#{$irc_reset} "
                 msg += link
+                # TODO: fix this when you have a channels collection
+                #    can you privmsg #chan1,#chan2 instead of one each?
                 send_channel('#lulz', msg)
-                feed.last = published
               end
             end
           end

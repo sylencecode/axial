@@ -13,12 +13,29 @@ module Axial
 
       many_to_many :nicks
       # many_to_many :nicks, left_key: :mask_id, right_key: :nick_id, join_table: :masks_nicks
+ 
       def possible_nicks()
         res = []
         nicks.each do |result|
           res.push(result.nick)
         end
         return res
+      end
+
+      def self.get_nicks_from(in_mask)
+        nicks = []
+        if (!in_mask.nil?)
+          search_mask = in_mask.strip
+          if (!search_mask.empty?)
+            filter = MaskUtils.get_mask_string_db(search_mask)
+            self.grep(:mask, filter).each do |mask|
+              mask.nicks.each do |nick|
+                nicks.push(nick.pretty_nick)
+              end
+            end
+          end
+        end
+        return nicks
       end
     
       def self.create_or_find(uhost)

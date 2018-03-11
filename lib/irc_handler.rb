@@ -77,6 +77,7 @@ module Axial
         { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
         { file: 'addons/maga.rb', class: 'Axial::Addons::MakeAmericaGreatAgain' },
         { file: 'addons/weather.rb', class: 'Axial::Addons::Weather' },
+        { file: 'addons/who_from.rb', class: 'Axial::Addons::WhoFrom' },
         { file: 'addons/wikipedia.rb', class: 'Axial::Addons::Wikipedia' }
       ]
       @channel_binds = []

@@ -16,7 +16,8 @@ module Axial
   
   uhosts = [
 #    'sylence!sylence@bellatrix.sylence.org',
-    'chimp!uid257001@id-257001.hathersage.irccloud.com'
+#    'chimp!uid257001@id-257001.hathersage.irccloud.com'
+     'apestate!pisschrist@txix.net]',
 #    'Nick2!~xjester@love.foo.dong.org',
 #    'Nick3!xjester@asdf-1234.foo.irccloud.com',
 #    'Nick4!~peeps@192.168.1.9',
