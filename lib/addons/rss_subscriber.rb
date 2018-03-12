@@ -33,22 +33,22 @@ module Axial
       def start_ingest_thread(channel_name)
         DB[:rss_feeds].update(last_ingest: Time.now)
         @thread = Thread.new do
-          begin
-            sleep 15
-            while (true)
+          sleep 15
+          while (true)
+            begin
               Models::RSSFeed.where(enabled: true).each do |feed|
                 rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
-                rss_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
-                rss_entries.each do |entry|
-                  if (published > Time.now)
+                recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
+                recent_entries.each do |entry|
+                  published = entry.published
+                  if (published > Time.now) # some idiots post articles dated for a future time
                     next
                   end
-                  published = entry.published
                   title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
                   summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                   article_url = entry.url
                   feed.update(ingest_count: feed.ingest_count + 1)
-  
+
                   url_shortener = ::Google::API::URLShortener::V1::URL.new
                   short_url = url_shortener.shorten(article_url)
                   if (!short_url.empty?)
@@ -56,8 +56,10 @@ module Axial
                   else
                     link = article_url
                   end
+
                   msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed.pretty_name}#{$irc_gray}]#{$irc_reset} "
                   msg += title
+
                   if (!summary.empty?)
                     msg += " #{$irc_gray}|#{$irc_reset} "
                     if (summary.length > 299)
@@ -66,29 +68,22 @@ module Axial
                       msg += summary
                     end
                   end
+
                   msg += " #{$irc_gray}|#{$irc_reset} "
                   msg += link
-                  begin
-                    @irc.send_channel(channel_name, msg)
-                  rescue Exception => ex
-                    @irc.send_channel(channel_name, "RSS error: #{ex.message}: #{ex.inspect}")
-                    log "RSS error: #{ex.message}: #{ex.inspect}"
-                    ex.backtrace.each do |i|
-                      log i
-                    end
-                  end
+                  @irc.send_channel(channel_name, msg)
                 end
-                if (recent_entries.count > 0)
-                  feed.update(last_ingest: published)
+
+                if (recent_entries.count > 0) # if any articles were found, update the last ingest timestamp
+                  feed.update(last_ingest: Time.now)
                 end
               end
               sleep 60
-            end
-          rescue Exception => ex
-            send_channel(channel, "RSS error: #{ex.message}: #{ex.inspect}")
-            log "RSS error: #{ex.message}: #{ex.inspect}"
-            ex.backtrace.each do |i|
-              log i
+            rescue Exception => ex
+              log "RSS error: #{ex.message}: #{ex.inspect}"
+              ex.backtrace.each do |i|
+                log i
+              end
             end
           end
         end

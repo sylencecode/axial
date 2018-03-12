@@ -118,6 +118,8 @@ module Axial
             send_login_info
           end
   
+          # TODO: create state tracking for server in an enum
+          # TODO: change to case with handlers
           while (raw_server_msg = @serverconn.readline)
             raw_server_msg.chomp!
               
@@ -127,7 +129,8 @@ module Axial
               @server_detected = true
               log "actual server host: #{@server_name}"
               next
-            elsif (raw_server_msg =~ /376/)
+            elsif (raw_server_msg =~ /^:#{@server_name} 376/ || raw_server_msg =~ /^#{@server_name} 422/)
+              # TODO : better parsing and joining
               log "got motd"
               join_channel "#lulz"
               next
