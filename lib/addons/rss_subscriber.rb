@@ -38,12 +38,12 @@ module Axial
             while (true)
               Models::RSSFeed.where(enabled: true).each do |feed|
                 rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
-                rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}.each do |entry|
+                rss_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
+                rss_entries.each do |entry|
                   if (published > Time.now)
                     next
                   end
                   published = entry.published
-                  feed.update(last_ingest: published)
                   title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
                   summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                   article_url = entry.url
@@ -77,6 +77,9 @@ module Axial
                       log i
                     end
                   end
+                end
+                if (recent_entries.count > 0)
+                  feed.update(last_ingest: published)
                 end
               end
               sleep 60
