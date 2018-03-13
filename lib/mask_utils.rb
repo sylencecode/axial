@@ -1,23 +1,50 @@
 #!/usr/bin/env ruby
 
 module Axial
+  class MaskError < Exception
+  end
+
   class MaskUtils 
     @do_not_wildcard = [
       '*.irccloud.com'
     ]
 
+    def self.ensure_wildcard(in_mask)
+      mask = in_mask.strip
+      if (mask =~ /^(\S+)!(\S+)@(\S+)/)
+        nick = Regexp.last_match[1]
+        ident = Regexp.last_match[2]
+        host = Regexp.last_match[3]
+      elsif (mask =~ /^(\S+)@(\S+)/)
+        nick = '*'
+        ident = Regexp.last_match[1]
+        host = Regexp.last_match[2]
+      elsif (mask =~ /^@(\S+)/)
+        nick = '*'
+        ident = '*'
+        host = Regexp.last_match[1]
+      elsif (mask =~ /(\S+)/)
+        nick = '*'
+        ident = '*'
+        host = Regexp.last_match[1]
+      else
+        raise(MaskError, "Could not generate a mask for '#{mask}'")
+      end
+
+      ident.gsub!(/^~/, '*')
+      if (!ident.start_with?('*'))
+        ident = "*" + ident
+      end
+      return "#{nick}!#{ident}@#{host}"
+    end
+
     def self.get_mask_regexp(mask)
+      mask = ensure_wildcard(mask)
       return Regexp.new('^' + Regexp.escape(mask).gsub(/\\\*/, '.*').gsub(/\\\?/, '?') + '$')
     end
 
     def self.get_mask_string_db(mask)
-      if (mask !~ /^\S+@/)
-        mask = "*@" + mask
-      end
-      if (mask !~ /^\S+!/)
-        mask = "*!" + mask
-      end
-      #return Regexp.new('^' + Regexp.escape(mask).gsub(/\\\*/, '%').gsub(/\\\?/, '%').gsub(/\\\./, '.') + '$')
+      mask = ensure_wildcard(mask)
       return mask.gsub(/\*/, '%').gsub(/\?/, '%')
     end
   

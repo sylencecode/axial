@@ -29,7 +29,7 @@ module Axial
     nick = ::Axial::Nick.from_uhost(nil, uhost)
     if (Models::Nick.get_from_nick(nick).nil?)
       puts "Nick #{nick.name} does not exist, creating"
-      Models::Nick.create_from_nick(nick)
+      Models::Nick.create_from_nick_object(nick)
     else
       puts "Nick #{nick.name} already exists"
     end
@@ -52,7 +52,7 @@ module Axial
   uhosts.each_with_index do |uhost, i|
     puts "#{i + 1}"
     uhosts.each do |host|
-      nick = ::Axial::Nick.from_uhost(nil, uhost)
+      nick = ::Axial::Nick.create_from_uhost(nil, uhost)
       if (Models::Nick[nick: nick.name.downcase].match_mask?(uhost))
         puts "yes|#{nick.name}|#{uhost}|"
       end

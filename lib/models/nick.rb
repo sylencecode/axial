@@ -21,11 +21,12 @@ module Axial
     #  set_dataset :nicks
     class Nick < Sequel::Model
 
-      many_to_many :masks
+      one_to_many :masks
       one_to_many :things
       one_to_many :rss_feeds
       one_to_one :seen
       # many_to_many :masks, left_key: :nick_id, right_key: :mask_id, join_table: :masks_nicks
+
       def possible_masks()
         res = []
         masks.each do |result|
@@ -47,23 +48,29 @@ module Axial
       end
     
       def match_mask?(in_mask)
+        match = false
         masks.each do |mask|
-          re_mask = MaskUtils::get_mask_regexp(mask.mask)
+          re_mask = MaskUtils.get_mask_regexp(mask.mask)
           if (re_mask.match(in_mask))
-            return true
+            match = true
+            break
           end
         end
-        return false
-      end
-    
-      def self.get_from_nick(nick)
-        if (!nick.kind_of?(::Axial::Nick))
-          raise(NickObjectError, "Attempted to query a nick record for an object type other than Axial::Nick.")
-        end
-        return self[nick: nick.name.downcase]
+        return match
       end
 
-      def self.create_from_nick(nick)
+      def self.create_from_nickname_mask(nickname, mask)
+        mask = MaskUtils.ensure_wildcard(mask)
+        nick_model = Nick.create(nick: nickname.downcase, pretty_nick: nickname)
+        nick_model.seen = Seen.create(nick_id: nick_model.id, status: 'for the first time', last: Time.now)
+        mask_model = Models::Mask.create(mask: mask, nick_id: nick_model.id)
+      end
+
+      def self.get_from_nickname(nickname)
+        return self[nick: nickname.downcase]
+      end
+
+      def self.create_from_nick_object(nick)
         if (!nick.kind_of?(::Axial::Nick))
           raise(NickObjectError, "Attempted to create a nick record for an object type other than Axial::Nick.")
         end
@@ -74,28 +81,10 @@ module Axial
     
         nick_model = Nick.create(nick: nick.name.downcase, pretty_nick: nick.name)
         nick_model.seen = Seen.create(nick_id: nick_model.id, status: 'for the first time', last: Time.now)
-        mask_model = Mask.create_or_find(nick.uhost)
-        nick_model.add_mask(mask_model)
+        #mask_model = Mask.create_or_find(nick.uhost)
+        # need to wildcard glob a mask here
+        #nick_model.add_mask(mask_model)
         return nick_model
-    
-        # move to after_create
-    #    else
-        #    update_seen here
-    #      nick.seen.status = statuses[i]
-    #      nick.seen.last = Time.now
-    #      nick.seen.update(status: statuses[i], last: Time.now)
-    #    end
-    #    db_mask = Mask[mask: Mask.gen_wildcard_mask(masks[i])]
-    #    if (mask.nil?)
-    #      puts "Creating and mask: #{Mask.gen_wildcard_mask(masks[i])}"
-    #      nick.add_mask(Mask.create_from_irc_host(masks[i]))
-    #  #    #mask = Mask.create(mask: Mask.gen_wildcard_mask(masks[i]))
-    #  #    nick.add_mask(mask)
-    #    elsif (!nick.match_mask?(masks[i]))
-    #      nick.add_mask(mask)
-    #    else
-    #      puts "Already had #{masks[i]}"
-    #    end
       end
     end
   end

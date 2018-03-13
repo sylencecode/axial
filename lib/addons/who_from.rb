@@ -27,7 +27,7 @@ module Axial
           elsif (in_mask.empty?)
             channel.message("#{nick.name}: try ?whofrom <mask> instead of whatever you just did.")
           else
-            nicks = Axial::Models::Mask.get_nicks_from(in_mask)
+            nicks = Axial::Models::Mask.get_nicks_from_mask(in_mask).collect{|nick| nick.pretty_nick}
             log "#{nick.uhost} requested nicks from '#{in_mask}'"
             if (nicks.count > 0)
               nick_string = nicks.join(', ')

@@ -2,10 +2,15 @@
 
 require 'sequel'
 require_relative '../lib/mask_utils.rb'
-require_relative '../lib/models/init.rb'
-require_relative '../lib/models/mask.rb'
-require_relative '../lib/models/nick.rb'
 
+masks = [
+  '*!~xjester@foo.com',
+  'foo.com',
+  'xjester@foo.com',
+  'plork!~foo@foo.com',
+  '~asdf@foo.com'
+]
 
-nicks = Axial::Models::Mask.get_nicks_from(ARGV[0])
-puts nicks.join(', ')
+masks.each do |mask|
+  puts mask + " -> " + Axial::MaskUtils.ensure_wildcard(mask)
+end

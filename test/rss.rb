@@ -16,15 +16,15 @@ Feedjira.logger.level = Logger::FATAL
           feeds = [
 #            Feed.new('http://rss.cnn.com/rss/cnn_latest.rss', 'cnn'),
 #            Feed.new('https://www.cnbc.com/id/100003114/device/rss/rss.html', 'Fox News'),
-            Feed.new('https://www.theguardian.com/us/rss', 'The Guardian'),
+#            Feed.new('https://www.theguardian.com/us/rss', 'The Guardian'),
+            Feed.new('https://threatpost.com/feed/', 'Tech News')
           ]
           
           feeds.each do |feed|
             rss_content = Feedjira::Feed.fetch_and_parse(feed.url)
-            rss_content.entries.select {|a| a.published > Time.now - 3600}.each do |entry|
-              puts entry.inspect
-              exit 0
+            rss_content.entries.each do |entry| #.select {|a| a.published > Time.now - 14400}.each do |entry|
               published = entry.published
+              puts published
               summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                 title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
               article_url = entry.url

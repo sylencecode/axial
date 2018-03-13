@@ -2,3 +2,11 @@ Metrics/LineLength:
   Max: 120
 Style/GuardClause:
   Enabled: false
+Metrics/MethodLength:
+  Max: 20
+Style/NegatedIf:
+  Enabled: false
+Style/ParenthesesAroundCondition:
+  Enabled: false
+Style/RedundantParentheses:
+  Enabled: false
