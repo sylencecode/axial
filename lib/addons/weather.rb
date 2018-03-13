@@ -1,5 +1,5 @@
-require 'geonames/api/search_json.rb'
-require 'wunderground/api/q.rb'
+require 'api/geo_names/search_json.rb'
+require 'api/wunderground/q.rb'
 
 module Axial
   module Addons
@@ -42,11 +42,9 @@ module Axial
 
         begin
           log "weather request from #{nick.uhost}: #{query}"
-          location_search = ::GeoNames::API::SearchJSON.new
-          geonames_location = location_search.search(query)
+          geonames_location = API::GeoNames::SearchJSON.search(query)
           if (geonames_location.found)
-            search = ::WUnderground::API::Conditions::Q.new
-            conditions = search.get_current_conditions(geonames_location.to_wunderground)
+            conditions = API::WUnderground::Q.get_current_conditions(geonames_location.to_wunderground)
             if (conditions.found)
               msg  = "#{$irc_gray}[#{$irc_cyan}weather#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{conditions.location}#{$irc_gray}]#{$irc_reset} "
               msg += "#{conditions.weather.downcase}"

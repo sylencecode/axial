@@ -1,4 +1,3 @@
-require_relative '../string/cleanup.rb'
 require_relative '../duration.rb'
 
 module YouTube
@@ -18,8 +17,9 @@ module YouTube
     def irc_description()
       short_description = @description.clone
       short_description.strip!
-      short_description = short_description.cleanup
+      short_description = short_description
       if (short_description.length > 219)
+        short_description = URIUtils.strip_html(short_description)
         short_description = short_description[0..219] + "..."
       end
       return short_description

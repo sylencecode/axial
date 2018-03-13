@@ -1,7 +1,7 @@
 Metrics/LineLength:
-  Max: 120
-Style/GuardClause:
   Enabled: false
+#Style/GuardClause:
+#  Enabled: false
 Metrics/MethodLength:
   Max: 20
 Style/NegatedIf:
@@ -9,4 +9,6 @@ Style/NegatedIf:
 Style/ParenthesesAroundCondition:
   Enabled: false
 Style/RedundantParentheses:
+  Enabled: false
+Style/DefWithParentheses:
   Enabled: false

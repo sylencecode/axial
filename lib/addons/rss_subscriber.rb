@@ -5,7 +5,6 @@ require 'feedjira'
 require 'uri_utils.rb'
 require 'models/nick.rb'
 require 'models/rss_feed.rb'
-require 'google/api/url_shortener/v1/url.rb'
 
 Feedjira.logger.level = Logger::FATAL
 
@@ -37,6 +36,7 @@ module Axial
           while (true)
             begin
               Models::RSSFeed.where(enabled: true).each do |feed|
+                ingested = 0
                 rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
                 recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
                 recent_entries.each do |entry|
@@ -49,8 +49,7 @@ module Axial
                   article_url = entry.url
                   feed.update(ingest_count: feed.ingest_count + 1)
 
-                  url_shortener = ::Google::API::URLShortener::V1::URL.new
-                  short_url = url_shortener.shorten(article_url)
+                  short_url = URIUtils.shorten(article_url)
                   if (!short_url.empty?)
                     link = short_url
                   else
@@ -72,9 +71,10 @@ module Axial
                   msg += " #{$irc_gray}|#{$irc_reset} "
                   msg += link
                   @irc.send_channel(channel_name, msg)
+                  ingested = ingested + 1
                 end
 
-                if (recent_entries.count > 0) # if any articles were found, update the last ingest timestamp
+                if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
                   feed.update(last_ingest: Time.now)
                 end
               end

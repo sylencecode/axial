@@ -2,25 +2,24 @@ require 'rest-client'
 require 'uri'
 require 'json'
 
-require_relative '../conditions.rb'
-require_relative '../../handlers/logging.rb'
+require 'api/wunderground/conditions.rb'
 
 $wunderground_api_key = "a584b01d4dbd0159"
 
-module WUnderground
+module Axial
   module API
-    module Conditions
+    module WUnderground
       class Q
-        @@rest_api = "http://api.wunderground.com/api/#{$wunderground_api_key}/conditions/q"
+        @rest_api = "http://api.wunderground.com/api/#{$wunderground_api_key}/conditions/q"
   
-        def get_current_conditions(in_location)
+        def self.get_current_conditions(in_location)
           if (!in_location.kind_of?(String) || in_location.strip.empty?)
             raise(ArgumentError, "Invalid location provided to WUnderground: #{in_location.inspect}")
           end
   
           location = in_location.strip
           location.gsub!(/ /, '_')
-          uri = URI::parse(@@rest_api + "/" + location + ".json")
+          uri = URI.parse(@rest_api + "/" + location + ".json")
     
           response = RestClient.get(uri.to_s)
           orig_json = JSON.parse(response)
@@ -34,7 +33,7 @@ module WUnderground
                 result = results[0]
                 if (result.has_key?('l'))
                   redirect = result['l'].gsub(/^\/q\//, '')
-                  new_uri = URI::parse(@@rest_api + "/" + redirect + ".json")
+                  new_uri = URI::parse(@rest_api + "/" + redirect + ".json")
                   new_response = RestClient.get(new_uri.to_s)
                   new_json = JSON.parse(new_response)
                 end

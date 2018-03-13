@@ -1,5 +1,5 @@
-require 'wikipedia/api/w.rb'
-require 'google/api/url_shortener/v1/url.rb'
+require 'api/wikipedia/w.rb'
+require 'uri_utils.rb'
 
 module Axial
   module Addons
@@ -27,15 +27,13 @@ module Axial
           if (query.length > 79)
             query = query[0..79]
           end
-          search = ::Wikipedia::API::W.new
-          article = search.search(query)
+          article = API::Wikipedia::W.search(query)
           if (article.found)
-            url_shortener = ::Google::API::URLShortener::V1::URL.new
-            short_url = url_shortener.shorten(article.url)
-            if (!short_url.empty?)
-              link = short_url
-            else
+            short_url = URIUtils.shorten(article.url)
+            if (short_url.nil?)
               link = article.url
+            else
+              link = short_url.to_s
             end
             msg =  "#{$irc_gray}[#{$irc_red}wikipedia#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
             msg += article.irc_extract

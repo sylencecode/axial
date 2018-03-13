@@ -1,4 +1,5 @@
-require 'google/api/custom_search_v1.rb'
+require 'uri_utils.rb'
+require 'api/google/custom_search/v1.rb'
 
 module Axial
   module Addons
@@ -25,15 +26,13 @@ module Axial
           if (query.length > 79)
             query = query[0..79]
           end
-          search = ::Google::API::CustomSearchV1.new
-          result = search.search(query)
+          result = API::Google::CustomSearch::V1.search(query)
           if (!result.irc_snippet.empty?)
-            url_shortener = ::Google::API::URLShortener::V1::URL.new
-            short_url = url_shortener.shorten(result.link)
-            if (!short_url.empty?)
-              link = short_url
-            else
+            short_url = URIUtils.shorten(result.link)
+            if (short_url.nil?)
               link = result.link
+            else
+              link = short_url.to_s
             end
             msg  = "#{$irc_gray}[#{$irc_green}google#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkgreen}#{nick.name}#{$irc_gray}]#{$irc_reset} "
             msg += result.irc_snippet
