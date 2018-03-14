@@ -12,8 +12,6 @@ ids = [
   "JdSMSHo"
 ]
 
-RestClient.log = 'stdout'
-
 api = YouTube::API::VideoV3.new
 ids.each do |id|
   video = api.get_video(id)

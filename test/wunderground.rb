@@ -3,7 +3,7 @@
 require_relative '../lib/wunderground/api/q.rb'
 require_relative '../lib/geonames/api/search_json.rb'
 
-RestClient.log = 'stdout'
+
 
 locsearch = GeoNames::API::SearchJSON.new
 geoloc = locsearch.search(ARGV[0])

@@ -22,7 +22,7 @@ module Axial
           channel.message("#{nick.name}: please provide a search term.")
           return
         end
-        log "wikipedia request from #{nick.uhost}: #{query}"
+        LOGGER.debug("wikipedia request from #{nick.uhost}: #{query}")
         begin
           if (query.length > 79)
             query = query[0..79]
@@ -40,9 +40,9 @@ module Axial
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end

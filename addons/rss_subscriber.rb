@@ -26,7 +26,9 @@ module Axial
       end
 
       def stop_ingest_thread()
-        @ingest_thread.kill
+        if (!@ingest_thread.nil?)
+          @ingest_thread.kill
+        end
       end
 
       def start_ingest_thread(channel_name)
@@ -52,7 +54,7 @@ module Axial
 
                   link = URIUtils.shorten(article_url)
 
-                  msg =  "#{Colors.gray}[#{Colors.cyan}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
+                  msg =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
                   msg += title
 
                   if (!summary.empty?)
@@ -71,14 +73,15 @@ module Axial
                 end
 
                 if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
+                  LOGGER.debug("Resetting last_ingest time of #{feed.pretty_name} from #{feed.last_ingest} to #{Time.now}")
                   feed.update(last_ingest: Time.now)
                 end
               end
               sleep 60
             rescue Exception => ex
-              log "RSS error: #{ex.message}: #{ex.inspect}"
+              LOGGER.error("#{self.class} error: #{ex.message}: #{ex.inspect}")
               ex.backtrace.each do |i|
-                log i
+                LOGGER.error(i)
               end
             end
           end
@@ -120,7 +123,7 @@ module Axial
         begin
           rss_content = Feedjira::Feed.fetch_and_parse(parsed_url)
           Models::RSSFeed.upsert(feed_name, parsed_url, nick_model)
-          log "RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}"
+          LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
           channel.message("#{nick.name}: ok, following articles from '#{feed_name}'.")
         rescue Feedjira::NoParserAvailable
           channel.message("#{nick.name}: '#{feed_url}' can't be parsed. is it a valid RSS feed?")
@@ -130,7 +133,7 @@ module Axial
       def list_feeds(channel, nick)
         feeds = Models::RSSFeed.all
         if (feeds.count > 0)
-          log "RSS: #{nick.uhost} listed feeds"
+          LOGGER.debug("RSS: #{nick.uhost} listed feeds")
           channel.message("rss feeds:")
           feeds.each do |feed|
             msg  = "#{Colors.gray}[#{Colors.reset} "
@@ -164,7 +167,7 @@ module Axial
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else
           feed_model.update(enabled: false)
-          log "RSS: #{nick.uhost} disabled #{feed_name}"
+          LOGGER.info("RSS: #{nick.uhost} disabled #{feed_name}")
           channel.message("#{nick.name}: ok, '#{feed_name}' disabled.")
         end
       end
@@ -175,7 +178,7 @@ module Axial
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else
           feed_model.update(enabled: true)
-          log "RSS: #{nick.uhost} enabled #{feed_name}"
+          LOGGER.info("RSS: #{nick.uhost} enabled #{feed_name}")
           channel.message("#{nick.name}: ok, '#{feed_name}' enabled.")
         end
       end
@@ -186,7 +189,7 @@ module Axial
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else
           feed_model.delete
-          log "RSS: #{nick.uhost} deleted #{feed_name}"
+          LOGGER.info("RSS: #{nick.uhost} deleted #{feed_name}")
           channel.message("#{nick.name}: ok, '#{feed_name}' deleted.")
         end
       end
@@ -195,7 +198,7 @@ module Axial
         if (@ingest_thread.alive? || @ingest_thread.stop?)
           channel.message("#{nick.name}: ok, stopping feed ingest.")
           stop_ingest_thread
-          log "RSS: #{nick.uhost} stopped ingest"
+          LOGGER.info("RSS: #{nick.uhost} stopped ingest")
         else
           channel.message("#{nick.name}: not currently ingesting feeds.")
           return
@@ -209,7 +212,7 @@ module Axial
         else
           channel.message("#{nick.name}: ok, starting feed ingest.")
           start_ingest_thread
-          log "RSS: #{nick.uhost} started ingest"
+          LOGGER.info("RSS: #{nick.uhost} started ingest")
         end
       end
 
@@ -253,11 +256,18 @@ module Axial
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
+      end
+
+      def before_reload()
+        super
+        LOGGER.info("#{self.class}: stopping RSS thread")
+        stop_ingest_thread
+        @ingest_thread = nil
       end
     end
   end

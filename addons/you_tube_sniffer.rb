@@ -39,13 +39,13 @@ module Axial
         end
 
         if (youtube_id.empty?)
-          log "Youtube video not found: #{video_url}"
+          LOGGER.warn("Youtube video not found: #{video_url}")
           return
         else
           video = API::YouTube::V3.get_video(youtube_id)
           if (video.found)
             link = URIUtils.shorten(video_url)
-            msg  = "#{Colors.gray}[#{Colors.blue}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+            msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
             msg += video.title
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += video.duration.short_to_s
@@ -57,14 +57,14 @@ module Axial
             msg += link.to_s
             channel.message(msg)
           else
-            log "Youtube video not found: #{video_url}"
+            LOGGER.warn("Youtube video not found: #{video_url}")
           end
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
     end

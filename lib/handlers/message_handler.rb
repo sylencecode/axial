@@ -4,11 +4,11 @@ module Axial
   module Handlers
     module MessageHandler
       def handle_notice(nick, msg)
-        log_notice(nick.name, msg)
+        LOGGER.info("#{nick.name} NOTICE: #{msg}")
       end
   
       def handle_privmsg(nick, msg)
-        log_privmsg(nick.name, msg)
+        LOGGER.info("#{nick.name} PRIVMSG: #{msg}")
         if (msg =~ /exec (.*)/)
           command = Regexp.last_match[1].strip
           nick_model = Models::Nick.get_if_valid(nick)
@@ -35,13 +35,13 @@ module Axial
           return
         end
 
-        log_channel_message(nick.name, channel.name, msg)
+        LOGGER.debug("CHANNEL #{channel.name}: <#{nick.name}> #{msg}")
 
         if (msg.downcase =~ /^\?about$/ || msg.downcase =~ /^\?help$/)
           channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR}")
           if (@addons.count > 0)
             @addons.each do |addon|
-              channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel}
+              channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel && listener[:command].is_a?(String)}
               listener_string = ""
               if (channel_listeners.count > 0)
                 commands = channel_listeners.collect{|foo| foo[:command]}
@@ -51,16 +51,51 @@ module Axial
             end
           end
           return
+        elsif (msg.downcase =~ /^\?reload$/)
+          begin
+            if (@addons.count == 0)
+              channel.message("#{nick.name}: No addons loaded...")
+              return
+            end
+
+            classes_to_unload = []
+            @addons.each do |addon|
+              class_name = addon[:object].class.to_s.split('::').last
+              classes_to_unload.push(class_name)
+              if (addon[:object].respond_to?(:before_reload))
+                addon[:object].public_send(:before_reload)
+              end
+            end
+
+            @binds.clear
+            @addons.clear
+
+            classes_to_unload.each do |class_name|
+              LOGGER.debug("removing class definition for #{class_name}")
+              if (Object.constants.include?(:Axial))
+                if (Axial.constants.include?(:Addons))
+                  if (Axial::Addons.constants.include?(class_name.to_sym))
+                    Axial::Addons.send(:remove_const, class_name.to_sym)
+                  end
+                end
+              end
+            end
+
+            load_addons
+
+            channel.message("loaded addons: #{@addons.collect{|addon| addon[:name]}.join(', ')}")
+          rescue Exception => ex
+            LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
+            ex.backtrace.each do |i|
+              LOGGER.error(i)
+            end
+          end
+          return
         end
 
         @binds.select{|bind| bind[:type] == :channel}.each do |bind|
           begin
-            if (bind[:command].is_a?(Regexp))
-              if (msg =~ bind[:command])
-                bind[:object].public_send(bind[:method], channel, nick, msg)
-                break
-              end
-            elsif (bind[:command].is_a?(String))
+            if (bind[:command].is_a?(String))
               match = '^(' + Regexp.escape(bind[:command]) + ')'
               base_match = match + '$'
               args_match = match + '\s+(.*)'
@@ -71,22 +106,33 @@ module Axial
                 command = Regexp.last_match[1]
                 args = Regexp.last_match[2]
                 command_object = Axial::Command.new(command, args)
-                bind[:object].public_send(bind[:method], channel, nick, command_object)
+                Thread.new do
+                  bind[:object].public_send(bind[:method], channel, nick, command_object)
+                end
                 break
               elsif (msg =~ base_regexp)
                 command = Regexp.last_match[1]
                 args = ""
                 command_object = Axial::Command.new(command, args)
-                bind[:object].public_send(bind[:method], channel, nick, command_object)
+                Thread.new do
+                  bind[:object].public_send(bind[:method], channel, nick, command_object)
+                end
+                break
+              end
+            elsif (bind[:command].is_a?(Regexp))
+              if (msg =~ bind[:command])
+                Thread.new do
+                  bind[:object].public_send(bind[:method], channel, nick, msg)
+                end
                 break
               end
             else
-              log "#{self.class}: unsure how to handle bind #{bind.inspect}, it isn't a string or regexp."
+              LOGGER.error("#{self.class}: unsure how to handle bind #{bind.inspect}, it isn't a string or regexp.")
             end
           rescue Exception => ex
-            log "#{self.class} error: #{ex.class}: #{ex.message}"
+            LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
             ex.backtrace.each do |i|
-              log i
+              LOGGER.error(i)
             end
           end
         end
@@ -108,7 +154,7 @@ module Axial
       end
   
       def handle_channel_notice(nick, channel, msg)
-        log_channel_notice(nick.name, channel.name, msg)
+        LOGGER.info("#{nick.name} NOTICE #{channel.name}: #{msg}")
       end 
     end
   end

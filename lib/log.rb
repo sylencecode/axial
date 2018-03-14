@@ -1,3 +1,10 @@
+require 'logger'
+LOGGER = Logger.new(STDOUT)
+LOGGER.level = Logger::DEBUG
+LOGGER.formatter = proc do |severity, time, unused, message|
+  puts "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}"
+end
+
 module Axial
   module Handlers
     module Logging

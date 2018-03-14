@@ -64,6 +64,8 @@ module Axial
         nick_model = Nick.create(nick: nickname.downcase, pretty_nick: nickname)
         nick_model.seen = Seen.create(nick_id: nick_model.id, status: 'for the first time', last: Time.now)
         mask_model = Models::Mask.create(mask: mask, nick_id: nick_model.id)
+        nick_model.add_mask(mask_model)
+        return nick_model
       end
 
       def self.get_from_nickname(nickname)

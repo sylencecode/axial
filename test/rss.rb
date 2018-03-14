@@ -11,7 +11,7 @@ require 'feedjira'
         @last = Time.now
       end
     end
-Feedjira.logger.level = Logger::FATAL
+#Feedjira.logger.level = Logger::FATAL
 
           feeds = [
 #            Feed.new('http://rss.cnn.com/rss/cnn_latest.rss', 'cnn'),

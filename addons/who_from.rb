@@ -28,7 +28,7 @@ module Axial
             channel.message("#{nick.name}: try ?whofrom <mask> instead of whatever you just did.")
           else
             nicks = Models::Mask.get_nicks_from_mask(in_mask).collect{|nick| nick.pretty_nick}
-            log "#{nick.uhost} requested nicks from '#{in_mask}'"
+            LOGGER.debug("#{nick.uhost} requested nicks from '#{in_mask}'")
             if (nicks.count > 0)
               nick_string = nicks.join(', ')
               channel.message("#{nick.name}: possible nicks for '#{in_mask}': #{nick_string}")
@@ -37,9 +37,9 @@ module Axial
             end
           end
         rescue Exception => ex
-          log "#{self.class} error #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end

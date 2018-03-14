@@ -8,7 +8,7 @@ safe = foo.safe_uri?(ARGV[0])
 puts safe.inspect
 
 # $google_api_key = "AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs"
-# RestClient.log = 'stdout'
+# 
 # 
 #       rest_api = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
 # 

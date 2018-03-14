@@ -29,14 +29,14 @@ module Axial
           return
         end
         seen_at = Axial::TimeSpan.new(user_model.seen.last, Time.now)
-        log "reported seeing #{user_model.pretty_nick} to #{nick.uhost}"
+        LOGGER.debug("reported seeing #{user_model.pretty_nick} to #{nick.uhost}")
         msg = "#{nick.name}: #{who} was last seen #{user_model.seen.status} #{seen_at.approximate_to_s} ago."
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
         
@@ -44,13 +44,13 @@ module Axial
         user = Models::Mask.get_nick_from_mask(nick.uhost)
         if (!user.nil?)
           user.seen.update(last: Time.now, status: "joining #{channel.name}")
-          log "updated seen for #{user.pretty_nick} (joining #{channel.name})"
+          LOGGER.debug("updated seen for #{user.pretty_nick} (joining #{channel.name})")
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
 
@@ -59,17 +59,17 @@ module Axial
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "leaving #{channel.name}")
-            log "updated seen for #{user.pretty_nick} (leaving #{channel.name})"
+            LOGGER.debug("updated seen for #{user.pretty_nick} (leaving #{channel.name})")
           else
             user.seen.update(last: Time.now, status: "leaving #{channel.name} (#{reason})")
-            log "updated seen for #{user.pretty_nick} (leaving #{channel.name}, reason: #{reason})"
+            LOGGER.debug("updated seen for #{user.pretty_nick} (leaving #{channel.name}, reason: #{reason})")
           end
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
 
@@ -78,17 +78,17 @@ module Axial
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "quitting IRC")
-            log "updated seen for #{user.pretty_nick} (quitting IRC)"
+            LOGGER.debug("updated seen for #{user.pretty_nick} (quitting IRC)")
           else
             user.seen.update(last: Time.now, status: "quitting IRC (#{reason})")
-            log "updated seen for #{user.pretty_nick} (quitting IRC, reason: #{reason})"
+            LOGGER.debug("updated seen for #{user.pretty_nick} (quitting IRC, reason: #{reason})")
           end
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
     end

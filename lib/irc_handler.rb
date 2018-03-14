@@ -2,6 +2,7 @@ $:.unshift(File.expand_path(File.join(File.dirname('.'), 'lib')))
 $stdout.sync = true
 $stderr.sync = true
 
+require 'yaml'
 require 'timeout'
 require 'socket'
 
@@ -9,9 +10,11 @@ require 'colors.rb'
 require 'channel.rb'
 require 'command.rb'
 require 'constants.rb'
+require 'addon.rb'
+require 'log.rb'
+require 'underscore.rb'
 
 # handlers...need eventing
-require 'handlers/logging.rb'
 require 'handlers/server_handler.rb'
 require 'handlers/message_handler.rb'
 
@@ -28,92 +31,55 @@ class AccessDenied < StandardError
 end
 
 module Axial
-  class Addon
-    include Axial::Handlers::Logging
-    attr_reader :listeners, :name, :version, :author
-    attr_accessor :irc
-
-    def initialize()
-      @listeners = []
-      @name = "unnamed"
-      @author = "unknown author"
-      @version = "unknown version"
-      @irc = nil
-    end
-
-    def on_part(method)
-      log "Channel part will invoke method '#{self.class}.#{method}'"
-      @listeners.push(type: :part, method: method)
-    end
-
-    def on_quit(method)
-      log "IRC quit will invoke method '#{self.class}.#{method}'"
-      @listeners.push(type: :quit, method: method)
-    end
-
-    def on_channel(command, method)
-      log "Channel command '#{command}' will invoke method '#{self.class}.#{method}'"
-      @listeners.push(type: :channel, command: command, method: method)
-    end
-
-    def on_join(method)
-      log "Channel join will invoke method '#{self.class}.#{method}'"
-      @listeners.push(type: :join, method: method)
-    end
-  end
-end
-
-module Axial
   class IRCHandler
-    include Axial::Handlers::Logging
+#    include Singleton
     include Axial::Handlers::ServerHandler
     include Axial::Handlers::MessageHandler
-    def initialize(connect_address, server_port, ssl = false)
-      @server_name = connect_address
-      @connect_address = connect_address
-      @server_port = server_port
-      @server_timeout = 10
-      @serverconn = nil
+    def initialize(props_file)
+      @addons              = []
+      @binds               = []
+      @bot_running         = true
+      @channels            = {}
       @connected_to_server = false
-      @bot_nick = "axial"
-      @bot_realname = "axial"
-      @bot_user = "axial"
-      @server_detected = false
-      @bot_running = true
-      @ssl = ssl
-      @addons = []
-      @addon_list = [
-        { file: 'addons/auto_op.rb',           class: 'Axial::Addons::AutoOp' },
-        { file: 'addons/google_search.rb',     class: 'Axial::Addons::GoogleSearch' },
-        { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
-        { file: 'addons/maga.rb',              class: 'Axial::Addons::MakeAmericaGreatAgain' },
-        { file: 'addons/rss_subscriber.rb',    class: 'Axial::Addons::RSSSubscriber' },
-        { file: 'addons/seen.rb',              class: 'Axial::Addons::Seen' },
-        { file: 'addons/user_management.rb',   class: 'Axial::Addons::UserManagement' },
-        { file: 'addons/weather.rb',           class: 'Axial::Addons::Weather' },
-        { file: 'addons/who_from.rb',          class: 'Axial::Addons::WhoFrom' },
-        { file: 'addons/wikipedia.rb',         class: 'Axial::Addons::Wikipedia' },
-        { file: 'addons/you_tube_sniffer.rb',  class: 'Axial::Addons::YouTubeSniffer' }
-      ]
-      @binds = []
-      @channels = {}
+      @props_file          = props_file
+      @real_server_name    = ""
+      @server_detected     = false
+      @serverconn          = nil
+      load_props
+    end
+
+    def load_props()
+      props = YAML.load_file(File.join(File.dirname(__FILE__), '..', @props_file))
+      @server_name    = props['server']['name']     || 'irc.efnet.org'
+      @server_port    = props['server']['port']     || 6667
+      @server_timeout = props['server']['timeout']  || 10
+      @ssl            = props['server']['ssl']      || false
+      @bot_nick       = props['bot']['nick']        || 'unnamed'
+      @bot_realname   = props['bot']['real_name']   || 'unnamed'
+      @bot_user       = props['bot']['user_name']   || 'unnamed'
+      @addon_list     = props['addons']             || []
+      @autojoin       = props['channels']
     end
 
     def send_raw(cmd)
       if (!cmd =~ /^PONG /)
-        log_outbound cmd
+        LOGGER.debug("Sent to server: #{cmd}")
       end
       @serverconn.puts(cmd)
     end
 
     def load_addons()
-      @addon_list.each do |addon|
-        require addon[:file]
-        addon_object = Object.const_get(addon[:class]).new
-        addon_object.irc = self
-        @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
-        addon_object.listeners.each do |listener|
-          @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
+      if (@addon_list.count == 0)
+        LOGGER.debug("No addons specified.")
+      else
+        @addon_list.each do |addon|
+          load File.join(File.dirname(__FILE__), '..', 'addons', "#{addon.underscore}.rb")
+          addon_object = Object.const_get("Axial::Addons::#{addon}").new
+          addon_object.irc = self
+          @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
+          addon_object.listeners.each do |listener|
+            @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
+          end
         end
       end
     end
@@ -134,14 +100,22 @@ module Axial
               
             # this definitely needs to be improved
             if (!@server_detected && raw_server_msg =~ /^:\S+ 004 #{@bot_nick} (\S+)/)
-              @server_name = $1
+              @real_server_name = $1
               @server_detected = true
-              log "actual server host: #{@server_name}"
+              LOGGER.info("actual server host: #{@real_server_name}")
               next
-            elsif (raw_server_msg =~ /^:#{@server_name} 376/ || raw_server_msg =~ /^#{@server_name} 422/)
+            elsif (raw_server_msg =~ /^:#{@real_server_name} 376/ || raw_server_msg =~ /^#{@real_server_name} 422/)
               # TODO : better parsing and joining
-              log "got motd"
-              join_channel "#lulz"
+              LOGGER.info("end of motd")
+              @autojoin.each do |channel_name|
+                join_channel(channel_name)
+              end
+              next
+            elsif (raw_server_msg =~ /^:#{@real_server_name} 375:{0,1}\s+(.*)/)
+              LOGGER.info("begin motd")
+              next
+            elsif (raw_server_msg =~ /^:#{@real_server_name} 372:{0,1}\s+(.*)/)
+              LOGGER.info("motd: " + Regexp.last_match[1])
               next
             elsif (raw_server_msg =~ /^PING (.*)/)
               handle_server_ping(Regexp.last_match[1])
@@ -151,11 +125,14 @@ module Axial
               next
             elsif (raw_server_msg =~ /^:(\S+) JOIN :{0,1}(\S+)/)
               nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
-              channel = Axial::Channel.new(self, Regexp.last_match[2])
+              channel_name = Regexp.last_match[2]
               if (nick.name.casecmp(@bot_nick).zero?)
-                handle_self_join(channel)
+                handle_self_join(channel_name)
+                # TODO: critical section around channel join
               else
-                log "#{nick.uhost} joined #{channel.name}"
+                channel = @channels[channel_name]
+                # TODO: critical section around channel join
+                LOGGER.debug("#{nick.uhost} joined #{channel.name}")
                 handle_join(channel, nick)
               end
               next
@@ -171,10 +148,10 @@ module Axial
                 handle_self_part(channel)
               else
                 if (reason.empty?)
-                  log "#{nick.uhost} left #{channel.name}"
+                  LOGGER.debug("#{nick.uhost} left #{channel.name}")
                   handle_part(channel, nick, reason)
                 else
-                  log "#{nick.uhost} left #{channel.name} (#{reason})"
+                  LOGGER.debug("#{nick.uhost} left #{channel.name} (#{reason})")
                   handle_part(channel, nick, reason)
                 end
               end
@@ -193,10 +170,10 @@ module Axial
                 handle_self_quit(reason)
               else
                 if (reason.empty?)
-                  log "#{nick.uhost} quit IRC"
+                  LOGGER.debug("#{nick.uhost} quit IRC")
                   handle_quit(nick, reason)
                 else
-                  log "#{nick.uhost} quit IRC (#{reason})"
+                  LOGGER.debug("#{nick.uhost} quit IRC (#{reason})")
                   handle_quit(nick, reason)
                 end
               end
@@ -209,11 +186,13 @@ module Axial
               dest = Regexp.last_match[2]
               msg = Regexp.last_match[3]
               if (dest.start_with?("#"))
-                if (@channels.has_key?(dest))
-                  channel = @channels[dest]
+                if (@channels.has_key?(dest.downcase))
+                  channel = @channels[dest.downcase]
+                  puts channel.name.inspect
                 else
-                  channel = Axial::Channel.new(self, dest)
-                  @channels[dest] = channel
+                  raise(RuntimeError, "No channel object for #{dest}")
+                 # channel = Axial::Channel.new(self, dest)
+                 # @channels[dest] = channel
                 end
                 handle_channel_message(channel, nick, msg)
               else
@@ -225,7 +204,7 @@ module Axial
               dest = Regexp.last_match[2]
               msg = Regexp.last_match[3]
 
-              if (uhost == @server_name || !uhost.include?('!'))
+              if (uhost.casecmp(@server_name).zero? || uhost == @real_server_name || !uhost.include?('!'))
                 handle_server_notice(msg)
                 next
               end
@@ -235,8 +214,9 @@ module Axial
                 if (@channels.has_key?(dest))
                   channel = @channels[dest]
                 else
-                  channel = Axial::Channel.new(self, dest)
-                  @channels[dest] = channel
+                  raise(RuntimeError, "No channel object for #{dest}")
+                 # channel = Axial::Channel.new(self, dest)
+                 # @channels[dest] = channel
                 end
                 handle_channel_notice(channel, nick, msg)
               else
@@ -244,16 +224,16 @@ module Axial
               end
               next
             else
-              log_unhandled(raw_server_msg)
+              LOGGER.warn("unhandled: #{raw_server_msg}")
               next
             end
           end
-        rescue Errno::ECONNRESET => e
-          log "lost connection to server - #{e.class}: #{e.message}"
+        rescue Errno::ECONNRESET => ex
+          LOGGER.error("lost connection to server - #{ex.class}: #{ex.message}")
           @connected_to_server = false
           sleep 5
-        rescue EOFError => e
-          log "lost connection to server - #{e.class}: #{e.message}"
+        rescue EOFError => ex
+          LOGGER.error("lost connection to server - #{ex.class}: #{ex.message}")
           @connected_to_server = false
           sleep 5
         end

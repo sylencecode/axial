@@ -2,6 +2,5 @@
 
 require_relative './lib/irc_handler.rb'
 
-#bot = Axial::IRCHandler.new("localhost", 6667)
-bot = Axial::IRCHandler.new("irc.choopa.net", 9999, true)
+bot = Axial::IRCHandler.new('conf/efnet.yml')
 bot.run

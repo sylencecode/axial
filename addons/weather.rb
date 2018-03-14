@@ -41,7 +41,7 @@ module Axial
         end
 
         begin
-          log "weather request from #{nick.uhost}: #{query}"
+          LOGGER.debug("weather request from #{nick.uhost} on #{channel.name}: #{query}")
           geonames_location = API::GeoNames::SearchJSON.search(query)
           if (geonames_location.found)
             conditions = API::WUnderground::Q.get_current_conditions(geonames_location.to_wunderground)
@@ -74,9 +74,9 @@ module Axial
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
           channel.message("#{nick.name}: the weather guys can't report the weather for \"#{query}\" right now.")
         end

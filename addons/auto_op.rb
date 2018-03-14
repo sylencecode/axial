@@ -18,13 +18,13 @@ module Axial
           user = Models::Mask.get_nick_from_mask(nick.uhost)
           if (!user.nil?)
             channel.op(nick)
-            log "auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_nick})"
+            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_nick})")
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end

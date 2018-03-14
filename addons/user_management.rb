@@ -35,9 +35,9 @@ module Axial
           channel.message("Current masks for #{user_model.pretty_nick}: #{user_model.possible_masks.join(', ')}")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end
@@ -79,9 +79,9 @@ module Axial
           channel.message("#{nick.name}: Mask '#{user_mask}' added to #{user_model.pretty_nick}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end
@@ -118,9 +118,9 @@ module Axial
           channel.message("#{nick.name}: User #{user_model.pretty_nick} created with mask '#{user_mask}'.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end

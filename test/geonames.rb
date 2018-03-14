@@ -2,7 +2,7 @@
 
 require_relative '../lib/geonames/api/search_json.rb'
 
-RestClient.log = 'stdout'
+
 
 search = GeoNames::API::SearchJSON.new
 result = search.search(ARGV[0])

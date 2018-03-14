@@ -42,7 +42,7 @@ module Axial
       end
 
       def translate(channel, nick, source_language, target_language, text)
-        log "translation request from #{nick.uhost} (#{source_language} -> #{target_language}): #{text}"
+        LOGGER.debug("translation request from #{nick.uhost} (#{source_language} -> #{target_language}): #{text}")
 
         translation = API::Google::Translate::V2.translate(source_language, target_language, text)
         if (translation.nil?)
@@ -60,9 +60,9 @@ module Axial
         channel.message(msg)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
     end

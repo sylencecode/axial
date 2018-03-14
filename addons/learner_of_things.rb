@@ -46,13 +46,13 @@ module Axial
         end
 
         Models::Thing.upsert(thing, explanation, nick_model)
-        log "learned: #{thing} = #{explanation} from #{nick.uhost}"
+        LOGGER.info("learned: #{thing} = #{explanation} from #{nick.uhost}")
         channel.message("#{nick.name}: ok, I've learned about #{thing}.")
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
 
@@ -69,7 +69,7 @@ module Axial
             return
           end
           thing_model = Models::Thing[thing: thing.downcase]
-          log "forgot: #{thing_model.pretty_thing} = #{thing_model.explanation} from #{nick.uhost}"
+          LOGGER.info("forgot: #{thing_model.pretty_thing} = #{thing_model.explanation} from #{nick.uhost}")
           if (thing_model.nil?)
             channel.message("#{nick.name}: I don't know about #{thing}.")
             return
@@ -78,9 +78,9 @@ module Axial
           channel.message("#{nick.name}: ok, I've forgotten about #{thing}.")
         rescue StandardError => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          log "#{self.class} error: #{ex.class}: #{ex.message}"
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
-            log i
+            LOGGER.error(i)
           end
         end
       end
@@ -96,16 +96,16 @@ module Axial
           channel.message("#{nick.name}: I don't know about #{thing}.")
           return
         end
-        log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}"
+        LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.nick.pretty_nick} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
 
@@ -124,12 +124,12 @@ module Axial
         end
         if (!thing_model.nil?) # if we found something, tell the channel
           channel.message("#{Colors.gray}[#{Colors.reset}#{thing_subject_string}#{Colors.gray}]#{Colors.reset} #{thing_model.explanation}")
-          log "thing (autojoin) expained #{thing_subject_string} = #{thing_model.explanation} to #{channel.name}."
+          LOGGER.debug("thing (autojoin) expained #{thing_subject_string} = #{thing_model.explanation} to #{channel.name}.")
         end
       rescue StandardError => ex
-        log "#{self.class} error on join of #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error on join of #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
     end

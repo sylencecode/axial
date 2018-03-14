@@ -3,7 +3,7 @@
 $:.unshift(File.expand_path(File.join('..', 'lib')))
 require 'api/wikipedia/w.rb'
 
-RestClient.log = 'stdout'
+
 
 article = Axial::API::Wikipedia::W.search(ARGV[0])
 

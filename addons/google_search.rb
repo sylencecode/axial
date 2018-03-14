@@ -24,7 +24,7 @@ module Axial
           channel.message("#{nick.name}: please provide a search term.")
           return
         end
-        log "google request from #{nick.uhost}: #{query}"
+        LOGGER.debug("google request from #{nick.uhost}: #{query}")
 
         if (query.length > 79)
           query = query[0..79]
@@ -43,9 +43,9 @@ module Axial
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
 
@@ -55,7 +55,7 @@ module Axial
           channel.message("#{nick.name}: please provide a search term.")
           return
         end
-        log "gis request from #{nick.uhost}: #{query}"
+        LOGGER.debug("google image search request from #{nick.uhost}: #{query}")
 
         if (query.length > 79)
           query = query[0..79]
@@ -64,7 +64,7 @@ module Axial
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
           link = URIUtils.shorten(result.link)
-          msg  = "#{Colors.gray}[#{Colors.red}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+          msg  = "#{Colors.gray}[#{Colors.green}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.title
           msg += " #{Colors.gray}|#{Colors.reset} "
           msg += link.to_s
@@ -74,9 +74,9 @@ module Axial
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
-          log i
+          LOGGER.error(i)
         end
       end
     end

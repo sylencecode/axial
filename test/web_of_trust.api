@@ -2,7 +2,6 @@
 
 require_relative '../lib/web_of_trust/api/public_link_json2.rb'
 
-RestClient.log = 'stdout'
 filter = WebOfTrust::API::PublicLinkJSON2.new
 foo = filter.get_rating(ARGV[0])
 puts "domain: #{foo.domain}"

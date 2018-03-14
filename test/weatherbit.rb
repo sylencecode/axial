@@ -2,7 +2,7 @@
 
 require_relative '../lib/weatherbit/api/v20/current.rb'
 
-RestClient.log = 'stdout'
+
 
 search = WeatherBit::API::V20::Current.new
 conditions = search.get_current_conditions(ARGV[0])
