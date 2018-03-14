@@ -99,7 +99,11 @@ module Axial
                     result.snippet = item['snippet']
                   end
                   if (item.has_key?('title'))
-                    result.title = item['title']
+                    title = item['title']
+                    if (title.length > 127)
+                      title = title[0..127]
+                    end
+                    result.title = title
                   end
                   if (item.has_key?('link'))
                     result.link = item['link']

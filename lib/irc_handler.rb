@@ -91,7 +91,8 @@ module Axial
         { file: 'addons/user_management.rb',   class: 'Axial::Addons::UserManagement' },
         { file: 'addons/weather.rb',           class: 'Axial::Addons::Weather' },
         { file: 'addons/who_from.rb',          class: 'Axial::Addons::WhoFrom' },
-        { file: 'addons/wikipedia.rb',         class: 'Axial::Addons::Wikipedia' }
+        { file: 'addons/wikipedia.rb',         class: 'Axial::Addons::Wikipedia' },
+        { file: 'addons/you_tube_sniffer.rb',  class: 'Axial::Addons::YouTubeSniffer' }
       ]
       @binds = []
       @channels = {}
@@ -148,8 +149,8 @@ module Axial
               handle_server_error(Regexp.last_match[1])
               next
             elsif (raw_server_msg =~ /^:(\S+) JOIN :{0,1}(\S+)/)
-              nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
-              channel = ::Axial::Channel.new(self, Regexp.last_match[2])
+              nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
+              channel = Axial::Channel.new(self, Regexp.last_match[2])
               if (nick.name.casecmp(@bot_nick).zero?)
                 handle_self_join(channel)
               else
@@ -158,8 +159,8 @@ module Axial
               end
               next
             elsif (raw_server_msg =~ /^:(\S+) PART (\S+)(.*)/)
-              nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
-              channel = ::Axial::Channel.new(self, Regexp.last_match[2])
+              nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
+              channel = Axial::Channel.new(self, Regexp.last_match[2])
               reason = Regexp.last_match[3].strip
               if (reason =~ /^:(.*)/)
                 reason = Regexp.last_match[1].strip
@@ -178,7 +179,7 @@ module Axial
               end
               next
             elsif (raw_server_msg =~ /^:(\S+) QUIT(.*)/)
-              nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
+              nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
               reason = Regexp.last_match[2].strip
               if (reason =~ /^:(.*)/)
                 reason = Regexp.last_match[1].strip
@@ -203,14 +204,14 @@ module Axial
               handle_server_notice(Regexp.last_match[1])
               next
             elsif (raw_server_msg =~ /^:(\S+) PRIVMSG (\S+) :(.*)/)
-              nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
+              nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
               dest = Regexp.last_match[2]
               msg = Regexp.last_match[3]
               if (dest.start_with?("#"))
                 if (@channels.has_key?(dest))
                   channel = @channels[dest]
                 else
-                  channel = ::Axial::Channel.new(self, dest)
+                  channel = Axial::Channel.new(self, dest)
                   @channels[dest] = channel
                 end
                 handle_channel_message(channel, nick, msg)
@@ -228,12 +229,12 @@ module Axial
                 next
               end
 
-              nick = ::Axial::Nick.from_uhost(self, uhost)
+              nick = Axial::Nick.from_uhost(self, uhost)
               if (dest.start_with?("#"))
                 if (@channels.has_key?(dest))
                   channel = @channels[dest]
                 else
-                  channel = ::Axial::Channel.new(self, dest)
+                  channel = Axial::Channel.new(self, dest)
                   @channels[dest] = channel
                 end
                 handle_channel_notice(channel, nick, msg)

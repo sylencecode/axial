@@ -65,7 +65,7 @@ module Axial
                   end
 
                   msg += " #{$irc_gray}|#{$irc_reset} "
-                  msg += link
+                  msg += link.to_s
                   @irc.send_channel(channel_name, msg)
                   ingested = ingested + 1
                 end
@@ -142,7 +142,7 @@ module Axial
             msg += " #{$irc_gray}|#{$irc_reset} "
             msg += "#{feed.ingest_count} ingested"
             msg += " #{$irc_gray}|#{$irc_reset} "
-            last = TimeSpan.new(Time.now, feed.last_ingest)
+            last = Axial::TimeSpan.new(Time.now, feed.last_ingest)
             msg += "last: #{last.short_to_s} ago"
             msg += " #{$irc_gray}|#{$irc_reset} "
             if (feed.enabled)

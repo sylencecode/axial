@@ -32,16 +32,11 @@ module Axial
 
         result = API::Google::CustomSearch::V1.search(query)
         if (!result.link.empty?)
-          short_url = URIUtils.shorten(result.link)
-          if (short_url.nil?)
-            link = result.link
-          else
-            link = short_url.to_s
-          end
+          link = URIUtils.shorten(result.link)
           msg  = "#{$irc_gray}[#{$irc_green}google#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkgreen}#{nick.name}#{$irc_gray}]#{$irc_reset} "
           msg += result.irc_snippet
           msg += " #{$irc_gray}|#{$irc_reset} "
-          msg += link
+          msg += link.to_s
           channel.message(msg)
         else
           channel.message("#{nick.name}: No search results.")
@@ -68,16 +63,11 @@ module Axial
 
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
-          short_url = URIUtils.shorten(result.link)
-          if (short_url.nil?)
-            link = result.link
-          else
-            link = short_url.to_s
-          end
-          msg  = "#{$irc_gray}[#{$irc_green}gis#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkgreen}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+          link = URIUtils.shorten(result.link)
+          msg  = "#{$irc_gray}[#{$irc_red}image search#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
           msg += result.title
           msg += " #{$irc_gray}|#{$irc_reset} "
-          msg += link
+          msg += link.to_s
           channel.message(msg)
         else
           channel.message("#{nick.name}: No image search results.")

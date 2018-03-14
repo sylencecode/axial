@@ -37,7 +37,7 @@ module Axial
 
       def self.get_if_valid(nick)
         nick_model = self[nick: nick.name.downcase]
-        if (!nick.kind_of?(::Axial::Nick))
+        if (!nick.kind_of?(Axial::Nick))
           raise(NickObjectError, "Attempted to query a nick record for an object type other than Axial::Nick.")
         end
 
@@ -50,7 +50,7 @@ module Axial
       def match_mask?(in_mask)
         match = false
         masks.each do |mask|
-          re_mask = MaskUtils.get_mask_regexp(mask.mask)
+          re_mask = Axial::MaskUtils.get_mask_regexp(mask.mask)
           if (re_mask.match(in_mask))
             match = true
             break
@@ -60,7 +60,7 @@ module Axial
       end
 
       def self.create_from_nickname_mask(nickname, mask)
-        mask = MaskUtils.ensure_wildcard(mask)
+        mask = Axial::MaskUtils.ensure_wildcard(mask)
         nick_model = Nick.create(nick: nickname.downcase, pretty_nick: nickname)
         nick_model.seen = Seen.create(nick_id: nick_model.id, status: 'for the first time', last: Time.now)
         mask_model = Models::Mask.create(mask: mask, nick_id: nick_model.id)
@@ -71,7 +71,7 @@ module Axial
       end
 
       def self.create_from_nick_object(nick)
-        if (!nick.kind_of?(::Axial::Nick))
+        if (!nick.kind_of?(Axial::Nick))
           raise(NickObjectError, "Attempted to create a nick record for an object type other than Axial::Nick.")
         end
 

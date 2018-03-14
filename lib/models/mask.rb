@@ -24,10 +24,10 @@ module Axial
       
       def self.get_masks_that_match(in_mask)
         matches = []
-        user_mask = MaskUtils.ensure_wildcard(in_mask)
-        in_regexp = MaskUtils.get_mask_regexp(user_mask)
+        user_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
+        in_regexp = Axial::MaskUtils.get_mask_regexp(user_mask)
         self.all.each do |mask|
-          match_regexp = MaskUtils.get_mask_regexp(mask.mask)
+          match_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
           # need to check masks both ways to ensure no duplicates
           if (match_regexp.match(user_mask))
             matches.push(mask)
@@ -40,10 +40,10 @@ module Axial
 
       def self.get_nicks_from_mask(in_mask)
         possible_nicks = []
-        in_mask = MaskUtils.ensure_wildcard(in_mask)
-        in_regexp = MaskUtils.get_mask_regexp(in_mask)
+        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
+        in_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
         Mask.all.each do |mask|
-          match_regexp = MaskUtils.get_mask_regexp(mask.mask)
+          match_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
           if (match_regexp.match(in_mask))
             possible_nicks.push(mask.nick)
           elsif (in_regexp.match(mask.mask))
@@ -54,7 +54,7 @@ module Axial
       end
 
       def self.get_nick_from_mask(in_mask)
-        in_mask = MaskUtils.ensure_wildcard(in_mask)
+        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
         possible_nicks = get_nicks_from_mask(in_mask)
         if (possible_nicks.count > 1)
           raise(DuplicateNickError, "mask #{in_mask} returns more than one user: #{possible_nicks.collect{|nick| nick.pretty_nick}.join(', ')}")
@@ -63,7 +63,7 @@ module Axial
       end
     
       def self.create_or_find(uhost)
-        mask = MaskUtils.gen_wildcard_mask(uhost)
+        mask = Axial::MaskUtils.gen_wildcard_mask(uhost)
         db_mask = self[mask: mask]
         if (db_mask.nil?)
           db_mask = self.create(mask: mask)

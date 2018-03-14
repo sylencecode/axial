@@ -69,22 +69,33 @@ module Axial
 
         @binds.select{|bind| bind[:type] == :channel}.each do |bind|
           begin
-            match = '^(' + Regexp.escape(bind[:command]) + ')'
-            base_match = match + '$'
-            args_match = match + '\s+(.*)'
-            args_regexp = Regexp.new(args_match, true)
-            base_regexp = Regexp.new(base_match, true)
-            # crummy way to avoid building objects for every message 
-            if (msg =~ args_regexp)
-              command = Regexp.last_match[1]
-              args = Regexp.last_match[2]
-              command_object = ::Axial::Command.new(command, args)
-              bind[:object].send(bind[:method], channel, nick, command_object)
-            elsif (msg =~ base_regexp)
-              command = Regexp.last_match[1]
-              args = ""
-              command_object = ::Axial::Command.new(command, args)
-              bind[:object].send(bind[:method], channel, nick, command_object)
+            if (bind[:command].is_a?(Regexp))
+              if (msg =~ bind[:command])
+                bind[:object].public_send(bind[:method], channel, nick, msg)
+                break
+              end
+            elsif (bind[:command].is_a?(String))
+              match = '^(' + Regexp.escape(bind[:command]) + ')'
+              base_match = match + '$'
+              args_match = match + '\s+(.*)'
+              # this is done to ensure that a command is typed in its entirety, even if it had no arguments
+              args_regexp = Regexp.new(args_match, true)
+              base_regexp = Regexp.new(base_match, true)
+              if (msg =~ args_regexp)
+                command = Regexp.last_match[1]
+                args = Regexp.last_match[2]
+                command_object = Axial::Command.new(command, args)
+                bind[:object].public_send(bind[:method], channel, nick, command_object)
+                break
+              elsif (msg =~ base_regexp)
+                command = Regexp.last_match[1]
+                args = ""
+                command_object = Axial::Command.new(command, args)
+                bind[:object].public_send(bind[:method], channel, nick, command_object)
+                break
+              end
+            else
+              log "#{self.class}: unsure how to handle bind #{bind.inspect}, it isn't a string or regexp."
             end
           rescue Exception => ex
             log "#{self.class} error: #{ex.class}: #{ex.message}"

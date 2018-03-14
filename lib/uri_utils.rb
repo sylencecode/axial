@@ -58,19 +58,23 @@ module Axial
         end
       end
 
-      begin
-        long_url = URI.parse(stripped_url)
-        short_url = API::Google::URLShortener::V1.shorten(long_url)
-        if (short_url.nil?)
-          short_url = API::TinyURL.shorten(long_url)
-        end
-        if (short_url.nil?)
-          return long_url
-        end
-        return short_url
-      rescue Exception => ex
-        puts ex.inspect
+      if (skip)
         return stripped_url
+      else
+        begin
+          long_url = URI.parse(stripped_url)
+          short_url = API::Google::URLShortener::V1.shorten(long_url)
+          if (short_url.nil?)
+            short_url = API::TinyURL.shorten(long_url)
+          end
+          if (short_url.nil?)
+            return long_url
+          end
+          return short_url
+        rescue Exception => ex
+          puts ex.inspect
+          return stripped_url
+        end
       end
     end
 

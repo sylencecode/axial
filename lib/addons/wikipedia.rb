@@ -29,16 +29,11 @@ module Axial
           end
           article = API::Wikipedia::W.search(query)
           if (article.found)
-            short_url = URIUtils.shorten(article.url)
-            if (short_url.nil?)
-              link = article.url
-            else
-              link = short_url.to_s
-            end
+            link = URIUtils.shorten(article.url)
             msg =  "#{$irc_gray}[#{$irc_red}wikipedia#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
             msg += article.irc_extract
             msg += " #{$irc_gray}|#{$irc_reset} "
-            msg += link
+            msg += link.to_s
             channel.message(msg)
           else
             channel.message("#{nick.name}: no results, or the wikipedia API sucks. try ?g instead to perform a google search.")

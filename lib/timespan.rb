@@ -1,27 +1,36 @@
 module Axial
   class TimeSpan
-    attr_accessor :total_seconds, :days, :hours, :minutes, :seconds, :now, :then
-  
+    attr_accessor :days, :hours, :minutes, :seconds
+    
+    def self.empty()
+      timespan = self.new(Time.now, Time.now)
+      timespan.days = 0
+      timespan.hours = 0
+      timespan.minutes = 0
+      timespan.seconds = 0
+      return timespan
+    end
+
     def initialize(_time1, _time2)
       if (_time1 > _time2)
-        @now = _time1
-        @then = _time2
+        now = _time1
+        later = _time2
       else
-        @now = _time2
-        @then = _time1
+        now = _time2
+        later = _time1
       end
-      @total_seconds = (@now - @then).to_i
+      total_seconds = (now - later).to_i
       minute = 60
       hour = minute * 60
       day = 24 * hour
   
       remaining = 0
-      @days = @total_seconds / day
-      remaining = @total_seconds % day
+      @days = total_seconds / day
+      remaining = total_seconds % day
       @hours = remaining / hour
-      remaining = @total_seconds % hour
+      remaining = total_seconds % hour
       @minutes = remaining / minute
-      remaining = @total_seconds % minute
+      remaining = total_seconds % minute
       @seconds = remaining
     end
   

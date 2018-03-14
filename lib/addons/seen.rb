@@ -28,7 +28,7 @@ module Axial
           channel.message("#{nick.name}: I don't recall seeing #{who}.")
           return
         end
-        seen_at = TimeSpan.new(user_model.seen.last, Time.now)
+        seen_at = Axial::TimeSpan.new(user_model.seen.last, Time.now)
         log "reported seeing #{user_model.pretty_nick} to #{nick.uhost}"
         msg = "#{nick.name}: #{who} was last seen #{user_model.seen.status} #{seen_at.approximate_to_s} ago."
         channel.message(msg)
@@ -41,7 +41,7 @@ module Axial
       end
         
       def update_seen_join(channel, nick)
-        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_nick_from_mask(nick.uhost)
         if (!user.nil?)
           user.seen.update(last: Time.now, status: "joining #{channel.name}")
           log "updated seen for #{user.pretty_nick} (joining #{channel.name})"
@@ -55,7 +55,7 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
-        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_nick_from_mask(nick.uhost)
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "leaving #{channel.name}")
@@ -74,7 +74,7 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_nick_from_mask(nick.uhost)
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "quitting IRC")
