@@ -5,6 +5,7 @@ $stderr.sync = true
 require 'timeout'
 require 'socket'
 
+require 'colors.rb'
 require 'channel.rb'
 require 'command.rb'
 require 'constants.rb'

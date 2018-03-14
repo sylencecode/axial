@@ -54,8 +54,8 @@ module Axial
           translation = translation[0..319]
         end
 
-        msg  = "#{$irc_gray}[#{$irc_green}#{source_language} -> #{target_language}"
-        msg += "#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkgreen}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+        msg  = "#{Colors.gray}[#{Colors.green}#{source_language} -> #{target_language}"
+        msg += "#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += translation
         channel.message(msg)
       rescue Exception => ex

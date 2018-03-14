@@ -1,19 +1,5 @@
 require 'uri'
 
-$irc_gray = "\x0314"
-$irc_reset = "\x03"
-$irc_blue = "\x0312"
-$irc_darkblue = "\x032"
-$irc_darkcyan = "\x0310"
-$irc_cyan = "\x0311"
-$irc_red = "\x034"
-$irc_darkred = "\x035"
-$irc_yellow = "\x038"
-$irc_green = "\x039"
-$irc_darkgreen = "\x033"
-$irc_magenta = "\x0313"
-$irc_darkmagenta = "\x036"
-
 module Axial
   module Handlers
     module MessageHandler

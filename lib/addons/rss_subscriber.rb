@@ -52,11 +52,11 @@ module Axial
 
                   link = URIUtils.shorten(article_url)
 
-                  msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed.pretty_name}#{$irc_gray}]#{$irc_reset} "
+                  msg =  "#{Colors.gray}[#{Colors.cyan}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
                   msg += title
 
                   if (!summary.empty?)
-                    msg += " #{$irc_gray}|#{$irc_reset} "
+                    msg += " #{Colors.gray}|#{Colors.reset} "
                     if (summary.length > 299)
                       msg += summary[0..296] + "..."
                     else
@@ -64,7 +64,7 @@ module Axial
                     end
                   end
 
-                  msg += " #{$irc_gray}|#{$irc_reset} "
+                  msg += " #{Colors.gray}|#{Colors.reset} "
                   msg += link.to_s
                   @irc.send_channel(channel_name, msg)
                   ingested = ingested + 1
@@ -133,24 +133,24 @@ module Axial
           log "RSS: #{nick.uhost} listed feeds"
           channel.message("rss feeds:")
           feeds.each do |feed|
-            msg  = "#{$irc_gray}[#{$irc_reset} "
+            msg  = "#{Colors.gray}[#{Colors.reset} "
             msg += feed.pretty_name
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += feed.pretty_url
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "added on #{feed.added.strftime("%m/%d/%Y")} by #{feed.nick.pretty_nick}"
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "#{feed.ingest_count} ingested"
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             last = Axial::TimeSpan.new(Time.now, feed.last_ingest)
             msg += "last: #{last.short_to_s} ago"
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             if (feed.enabled)
               msg += "enabled"
             else
               msg += "disabled"
             end
-            msg += " #{$irc_gray}]#{$irc_reset}"
+            msg += " #{Colors.gray}]#{Colors.reset}"
             channel.message(msg)
           end
         else

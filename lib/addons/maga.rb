@@ -20,7 +20,7 @@ module Axial
       def send_maga(channel, nick, command)
         begin
           log "MAGA request from #{nick.uhost}"
-          msg  = "#{$irc_gray}[#{$irc_red}MAGA!#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+          msg  = "#{Colors.gray}[#{Colors.red}MAGA!#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += @markov.generate_4_sentences
           channel.message(msg)
         rescue Exception => ex

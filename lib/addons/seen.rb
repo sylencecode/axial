@@ -80,7 +80,7 @@ module Axial
             user.seen.update(last: Time.now, status: "quitting IRC")
             log "updated seen for #{user.pretty_nick} (quitting IRC)"
           else
-            user.seen.update(last: Time.now, status: "quitting IRC #{reason})")
+            user.seen.update(last: Time.now, status: "quitting IRC (#{reason})")
             log "updated seen for #{user.pretty_nick} (quitting IRC, reason: #{reason})"
           end
         end

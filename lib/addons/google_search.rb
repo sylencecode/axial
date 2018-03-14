@@ -33,9 +33,9 @@ module Axial
         result = API::Google::CustomSearch::V1.search(query)
         if (!result.link.empty?)
           link = URIUtils.shorten(result.link)
-          msg  = "#{$irc_gray}[#{$irc_green}google#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkgreen}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+          msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.irc_snippet
-          msg += " #{$irc_gray}|#{$irc_reset} "
+          msg += " #{Colors.gray}|#{Colors.reset} "
           msg += link.to_s
           channel.message(msg)
         else
@@ -64,9 +64,9 @@ module Axial
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
           link = URIUtils.shorten(result.link)
-          msg  = "#{$irc_gray}[#{$irc_red}image search#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+          msg  = "#{Colors.gray}[#{Colors.red}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.title
-          msg += " #{$irc_gray}|#{$irc_reset} "
+          msg += " #{Colors.gray}|#{Colors.reset} "
           msg += link.to_s
           channel.message(msg)
         else

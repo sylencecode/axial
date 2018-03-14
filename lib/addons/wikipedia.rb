@@ -30,9 +30,9 @@ module Axial
           article = API::Wikipedia::W.search(query)
           if (article.found)
             link = URIUtils.shorten(article.url)
-            msg =  "#{$irc_gray}[#{$irc_red}wikipedia#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkred}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+            msg =  "#{Colors.gray}[#{Colors.red}wikipedia#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
             msg += article.irc_extract
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += link.to_s
             channel.message(msg)
           else

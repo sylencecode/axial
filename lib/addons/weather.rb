@@ -18,13 +18,13 @@ module Axial
       
       def weather_color(temp)
         if (temp >= 90)
-          temp_color = $irc_red
+          temp_color = Colors.red
         elsif (temp >= 70)
-          temp_color = $irc_yellow
+          temp_color = Colors.yellow
         elsif (temp <= 40)
-          temp_color = $irc_blue
+          temp_color = Colors.blue
         elsif (temp <= 60)
-          temp_color = $irc_cyan
+          temp_color = Colors.cyan
         end
         return temp_color
       end
@@ -46,17 +46,17 @@ module Axial
           if (geonames_location.found)
             conditions = API::WUnderground::Q.get_current_conditions(geonames_location.to_wunderground)
             if (conditions.found)
-              msg  = "#{$irc_gray}[#{$irc_cyan}weather#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{conditions.location}#{$irc_gray}]#{$irc_reset} "
+              msg  = "#{Colors.gray}[#{Colors.cyan}weather#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{conditions.location}#{Colors.gray}]#{Colors.reset} "
               msg += "#{conditions.weather.downcase}"
-              msg += " #{$irc_gray}|#{$irc_reset}"
-              msg += "#{weather_color(conditions.temp_f)} #{conditions.temp_f}f#{$irc_reset}"
-              msg += " #{$irc_gray}|#{$irc_reset} "
-              msg += "feels like:#{weather_color(conditions.feels_like_f)} #{conditions.feels_like_f}f#{$irc_reset}"
-              msg += " #{$irc_gray}|#{$irc_reset} "
+              msg += " #{Colors.gray}|#{Colors.reset}"
+              msg += "#{weather_color(conditions.temp_f)} #{conditions.temp_f}f#{Colors.reset}"
+              msg += " #{Colors.gray}|#{Colors.reset} "
+              msg += "feels like:#{weather_color(conditions.feels_like_f)} #{conditions.feels_like_f}f#{Colors.reset}"
+              msg += " #{Colors.gray}|#{Colors.reset} "
               msg += "humidity: #{conditions.relative_humidity}%"
-              msg += " #{$irc_gray}|#{$irc_reset} "
+              msg += " #{Colors.gray}|#{Colors.reset} "
               msg += "visibility: #{conditions.visibility_mi}mi"
-              msg += " #{$irc_gray}|#{$irc_reset} "
+              msg += " #{Colors.gray}|#{Colors.reset} "
               if (conditions.wind_mph > 0)
                 msg += "winds: #{conditions.wind_mph}mph from #{conditions.wind_dir.downcase}"
                 if (conditions.wind_gust_mph > 0)

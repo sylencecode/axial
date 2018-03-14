@@ -45,15 +45,15 @@ module Axial
           video = API::YouTube::V3.get_video(youtube_id)
           if (video.found)
             link = URIUtils.shorten(video_url)
-            msg  = "#{$irc_gray}[#{$irc_blue}youtube#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkblue}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+            msg  = "#{Colors.gray}[#{Colors.blue}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
             msg += video.title
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += video.duration.short_to_s
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} views"
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += video.irc_description
-            msg += " #{$irc_gray}|#{$irc_reset} "
+            msg += " #{Colors.gray}|#{Colors.reset} "
             msg += link.to_s
             channel.message(msg)
           else

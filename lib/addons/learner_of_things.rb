@@ -98,7 +98,7 @@ module Axial
         end
         log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}"
         learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
-        msg  = "#{$irc_gray}[#{$irc_blue}thing#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkblue}#{nick.name}#{$irc_gray}]#{$irc_reset} "
+        msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.nick.pretty_nick} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
@@ -123,7 +123,7 @@ module Axial
           end
         end
         if (!thing_model.nil?) # if we found something, tell the channel
-          channel.message("#{$irc_gray}[#{$irc_reset}#{thing_subject_string}#{$irc_gray}]#{$irc_reset} #{thing_model.explanation}")
+          channel.message("#{Colors.gray}[#{Colors.reset}#{thing_subject_string}#{Colors.gray}]#{Colors.reset} #{thing_model.explanation}")
           log "thing (autojoin) expained #{thing_subject_string} = #{thing_model.explanation} to #{channel.name}."
         end
       rescue StandardError => ex
