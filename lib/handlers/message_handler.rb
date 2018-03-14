@@ -68,22 +68,29 @@ module Axial
         end
 
         @binds.select{|bind| bind[:type] == :channel}.each do |bind|
-          match = '^(' + Regexp.escape(bind[:command]) + ')'
-          base_match = match + '$'
-          args_match = match + '\s+(.*)'
-          args_regexp = Regexp.new(args_match, true)
-          base_regexp = Regexp.new(base_match, true)
-          # crummy way to avoid building objects for every message 
-          if (msg =~ args_regexp)
-            command = Regexp.last_match[1]
-            args = Regexp.last_match[2]
-            command_object = ::Axial::Command.new(command, args)
-            bind[:object].send(bind[:method], channel, nick, command_object)
-          elsif (msg =~ base_regexp)
-            command = Regexp.last_match[1]
-            args = ""
-            command_object = ::Axial::Command.new(command, args)
-            bind[:object].send(bind[:method], channel, nick, command_object)
+          begin
+            match = '^(' + Regexp.escape(bind[:command]) + ')'
+            base_match = match + '$'
+            args_match = match + '\s+(.*)'
+            args_regexp = Regexp.new(args_match, true)
+            base_regexp = Regexp.new(base_match, true)
+            # crummy way to avoid building objects for every message 
+            if (msg =~ args_regexp)
+              command = Regexp.last_match[1]
+              args = Regexp.last_match[2]
+              command_object = ::Axial::Command.new(command, args)
+              bind[:object].send(bind[:method], channel, nick, command_object)
+            elsif (msg =~ base_regexp)
+              command = Regexp.last_match[1]
+              args = ""
+              command_object = ::Axial::Command.new(command, args)
+              bind[:object].send(bind[:method], channel, nick, command_object)
+            end
+          rescue Exception => ex
+            log "#{self.class} error: #{ex.class}: #{ex.message}"
+            ex.backtrace.each do |i|
+              log i
+            end
           end
         end
 
