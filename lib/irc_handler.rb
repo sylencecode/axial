@@ -23,7 +23,7 @@ require 'models/nick.rb'
 require 'models/mask.rb'
 require 'models/seen.rb'
 
-class AccessDenied < Exception
+class AccessDenied < StandardError
 end
 
 module Axial
@@ -38,6 +38,16 @@ module Axial
       @author = "unknown author"
       @version = "unknown version"
       @irc = nil
+    end
+
+    def on_part(method)
+      log "Channel part will invoke method '#{self.class}.#{method}'"
+      @listeners.push(type: :part, method: method)
+    end
+
+    def on_quit(method)
+      log "IRC quit will invoke method '#{self.class}.#{method}'"
+      @listeners.push(type: :quit, method: method)
     end
 
     def on_channel(command, method)
@@ -72,18 +82,18 @@ module Axial
       @ssl = ssl
       @addons = []
       @addon_list = [
-        { file: 'addons/auto_op.rb', class: 'Axial::Addons::AutoOp' },
-        { file: 'addons/google_search.rb', class: 'Axial::Addons::GoogleSearch' },
+        { file: 'addons/auto_op.rb',           class: 'Axial::Addons::AutoOp' },
+        { file: 'addons/google_search.rb',     class: 'Axial::Addons::GoogleSearch' },
         { file: 'addons/learner_of_things.rb', class: 'Axial::Addons::LearnerOfThings' },
-        { file: 'addons/maga.rb', class: 'Axial::Addons::MakeAmericaGreatAgain' },
-        { file: 'addons/rss_subscriber.rb', class: 'Axial::Addons::RSSSubscriber' },
-        { file: 'addons/user_management.rb', class: 'Axial::Addons::UserManagement' },
-        { file: 'addons/weather.rb', class: 'Axial::Addons::Weather' },
-        { file: 'addons/who_from.rb', class: 'Axial::Addons::WhoFrom' },
-        { file: 'addons/wikipedia.rb', class: 'Axial::Addons::Wikipedia' }
+        { file: 'addons/maga.rb',              class: 'Axial::Addons::MakeAmericaGreatAgain' },
+        { file: 'addons/rss_subscriber.rb',    class: 'Axial::Addons::RSSSubscriber' },
+        { file: 'addons/seen.rb',              class: 'Axial::Addons::Seen' },
+        { file: 'addons/user_management.rb',   class: 'Axial::Addons::UserManagement' },
+        { file: 'addons/weather.rb',           class: 'Axial::Addons::Weather' },
+        { file: 'addons/who_from.rb',          class: 'Axial::Addons::WhoFrom' },
+        { file: 'addons/wikipedia.rb',         class: 'Axial::Addons::Wikipedia' }
       ]
-      @channel_binds = []
-      @join_binds = []
+      @binds = []
       @channels = {}
     end
 
@@ -101,11 +111,7 @@ module Axial
         addon_object.irc = self
         @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
         addon_object.listeners.each do |listener|
-          if (listener[:type] == :channel)
-            @channel_binds.push(object: addon_object, command: listener[:command], method: listener[:method].to_sym)
-          elsif (listener[:type] == :join)
-            @join_binds.push(object: addon_object, method: listener[:method].to_sym)
-          end
+          @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
         end
       end
     end
@@ -151,10 +157,47 @@ module Axial
                 handle_join(channel, nick)
               end
               next
-            elsif (raw_server_msg =~ /^:(\S+) QUIT :(.*)/)
+            elsif (raw_server_msg =~ /^:(\S+) PART (\S+)(.*)/)
               nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
-              reason = Regexp.last_match[2]
-              handle_quit(nick, reason)
+              channel = ::Axial::Channel.new(self, Regexp.last_match[2])
+              reason = Regexp.last_match[3].strip
+              if (reason =~ /^:(.*)/)
+                reason = Regexp.last_match[1].strip
+              end
+
+              if (nick.name.casecmp(@bot_nick).zero?)
+                handle_self_part(channel)
+              else
+                if (reason.empty?)
+                  log "#{nick.uhost} left #{channel.name}"
+                  handle_part(channel, nick, reason)
+                else
+                  log "#{nick.uhost} left #{channel.name} (#{reason})"
+                  handle_part(channel, nick, reason)
+                end
+              end
+              next
+            elsif (raw_server_msg =~ /^:(\S+) QUIT(.*)/)
+              nick = ::Axial::Nick.from_uhost(self, Regexp.last_match[1])
+              reason = Regexp.last_match[2].strip
+              if (reason =~ /^:(.*)/)
+                reason = Regexp.last_match[1].strip
+              end
+
+              if (nick.name.casecmp(@bot_nick).zero?)
+                # this is not how a client is told they're quitting...
+                # [   unhandled    ] Closing Link: axial[localhost] (Quit: axial)
+                # [       log      ] lost connection to server - EOFError: end of file reached
+                handle_self_quit(reason)
+              else
+                if (reason.empty?)
+                  log "#{nick.uhost} quit IRC"
+                  handle_quit(nick, reason)
+                else
+                  log "#{nick.uhost} quit IRC (#{reason})"
+                  handle_quit(nick, reason)
+                end
+              end
               next
             elsif (raw_server_msg =~ /^NOTICE \S+ :(.*)/)
               handle_server_notice(Regexp.last_match[1])

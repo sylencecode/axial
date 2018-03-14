@@ -15,9 +15,7 @@ module Axial
 
       def auto_op(channel, nick)
         begin
-          # need to make a sloppy get masks and return a nick thing...
-          user_mask = MaskUtils.ensure_wildcard(nick.uhost)
-          user = Axial::Models::Mask.get_nick_from_mask(user_mask)
+          user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
           if (!user.nil?)
             channel.op(nick)
             log "auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_nick})"

@@ -32,12 +32,43 @@ module Axial
         end
       end
 
+      def handle_self_part(channel)
+        log "I left #{channel.name}"
+        @binds.select{|bind| bind[:type] == :self_part}.each do |bind|
+          bind[:object].send(bind[:method], channel)
+        end
+      end
+
+      def handle_part(channel, nick, reason)
+        @binds.select{|bind| bind[:type] == :part}.each do |bind|
+          bind[:object].send(bind[:method], channel, nick, reason)
+        end
+      end
+
+      def handle_quit(nick, reason)
+        @binds.select{|bind| bind[:type] == :quit}.each do |bind|
+          bind[:object].send(bind[:method], nick, reason)
+        end
+        log_quit(nick.name, reason)
+      end
+
+      def handle_self_quit(reason)
+        if (reason.empty?)
+          log "I quit IRC"
+        else
+          log "I quit IRC (#{reason})"
+        end
+      end
+
       def handle_self_join(channel)
         log "I joined #{channel.name}"
+        @binds.select{|bind| bind[:type] == :self_join}.each do |bind|
+          bind[:object].send(bind[:method], channel)
+        end
       end
 
       def handle_join(channel, nick)
-        @join_binds.each do |bind|
+        @binds.select{|bind| bind[:type] == :join}.each do |bind|
           bind[:object].send(bind[:method], channel, nick)
         end
       end

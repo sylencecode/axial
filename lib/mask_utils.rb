@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 module Axial
-  class MaskError < Exception
+  class MaskError < StandardError
   end
 
   class MaskUtils 

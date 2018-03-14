@@ -12,7 +12,7 @@ DB_OPTIONS = {
 
 DB = Sequel.connect(DB_OPTIONS)
 
-class DatabaseError < Exception
+class DatabaseError < StandardError
 end
 
 # if (DB.adapter_scheme == :postgres)

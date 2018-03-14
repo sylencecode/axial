@@ -3,7 +3,7 @@
 require 'sequel'
 require 'models/nick.rb'
 
-class RSSError < Exception
+class ThingError < StandardError
 end
 
 module Axial

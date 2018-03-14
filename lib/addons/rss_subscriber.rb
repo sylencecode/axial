@@ -44,17 +44,13 @@ module Axial
                   if (published > Time.now) # some idiots post articles dated for a future time
                     next
                   end
+
                   title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
                   summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                   article_url = entry.url
                   feed.update(ingest_count: feed.ingest_count + 1)
 
-                  short_url = URIUtils.shorten(article_url)
-                  if (!short_url.empty?)
-                    link = short_url
-                  else
-                    link = article_url
-                  end
+                  link = URIUtils.shorten(article_url)
 
                   msg =  "#{$irc_gray}[#{$irc_cyan}news#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkcyan}#{feed.pretty_name}#{$irc_gray}]#{$irc_reset} "
                   msg += title

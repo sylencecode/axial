@@ -67,7 +67,7 @@ module Axial
           return
         end
 
-        @channel_binds.each do |bind|
+        @binds.select{|bind| bind[:type] == :channel}.each do |bind|
           match = '^(' + Regexp.escape(bind[:command]) + ')'
           base_match = match + '$'
           args_match = match + '\s+(.*)'
@@ -105,11 +105,7 @@ module Axial
   
       def handle_channel_notice(nick, channel, msg)
         log_channel_notice(nick.name, channel.name, msg)
-      end
- 
-      def handle_quit(nick, reason)
-        log_quit(nick.name, reason)
-      end
+      end 
     end
   end
 end

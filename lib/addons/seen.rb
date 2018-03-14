@@ -1,95 +1,96 @@
-require 'pg'
+#!/usr/bin/env ruby
 
-# holy shit i need to fix this
+module Axial
+  module Addons
+    class Seen < Axial::Addon
+      def initialize()
+        super
 
-module Seen
-  class SeenResult
-    attr_accessor :nick, :uhost, :status, :last
-    def initialize()
-      @last = nil
-      @nick = ""
-      @uhost = ""
-      @status = ""
-    end
-  
-    def to_irc()
-      seen_ago = ::TimeSpan.new(@last, Time.now)
-      return "#{@nick} (#{@uhost}) was last seen #{@status} #{seen_ago.approximate_to_s} ago."
-    end
-  end
+        @name    = 'last seen'
+        @author  = 'sylence <sylence@sylence.org>'
+        @version = '1.0.0'
 
-  class Search
-    @@seen_db = "axial"
-    @@seen_user = "axial"
-    @@seen_table = "seen"
-
-    def initialize()
-      @pg = nil
-    end
-
-    def connect()
-      @pg = PG::Connection.new( :dbname => @@seen_db, :user => @@seen_user )
-      @pg.prepare("get_seen", "SELECT id, nick, uhost, status, last from #{@@seen_table} WHERE LOWER(nick) = LOWER($1)")
-      @pg.prepare("add_seen", "INSERT INTO #{@@seen_table} (nick, uhost, status, last) VALUES ($1, $2, $3, 'now')")
-      @pg.prepare("update_seen", "UPDATE #{@@seen_table} SET (nick, uhost, status, last) = ($1, $2, $3, 'now') WHERE id = $4")
-    end
-    private :connect
-
-    def disconnect()
-      @pg.close
-    end
-    private :disconnect
-
-    def query_seen(nick)
-      connect
-      query = @pg.exec_prepared("get_seen", [ nick ] )
-      if (query.ntuples > 0)
-        result = query
-      else
-        result = nil
+        on_channel '?seen', :seen
+        on_join    :update_seen_join
+        on_part    :update_seen_part
+        on_quit    :update_seen_quit
+        #on_kick    :update_seen_kick
       end
-      disconnect
-      return result
-      private :query_seen
-    end
 
-    def search(nick)
-      query = query_seen(nick)
-      if (!query.nil?)
-        seen = SeenResult.new
-        seen.nick = query[0]['nick']
-        seen.uhost = query[0]['uhost']
-        seen.status = query[0]['status']
-        time_string = query[0]['last']
-        if (time_string =~ /(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)/)
-          # build a Time object out of the psql timestamp
-          year = $1
-          month = $2
-          day = $3
-          hour = $4
-          minute = $5
-          second = $6
-          seen.last = Time.new(year, month, day, hour, minute, second)
-        else
-          # bad timestamp, return nil
-          return nil
+      def seen(channel, nick, command)
+        who = command.args.strip
+        if (who.empty?)
+          channel.message("#{nick.name}: try ?seen <nick> instead of whatever you just did.")
+          return
         end
-        return seen
-      else
-        return nil
+        user_model = Models::Nick[nick: who.downcase]
+        if (user_model.nil?)
+          channel.message("#{nick.name}: I don't recall seeing #{who}.")
+          return
+        end
+        seen_at = TimeSpan.new(user_model.seen.last, Time.now)
+        log "reported seeing #{user_model.pretty_nick} to #{nick.uhost}"
+        msg = "#{nick.name}: #{who} was last seen #{user_model.seen.status} #{seen_at.approximate_to_s} ago."
+        channel.message(msg)
+      rescue StandardError => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        ex.backtrace.each do |i|
+          log i
+        end
       end
-    end
-  
-    def update_seen(nick, uhost, status)
-      connect
-      seen = query_seen(nick)
-      if (seen.nil?)
-        @pg.exec_prepared("add_seen", [ nick, uhost, status ])
-      else
-        id = query['id']
-        @pg.exec_prepared("update_seen", [ nick, uhost, status, id ])
+        
+      def update_seen_join(channel, nick)
+        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        if (!user.nil?)
+          user.seen.update(last: Time.now, status: "joining #{channel.name}")
+          log "updated seen for #{user.pretty_nick} (joining #{channel.name})"
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        ex.backtrace.each do |i|
+          log i
+        end
       end
-      disconnect
+
+      def update_seen_part(channel, nick, reason)
+        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        if (!user.nil?)
+          if (reason.empty?)
+            user.seen.update(last: Time.now, status: "leaving #{channel.name}")
+            log "updated seen for #{user.pretty_nick} (leaving #{channel.name})"
+          else
+            user.seen.update(last: Time.now, status: "leaving #{channel.name} (#{reason})")
+            log "updated seen for #{user.pretty_nick} (leaving #{channel.name}, reason: #{reason})"
+          end
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        ex.backtrace.each do |i|
+          log i
+        end
+      end
+
+      def update_seen_quit(nick, reason)
+        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
+        if (!user.nil?)
+          if (reason.empty?)
+            user.seen.update(last: Time.now, status: "quitting IRC")
+            log "updated seen for #{user.pretty_nick} (quitting IRC)"
+          else
+            user.seen.update(last: Time.now, status: "quitting IRC #{reason})")
+            log "updated seen for #{user.pretty_nick} (quitting IRC, reason: #{reason})"
+          end
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        log "#{self.class} error: #{ex.class}: #{ex.message}"
+        ex.backtrace.each do |i|
+          log i
+        end
+      end
     end
   end
 end

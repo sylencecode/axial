@@ -97,7 +97,7 @@ module Axial
           return
         end
         log "expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}"
-        learned_at = ::TimeSpan.new(thing_model.learned_at, Time.now)
+        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{$irc_gray}[#{$irc_blue}thing#{$irc_reset} #{$irc_gray}::#{$irc_reset} #{$irc_darkblue}#{nick.name}#{$irc_gray}]#{$irc_reset} "
         msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.nick.pretty_nick} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
@@ -110,8 +110,7 @@ module Axial
       end
 
       def explain_on_join(channel, nick)
-        user_mask = MaskUtils.ensure_wildcard(nick.uhost)
-        user = Axial::Models::Mask.get_nick_from_mask(user_mask)
+        user = Axial::Models::Mask.get_nick_from_mask(nick.uhost)
         if (!user.nil?)
           thing_model = Models::Thing[thing: user.nick.downcase]
           if (!thing_model.nil?)
