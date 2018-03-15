@@ -44,7 +44,7 @@ module Axial
           return
         end
 
-        Models::Thing.upsert(thing, explanation, nick_model)
+        Models::Thing.upsert(thing, explanation, user_model)
         LOGGER.info("learned: #{thing} = #{explanation} from #{nick.uhost}")
         channel.message("#{nick.name}: ok, I've learned about #{thing}.")
       rescue StandardError => ex
@@ -98,7 +98,7 @@ module Axial
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
+        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
