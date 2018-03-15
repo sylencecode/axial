@@ -1,0 +1,49 @@
+require 'rest-client'
+require 'uri'
+require 'json'
+
+$yandex_api_key = 'trnsl.1.1.20180314T084321Z.c3f04388a321a97b.b8f41a8ad142ad694845236e1af9e9e1eaad6fab'
+
+module Axial
+  module API
+    module Yandex
+      module V1_5
+        class TRJson
+          @yandex_rest_api   = 'https://translate.yandex.net/api/v1.5/tr.json/translate'
+
+          def self.translate(source_language, target_language, text)
+            rest_endpoint = URI.parse(@yandex_rest_api)
+
+            headers = {
+              accept: 'application/json'
+            }
+
+            params = {
+                lang: "#{source_language}-#{target_language}",
+                 key: $yandex_api_key
+            }
+
+            rest_endpoint.query  = URI.encode_www_form(params)
+
+            payload = "text=" + text
+
+            response = RestClient.post(rest_endpoint.to_s, payload, headers)
+            json = JSON.parse(response)
+
+            translation = nil
+            if (json.has_key?('text'))
+              text = json['text']
+              if (text.is_a?(Array) && text.count > 0)
+                translation = text.first
+              end
+            end
+            return translation
+          rescue RestClient::Exception => ex
+            puts "#{self.class} error: #{ex.class}: #{ex.message}"
+            return nil
+          end
+        end
+      end
+    end
+  end
+end

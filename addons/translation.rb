@@ -1,4 +1,4 @@
-require 'api/google/translate/v2.rb'
+require 'api/yandex/v1_5/tr_json.rb'
 
 module Axial
   module Addons
@@ -6,7 +6,7 @@ module Axial
       def initialize()
         super
 
-        @name    = 'translation by google'
+        @name    = 'translation by yandex'
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
@@ -44,7 +44,7 @@ module Axial
       def translate(channel, nick, source_language, target_language, text)
         LOGGER.debug("translation request from #{nick.uhost} (#{source_language} -> #{target_language}): #{text}")
 
-        translation = API::Google::Translate::V2.translate(source_language, target_language, text)
+        translation = API::Yandex::V1_5::TRJson.translate(source_language, target_language, text)
         if (translation.nil?)
           channel.message("#{nick.name}: Couldn't translate '#{text}'")
           return

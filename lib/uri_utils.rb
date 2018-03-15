@@ -72,7 +72,6 @@ module Axial
           end
           return short_url
         rescue Exception => ex
-          puts ex.inspect
           return stripped_url
         end
       end

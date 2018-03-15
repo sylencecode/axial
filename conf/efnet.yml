@@ -16,6 +16,7 @@ addons:
   - MAGA
   - RSSSubscriber
   - Seen
+  - Translation
   - UserManagement
   - Weather
   - WhoFrom

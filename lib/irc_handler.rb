@@ -62,6 +62,11 @@ module Axial
       @serverconn.puts(cmd)
     end
 
+    def reload_addons()
+      load_props
+      load_addons
+    end
+
     def load_addons()
       if (@addon_list.count == 0)
         LOGGER.debug("No addons specified.")
@@ -182,7 +187,6 @@ module Axial
               if (dest.start_with?("#"))
                 if (@channels.has_key?(dest.downcase))
                   channel = @channels[dest.downcase]
-                  puts channel.name.inspect
                 else
                   raise(RuntimeError, "No channel object for #{dest}")
                  # channel = Axial::Channel.new(self, dest)

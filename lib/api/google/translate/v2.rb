@@ -36,7 +36,6 @@ module Axial
         
             response = RestClient.post(rest_endpoint.to_s, payload.to_json, headers)
             json = JSON.parse(response)
-            puts JSON.pretty_inspect(json)
         
             translation = nil
             if (json.has_key?('data'))
@@ -50,7 +49,7 @@ module Axial
             end
             return translation
           rescue RestClient::Exception => ex
-            puts "#{ex.class}: #{ex.message}"
+            puts "#{self.class} error: #{ex.class}: #{ex.message}"
             return nil
           end
         end

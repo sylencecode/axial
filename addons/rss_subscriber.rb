@@ -77,7 +77,7 @@ module Axial
               end
               sleep 60
             rescue Exception => ex
-              LOGGER.error("#{self.class} error: #{ex.message}: #{ex.inspect}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end

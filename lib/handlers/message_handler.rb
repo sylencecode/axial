@@ -87,7 +87,7 @@ module Axial
               end
             end
 
-            load_addons
+            reload_addons
 
             channel.message("loaded addons: #{@addons.collect{|addon| addon[:name]}.join(', ')}")
           rescue Exception => ex
