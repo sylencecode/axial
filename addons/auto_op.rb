@@ -1,4 +1,5 @@
-#!/usr/bin/env ruby
+require 'models/user.rb'
+require 'models/mask.rb'
 
 module Axial
   module Addons
@@ -15,10 +16,10 @@ module Axial
 
       def auto_op(channel, nick)
         begin
-          user = Models::Mask.get_nick_from_mask(nick.uhost)
+          user = Models::Mask.get_user_from_mask(nick.uhost)
           if (!user.nil?)
             channel.op(nick)
-            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_nick})")
+            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")

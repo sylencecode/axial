@@ -1,9 +1,7 @@
-#!/usr/bin/env ruby
-
 require 'nokogiri'
 require 'feedjira'
 require 'uri_utils.rb'
-require 'models/nick.rb'
+require 'models/user.rb'
 require 'models/rss_feed.rb'
 
 Feedjira.logger.level = Logger::FATAL
@@ -50,7 +48,6 @@ module Axial
                   title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
                   summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
                   article_url = entry.url
-                  feed.update(ingest_count: feed.ingest_count + 1)
 
                   link = URIUtils.shorten(article_url)
 
@@ -74,6 +71,7 @@ module Axial
 
                 if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
                   LOGGER.debug("Resetting last_ingest time of #{feed.pretty_name} from #{feed.last_ingest} to #{Time.now}")
+                  feed.update(ingest_count: feed.ingest_count + ingested)
                   feed.update(last_ingest: Time.now)
                 end
               end
@@ -92,7 +90,7 @@ module Axial
         channel.message("#{nick.name}: try ?rss add <name> = <feed url>, ?rss delete <name>, ?rss list, ?rss enable, or ?rss disable.")
       end
 
-      def add_feed(channel, nick, nick_model, args)
+      def add_feed(channel, nick, user_model, args)
         if (args.strip =~ /(.*)=(.*)/)
           feed_name = Regexp.last_match[1].strip
           feed_url = Regexp.last_match[2].strip
@@ -122,7 +120,7 @@ module Axial
 
         begin
           rss_content = Feedjira::Feed.fetch_and_parse(parsed_url)
-          Models::RSSFeed.upsert(feed_name, parsed_url, nick_model)
+          Models::RSSFeed.upsert(feed_name, parsed_url, user_model)
           LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
           channel.message("#{nick.name}: ok, following articles from '#{feed_name}'.")
         rescue Feedjira::NoParserAvailable
@@ -141,7 +139,7 @@ module Axial
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += feed.pretty_url
             msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "added on #{feed.added.strftime("%m/%d/%Y")} by #{feed.nick.pretty_nick}"
+            msg += "added on #{feed.added.strftime("%m/%d/%Y")} by #{feed.user.pretty_name}"
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "#{feed.ingest_count} ingested"
             msg += " #{Colors.gray}|#{Colors.reset} "
@@ -218,8 +216,8 @@ module Axial
 
       def handle_rss_command(channel, nick, command)
         begin
-          nick_model = Models::Nick.get_if_valid(nick)
-          if (nick_model.nil?)
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -230,7 +228,7 @@ module Axial
 
           case (command.args.strip)
             when /^add\s+(\S+.*)/i
-              add_feed(channel, nick, nick_model, Regexp.last_match[1].strip)
+              add_feed(channel, nick, user_model, Regexp.last_match[1].strip)
               return
             when /^delete\s+(\S+.*)/i, /^remove\s+(\S+.*)/i
               delete_feed(channel, nick, Regexp.last_match[1].strip)

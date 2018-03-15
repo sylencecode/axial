@@ -1,4 +1,5 @@
-#!/usr/bin/env ruby
+require 'models/user.rb'
+require 'models/mask.rb'
 
 module Axial
   module Addons
@@ -23,13 +24,13 @@ module Axial
           channel.message("#{nick.name}: try ?seen <nick> instead of whatever you just did.")
           return
         end
-        user_model = Models::Nick[nick: who.downcase]
+        user_model = Models::User[name: who.downcase]
         if (user_model.nil?)
           channel.message("#{nick.name}: I don't recall seeing #{who}.")
           return
         end
         seen_at = Axial::TimeSpan.new(user_model.seen.last, Time.now)
-        LOGGER.debug("reported seeing #{user_model.pretty_nick} to #{nick.uhost}")
+        LOGGER.debug("reported seeing #{user_model.pretty_name} to #{nick.uhost}")
         msg = "#{nick.name}: #{who} was last seen #{user_model.seen.status} #{seen_at.approximate_to_s} ago."
         channel.message(msg)
       rescue StandardError => ex
@@ -41,10 +42,10 @@ module Axial
       end
         
       def update_seen_join(channel, nick)
-        user = Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           user.seen.update(last: Time.now, status: "joining #{channel.name}")
-          LOGGER.debug("updated seen for #{user.pretty_nick} (joining #{channel.name})")
+          LOGGER.debug("updated seen for #{user.pretty_name} (joining #{channel.name})")
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -55,14 +56,14 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
-        user = Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "leaving #{channel.name}")
-            LOGGER.debug("updated seen for #{user.pretty_nick} (leaving #{channel.name})")
+            LOGGER.debug("updated seen for #{user.pretty_name} (leaving #{channel.name})")
           else
             user.seen.update(last: Time.now, status: "leaving #{channel.name} (#{reason})")
-            LOGGER.debug("updated seen for #{user.pretty_nick} (leaving #{channel.name}, reason: #{reason})")
+            LOGGER.debug("updated seen for #{user.pretty_name} (leaving #{channel.name}, reason: #{reason})")
           end
         end
       rescue Exception => ex
@@ -74,14 +75,14 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        user = Models::Mask.get_nick_from_mask(nick.uhost)
+        user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (reason.empty?)
             user.seen.update(last: Time.now, status: "quitting IRC")
-            LOGGER.debug("updated seen for #{user.pretty_nick} (quitting IRC)")
+            LOGGER.debug("updated seen for #{user.pretty_name} (quitting IRC)")
           else
             user.seen.update(last: Time.now, status: "quitting IRC (#{reason})")
-            LOGGER.debug("updated seen for #{user.pretty_nick} (quitting IRC, reason: #{reason})")
+            LOGGER.debug("updated seen for #{user.pretty_name} (quitting IRC, reason: #{reason})")
           end
         end
       rescue Exception => ex

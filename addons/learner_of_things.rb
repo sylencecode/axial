@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+require 'models/user.rb'
 require 'models/thing.rb'
 require 'timespan.rb'
 
@@ -20,8 +19,8 @@ module Axial
       end
 
       def learn(channel, nick, command)
-        nick_model = Models::Nick.get_if_valid(nick)
-        if (nick_model.nil?)
+        user_model = Models::User.get_from_nick_object(nick)
+        if (user_model.nil?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
         end
@@ -58,8 +57,8 @@ module Axial
 
       def forget(channel, nick, command)
         begin
-          nick_model = Models::Nick.get_if_valid(nick)
-          if (nick_model.nil?)
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -99,7 +98,7 @@ module Axial
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.nick.pretty_nick} #{learned_at.approximate_to_s} ago)"
+        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation}. (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -110,9 +109,9 @@ module Axial
       end
 
       def explain_on_join(channel, nick)
-        user = Models::Mask.get_nick_from_mask(nick.uhost)
-        if (!user.nil?)
-          thing_model = Models::Thing[thing: user.nick.downcase]
+        user_model = Models::Mask.get_user_from_mask(nick.uhost)
+        if (!user_model.nil?)
+          thing_model = Models::Thing[thing: user_model.name]
           if (!thing_model.nil?)
             thing_subject_string = nick.name # don't reveal the user's actual nick, just use the nick they joined with
           end

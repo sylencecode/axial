@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 module Axial
   class MaskError < StandardError
   end

@@ -11,8 +11,8 @@ module Axial
         LOGGER.info("#{nick.name} PRIVMSG: #{msg}")
         if (msg =~ /exec (.*)/)
           command = Regexp.last_match[1].strip
-          nick_model = Models::Nick.get_if_valid(nick)
-          if (nick_model.nil?)
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil?)
             nick.message(Constants::ACCESS_DENIED)
             return
           end
@@ -53,11 +53,17 @@ module Axial
           return
         elsif (msg.downcase =~ /^\?reload$/)
           begin
+            user_model = Models::User.get_from_nick_object(nick)
+            if (user_model.nil?)
+              nick.message(Constants::ACCESS_DENIED)
+              return
+            end
             if (@addons.count == 0)
               channel.message("#{nick.name}: No addons loaded...")
               return
             end
 
+            channel.message("unloading addons: #{@addons.collect{|addon| addon[:name]}.join(', ')}")
             classes_to_unload = []
             @addons.each do |addon|
               class_name = addon[:object].class.to_s.split('::').last

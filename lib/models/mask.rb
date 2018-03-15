@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-
 require 'sequel'
-require_relative '../mask_utils.rb'
-require_relative 'nick.rb'
+require 'mask_utils.rb'
+require 'models/user.rb'
 
 # note to self: you can use this if your model does not directly imply a table
 # Mask = Class.new(Sequel::Model)
@@ -12,15 +10,7 @@ module Axial
   module Models
     class Mask < Sequel::Model
 
-      many_to_one :nick
- 
-      def possible_nicks()
-        res = []
-        nicks.each do |result|
-          res.push(result.nick)
-        end
-        return res
-      end
+      many_to_one :user
       
       def self.get_masks_that_match(in_mask)
         matches = []
@@ -38,28 +28,28 @@ module Axial
         return matches
       end
 
-      def self.get_nicks_from_mask(in_mask)
-        possible_nicks = []
+      def self.get_users_from_mask(in_mask)
+        possible_users = []
         in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
         in_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
         Mask.all.each do |mask|
           match_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
           if (match_regexp.match(in_mask))
-            possible_nicks.push(mask.nick)
+            possible_users.push(mask.user)
           elsif (in_regexp.match(mask.mask))
-            possible_nicks.push(mask.nick)
+            possible_users.push(mask.user)
           end
         end
-        return possible_nicks
+        return possible_users
       end
 
-      def self.get_nick_from_mask(in_mask)
+      def self.get_user_from_mask(in_mask)
         in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
-        possible_nicks = get_nicks_from_mask(in_mask)
-        if (possible_nicks.count > 1)
-          raise(DuplicateNickError, "mask #{in_mask} returns more than one user: #{possible_nicks.collect{|nick| nick.pretty_nick}.join(', ')}")
+        possible_users = get_users_from_mask(in_mask)
+        if (possible_users.count > 1)
+          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{|user| user.pretty_name}.join(', ')}")
         end
-        return possible_nicks.first
+        return possible_users.first
       end
     
       def self.create_or_find(uhost)

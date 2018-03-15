@@ -1,7 +1,5 @@
-#!/usr/bin/env ruby
-
+require 'models/user.rb'
 require 'models/mask.rb'
-require 'models/nick.rb'
 
 module Axial
   module Addons
@@ -20,20 +18,20 @@ module Axial
       def who_from(channel, nick, command)
         begin
           in_mask = command.args.strip
-          nick_model = Models::Nick.get_if_valid(nick)
-          if (nick_model.nil?)
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           elsif (in_mask.empty?)
             channel.message("#{nick.name}: try ?whofrom <mask> instead of whatever you just did.")
           else
-            nicks = Models::Mask.get_nicks_from_mask(in_mask).collect{|nick| nick.pretty_nick}
+            users = Models::Mask.get_users_from_mask(in_mask).collect{|user| user.pretty_name}
             LOGGER.debug("#{nick.uhost} requested nicks from '#{in_mask}'")
-            if (nicks.count > 0)
-              nick_string = nicks.join(', ')
-              channel.message("#{nick.name}: possible nicks for '#{in_mask}': #{nick_string}")
+            if (users.count > 0)
+              user_string = users.join(', ')
+              channel.message("#{nick.name}: possible users for '#{in_mask}': #{user_string}")
             else
-              channel.message("#{nick.name}: i can't find any nicks matching '#{in_mask}'.")
+              channel.message("#{nick.name}: i can't find an users matching '#{in_mask}'.")
             end
           end
         rescue Exception => ex

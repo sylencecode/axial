@@ -18,14 +18,8 @@ require 'underscore.rb'
 require 'handlers/server_handler.rb'
 require 'handlers/message_handler.rb'
 
-# move to seen
-# require 'timespan.rb'
-
 # move to an addon?
 require 'models/init.rb'
-require 'models/nick.rb'
-require 'models/mask.rb'
-require 'models/seen.rb'
 
 class AccessDenied < StandardError
 end

@@ -53,7 +53,7 @@ module Axial
         @binds.select{|bind| bind[:type] == :quit}.each do |bind|
           bind[:object].public_send(bind[:method], nick, reason)
         end
-        LOGGER.debug("#{nickname} left IRC (#{reason})")
+        LOGGER.debug("#{nick.uhost} left IRC (#{reason})")
       end
 
       def handle_self_quit(reason)
