@@ -1,20 +1,19 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/wunderground/api/q.rb'
-require_relative '../lib/geonames/api/search_json.rb'
+$:.unshift(File.expand_path(File.join('..', 'lib')))
+
+require 'api/wunderground/q.rb'
+require 'api/geo_names/search_json.rb'
 
 
-
-locsearch = GeoNames::API::SearchJSON.new
-geoloc = locsearch.search(ARGV[0])
+geoloc = Axial::API::GeoNames::SearchJSON.search(ARGV[0])
 if (geoloc.found)
   loc = geoloc.to_wunderground
 else
   loc = ARGV[0]
 end
 
-search = WUnderground::API::Conditions::Q.new
-result = search.get_current_conditions(loc)
+result = Axial::API::WUnderground::Q.get_current_conditions('22205')
 
 puts "json"
 puts JSON.pretty_generate(result.json)

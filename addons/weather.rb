@@ -42,9 +42,17 @@ module Axial
 
         begin
           LOGGER.debug("weather request from #{nick.uhost} on #{channel.name}: #{query}")
-          geonames_location = API::GeoNames::SearchJSON.search(query)
-          if (geonames_location.found)
-            conditions = API::WUnderground::Q.get_current_conditions(geonames_location.to_wunderground)
+          location = nil
+          if (query =~ /^[0-9][0-9][0-9][0-9][0-9]$/)
+            location = query
+          else
+            geonames_location = API::GeoNames::SearchJSON.search(query)
+            if (geonames_location.found)
+              location = geonames_location.to_wunderground
+            end
+          end
+          if (!location.nil?)
+            conditions = API::WUnderground::Q.get_current_conditions(location)
             if (conditions.found)
               msg  = "#{Colors.gray}[#{Colors.cyan}weather#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{conditions.location}#{Colors.gray}]#{Colors.reset} "
               msg += "#{conditions.weather.downcase}"
