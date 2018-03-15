@@ -76,7 +76,16 @@ module Axial
         # could add a mutex here and wait for the sync before proceeding
         @binds.select{|bind| bind[:type] == :self_join}.each do |bind|
           Thread.new do
-            bind[:object].public_send(bind[:method], channel)
+            begin
+              bind[:object].public_send(bind[:method], channel)
+            rescue Exception => ex
+              # TODO: move this to an addon handler
+              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
           end
         end
       end
@@ -84,7 +93,16 @@ module Axial
       def handle_join(channel, nick)
         @binds.select{|bind| bind[:type] == :join}.each do |bind|
           Thread.new do
-            bind[:object].public_send(bind[:method], channel, nick)
+            begin
+              bind[:object].public_send(bind[:method], channel, nick)
+            rescue Exception => ex
+              # TODO: move this to an addon handler
+              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
           end
         end
       end

@@ -113,7 +113,16 @@ module Axial
                 args = Regexp.last_match[2]
                 command_object = Axial::Command.new(command, args)
                 Thread.new do
-                  bind[:object].public_send(bind[:method], channel, nick, command_object)
+                  begin
+                    bind[:object].public_send(bind[:method], channel, nick, command_object)
+                  rescue Exception => ex
+                    # TODO: move this to an addon handler
+                    channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+                    LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                    ex.backtrace.each do |i|
+                      LOGGER.error(i)
+                    end
+                  end
                 end
                 break
               elsif (msg =~ base_regexp)
@@ -121,14 +130,32 @@ module Axial
                 args = ""
                 command_object = Axial::Command.new(command, args)
                 Thread.new do
-                  bind[:object].public_send(bind[:method], channel, nick, command_object)
+                  begin
+                    bind[:object].public_send(bind[:method], channel, nick, command_object)
+                  rescue Exception => ex
+                    # TODO: move this to an addon handler
+                    channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+                    LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                    ex.backtrace.each do |i|
+                      LOGGER.error(i)
+                    end
+                  end
                 end
                 break
               end
             elsif (bind[:command].is_a?(Regexp))
               if (msg =~ bind[:command])
                 Thread.new do
-                  bind[:object].public_send(bind[:method], channel, nick, msg)
+                  begin
+                    bind[:object].public_send(bind[:method], channel, nick, msg)
+                  rescue Exception => ex
+                    # TODO: move this to an addon handler
+                    channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+                    LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                    ex.backtrace.each do |i|
+                      LOGGER.error(i)
+                    end
+                  end
                 end
                 break
               end

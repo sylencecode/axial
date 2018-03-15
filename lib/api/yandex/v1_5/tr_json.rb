@@ -9,10 +9,10 @@ module Axial
     module Yandex
       module V1_5
         class TRJson
-          @yandex_rest_api   = 'https://translate.yandex.net/api/v1.5/tr.json/translate'
+          @yandex_rest_api   = 'https://translate.yandex.net/api/v1.5/tr.json'
 
           def self.translate(source_language, target_language, text)
-            rest_endpoint = URI.parse(@yandex_rest_api)
+            rest_endpoint = URI.parse(@yandex_rest_api + '/translate')
 
             headers = {
               accept: 'application/json'
@@ -25,7 +25,7 @@ module Axial
 
             rest_endpoint.query  = URI.encode_www_form(params)
 
-            payload = "text=" + text
+            payload = 'text=' + text
 
             response = RestClient.post(rest_endpoint.to_s, payload, headers)
             json = JSON.parse(response)
@@ -38,6 +38,37 @@ module Axial
               end
             end
             return translation
+          rescue RestClient::Exception => ex
+            puts "#{self.class} error: #{ex.class}: #{ex.message}"
+            return nil
+          end
+
+          def self.detect(text)
+            rest_endpoint = URI.parse(@yandex_rest_api + '/detect')
+
+            headers = {
+              accept: 'application/json'
+            }
+
+            params = {
+              key: $yandex_api_key
+            }
+
+            rest_endpoint.query  = URI.encode_www_form(params)
+
+            payload = 'text=' + text
+
+            response = RestClient.post(rest_endpoint.to_s, payload, headers)
+            json = JSON.parse(response)
+
+            detected_language = nil
+            if (json.has_key?('lang'))
+              lang = json['lang']
+              if (lang.is_a?(String) && !lang.empty?)
+                detected_language = lang
+              end
+            end
+            return detected_language
           rescue RestClient::Exception => ex
             puts "#{self.class} error: #{ex.class}: #{ex.message}"
             return nil
