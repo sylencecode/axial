@@ -10,6 +10,10 @@ module Axial
       @irc.set_channel_mode(@name, "+o #{nick.name}")
     end
 
+    def voice(nick)
+      @irc.set_channel_mode(@name, "+v #{nick.name}")
+    end
+
     def message(text)
       @irc.send_channel(@name, text)
     end

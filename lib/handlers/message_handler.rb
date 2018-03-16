@@ -38,7 +38,7 @@ module Axial
         LOGGER.debug("CHANNEL #{channel.name}: <#{nick.name}> #{msg}")
 
         if (msg.downcase =~ /^\?about$/ || msg.downcase =~ /^\?help$/)
-          channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR}")
+          channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
           if (@addons.count > 0)
             @addons.each do |addon|
               channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel && listener[:command].is_a?(String)}

@@ -31,11 +31,12 @@ module Axial
         
             response = RestClient.post(rest_endpoint.to_s, payload.to_json, headers)
             json = JSON.parse(response)
-        
+
             short_url = nil
             if (json.has_key?('id'))
               short_url = json['id']
             end
+
             return URI.parse(short_url)
           rescue RestClient::Exception => ex
             return nil

@@ -17,7 +17,8 @@ require 'feedjira'
 #            Feed.new('http://rss.cnn.com/rss/cnn_latest.rss', 'cnn'),
 #            Feed.new('https://www.cnbc.com/id/100003114/device/rss/rss.html', 'Fox News'),
 #            Feed.new('https://www.theguardian.com/us/rss', 'The Guardian'),
-            Feed.new('https://threatpost.com/feed/', 'Tech News')
+#            Feed.new('https://threatpost.com/feed/', 'Tech News')
+            Feed.new('https://www.wired.com/feed/category/security/latest/rss', 'wired - privacy')
           ]
           
           feeds.each do |feed|

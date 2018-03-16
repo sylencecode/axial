@@ -119,7 +119,7 @@ module Axial
 
       def send_privmsg(nick, message)
         send_raw "PRIVMSG #{nick} :#{message}"
-        sleep 1
+        sleep 1 
       end
 
       def send_channel(channel, message)

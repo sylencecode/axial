@@ -10,15 +10,17 @@ module Axial
         @name    = 'user management'
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
+        @valid_roles = %w(director manager op friend)
 
         on_channel '?addmask',  :add_mask
         on_channel '?adduser',  :add_user
         on_channel '?getmasks', :get_masks
+        on_channel '?setrole',  :set_role
       end
       def get_masks(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil?)
+          if (user_model.nil? || !user_model.admin?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -50,7 +52,7 @@ module Axial
       def add_mask(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil?)
+          if (user_model.nil? || !user.admin?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -87,10 +89,70 @@ module Axial
         end
       end
 
+      def set_role(channel, nick, command)
+        begin
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil? || !user_model.manager?)
+            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+            return
+          end
+
+          if (command.args.strip =~ /(\S+)\s+(\S+)/)
+            subject_nickname = Regexp.last_match[1]
+            subject_role = Regexp.last_match[2].downcase
+          else
+            channel.message("#{nick.name}: try ?setrole <user> <#{@valid_roles.join('|')}>")
+            return
+          end
+
+          if (!@valid_roles.include?(subject_role))
+            channel.message("#{nick.name}: roles must be one of: #{@valid_roles.join(', ')}")
+            return
+          end
+
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (subject_model.nil?)
+            channel.message("#{nick.name}: user '#{subject_nickname}' not found.")
+            return
+          end
+
+          if (user_model.id == subject_model.id)
+            channel.message("#{nick.name}: sorry, you can't modify yourself.")
+            return
+          end
+
+          if (subject_role == 'manager' && !user_model.director?) 
+            channel.message("#{nick.name}: sorry, only directors can assign new managers.")
+            return
+          end
+
+          if (subject_role == 'director')
+            if (!user_model.director? || user_model.id != 1) 
+              channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
+              return
+            end
+          end
+
+          if (subject_model.director? && user_model.id != 1)
+            channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
+            return
+          end
+
+          subject_model.update(role: subject_role)
+          channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role of #{subject_role}.")
+        rescue Exception => ex
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
+      end
+
       def add_user(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil?)
+          if (user_model.nil? || !user_model.admin?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end

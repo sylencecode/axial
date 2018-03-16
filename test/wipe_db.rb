@@ -18,10 +18,11 @@ else
   DB.drop_table?(:seens, :users, :masks, :things, :rss_feeds)
 end
 
-DB.create_table :users do
+DB.create_table :usersnew do
   primary_key :id
   String :user, size: 32, unique: true
   String :pretty_name, size: 32
+  String :role, size: 16, default: 'friend'
 end
 
 DB.create_table :seens do

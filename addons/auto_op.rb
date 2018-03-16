@@ -18,8 +18,13 @@ module Axial
         begin
           user = Models::Mask.get_user_from_mask(nick.uhost)
           if (!user.nil?)
-            channel.op(nick)
-            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            if (user.op?)
+              channel.op(nick)
+              LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            elsif (user.friend?)
+              channel.voice(nick)
+              LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            end
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
