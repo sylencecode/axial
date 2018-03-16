@@ -1,5 +1,7 @@
-require 'nokogiri'
+gem 'nokogiri'
+gem 'feedjira'
 require 'feedjira'
+require 'nokogiri'
 require 'uri_utils.rb'
 require 'models/user.rb'
 require 'models/rss_feed.rb'

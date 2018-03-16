@@ -2,5 +2,7 @@
 
 require_relative 'lib/bot.rb'
 
-Bot.config = 'conf/localhost.yml'
-Bot.run
+config_file = 'conf/localhost.yml'
+
+bot = Axial::Bot.create(config_file)
+bot.run

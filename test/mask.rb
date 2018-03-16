@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'sequel'
+gem 'sequel'
 require_relative '../lib/mask_utils.rb'
 
 masks = [

@@ -2,6 +2,7 @@
 
 require 'cgi'
 require 'fileutils'
+gem 'marky_markov'
 require 'marky_markov'
 
 markov = MarkyMarkov::Dictionary.new('../maga')

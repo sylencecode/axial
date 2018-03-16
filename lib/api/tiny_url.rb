@@ -1,3 +1,6 @@
+gem 'rest-client'
+require 'rest-client'
+
 module Axial
   module API
     module TinyURL

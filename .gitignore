@@ -1,3 +1,4 @@
 *.mmd
 !trump.mmd
 *.swp
+.idea/

@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+gem 'nokogiri'
+gem 'feedjira'
 require 'nokogiri'
 require 'feedjira'
 

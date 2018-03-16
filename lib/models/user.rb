@@ -1,3 +1,4 @@
+gem 'sequel'
 require 'sequel'
 require 'nick.rb'
 require 'mask_utils.rb'

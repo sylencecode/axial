@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+gem 'sequel'
 require 'sequel'
 require_relative '../lib/models/init.rb'
 # DB_OPTIONS = {

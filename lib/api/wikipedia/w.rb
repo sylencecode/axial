@@ -1,7 +1,9 @@
+gem 'rest-client'
+gem 'nokogiri'
 require 'rest-client'
+require 'nokogiri'
 require 'uri'
 require 'json'
-require 'nokogiri'
 
 require 'uri_utils.rb'
 require 'api/wikipedia/article.rb'

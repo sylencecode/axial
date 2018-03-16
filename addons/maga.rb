@@ -1,4 +1,4 @@
-require 'marky_markov'
+gem 'marky_markov'
 
 module Axial
   module Addons

@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
-
+gem 'marky_markov'
+require 'marky_markov'
 require 'cgi'
 require 'fileutils'
-require 'marky_markov'
 
 markov = MarkyMarkov::TemporaryDictionary.new
 text = File.open('/home/axial/irc.efnet.#lrh.weechatlog', 'r')

@@ -1,3 +1,4 @@
+gem 'rest-client'
 require 'rest-client'
 require 'uri'
 require 'json'

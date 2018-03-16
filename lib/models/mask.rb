@@ -1,3 +1,4 @@
+gem 'sequel'
 require 'sequel'
 require 'mask_utils.rb'
 require 'models/user.rb'

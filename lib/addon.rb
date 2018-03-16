@@ -1,4 +1,3 @@
-require 'log.rb'
 module Axial
   # parent class for new addons
   class Addon

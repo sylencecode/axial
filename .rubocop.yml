@@ -14,3 +14,5 @@ Style/RedundantParentheses:
   Enabled: false
 Style/DefWithParentheses:
   Enabled: false
+Lint/RescueException:
+  Enabled: false
