@@ -1,37 +1,136 @@
+require 'socket'
+require 'timeout'
+require 'openssl'
+require 'server'
+require 'consumers/chat_consumer'
+require 'consumers/raw_consumer'
+
 module Axial
   module Handlers
-    module ServerHandler
-      def connect_to_server(ssl = false)
-        begin
-          Timeout::timeout(@connect_timeout) do
-            LOGGER.info("connecting to #{@server_name}:#{@server_port}")
-            if (ssl)
-              context = OpenSSL::SSL::SSLContext::new
-              context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-              tcp_socket = ::TCPSocket.new(@server_name, @server_port)
-              @serverconn = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
-              @serverconn.connect
-            else
-              @serverconn = ::TCPSocket.new(@server_name, @server_port)
-            end
+    class ServerHandler
+      attr_reader :server, :raw_consumer, :chat_consumer
+
+      def initialize(bot, server)
+        @server_detected = false
+        @server          = server
+        @bot             = bot
+        @send_monitor    = Monitor.new
+        @raw_consumer    = Consumers::RawConsumer.new(self, :send)
+        @chat_consumer   = Consumers::ChatConsumer.new(self, :send)
+      end
+
+      def connect()
+        @raw_consumer.start
+        @chat_consumer.start
+        @real_server_name = ''
+        LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
+          Timeout.timeout(@connect_timeout) do
+          if (@server.ssl?)
+            context = OpenSSL::SSL::SSLContext::new
+            context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+            tcp_socket = ::TCPSocket.new(@server.address, @server.port)
+            @conn = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
+            @conn.connect
+          else
+            @conn = TCPSocket.new(@server.address, @server.port)
           end
-          LOGGER.info("connected to #{@server_name}:#{@server_port}")
-          @connected_to_server = true
-        rescue SocketError => ex
-          LOGGER.error("#{ex.class}: #{ex.message}")
-          sleep @connect_timeout
-          retry
-        rescue Timeout::Error => ex
-          LOGGER.error("unable to connect - connection attempt timed out - trying again in 15 seconds.")
-          sleep @connect_timeout
-          retry
-        rescue Errno::ECONNREFUSED => ex
-          LOGGER.error("unable to connect - connection refused - trying again in 15 seconds.")
-          sleep @connect_timeout
-          retry
+        end
+
+        LOGGER.info("connected to #{@server.address}:#{@server.port}")
+        @connected = true
+      end
+      private :connect
+
+      def send(raw)
+        @send_monitor.synchronize do
+          @conn.puts(raw)
+          if (!raw =~ /^PONG /)
+            LOGGER.debug("Sent to server: #{cmd}")
+          end
         end
       end
 
+      def login()
+        send("USER #{@bot.bot_user} 0 * :#{@bot.bot_realname}")
+        send("NICK #{@bot.bot_nick}")
+        LOGGER.info("sent credentials to server")
+      end
+
+      def pong(ping)
+        send("PONG #{ping}")
+      end
+
+      def dispatch(raw)
+        if (raw =~ /^:(\S+)\s+001\s+#{@bot.bot_nick}/)
+          @real_server_name = Regexp.last_match[1]
+          @server_detected = true
+          LOGGER.info("actual server host: #{@real_server_name}")
+        elsif (raw =~ /^PING\s+(.*)/)
+          pong(Regexp.last_match[1])
+        else
+          @bot.server_consumer.send(raw)
+        end
+      end
+
+      def autojoin_channels()
+        LOGGER.info("reached end of MOTD, processing on-connect hooks")
+        @bot.autojoin.each do |channel|
+          join(channel)
+        end
+      end
+
+      def dispatch_numeric(code, text)
+        case code
+          when '376', '422'
+            autojoin_channels
+          when '315'
+            # end of /who list, free up the channel and call it sync'd
+          when '352'
+            # start putting nicks and uhosts in
+          when '353'
+            # lock the mutex on
+            # got names list, start channel
+          when '366'
+            # names list is over, perform WHO #channel
+          else
+            LOGGER.info("[unh #{code}] #{text}")
+        end
+      end
+
+      def join(channel, password = "")
+        if (password.empty?)
+          send("JOIN #{channel}")
+        else
+          send("JOIN #{channel} #{password}")
+        end
+      end
+
+      def loop()
+        connect
+        login
+        while (raw = @conn.readline)
+          dispatch(raw.chomp)
+        end
+      rescue SocketError => ex
+        LOGGER.error("#{ex.class}: #{ex.message}")
+        sleep @server.timeout
+        retry
+      rescue Timeout::Error => ex
+        LOGGER.error("unable to connect - connection attempt timed out - trying again in 15 seconds.")
+        sleep @server.timeout
+        retry
+      rescue Errno::ECONNREFUSED => ex
+        LOGGER.error("unable to connect - connection refused - trying again in 15 seconds.")
+        sleep @server.timeout
+        retry
+      end
+    end
+  end
+end
+
+module Unused
+  module Unused2
+    module Unused3
       def handle_self_part(channel)
         if (@channels.has_key?(channel.name.downcase))
           @channels.delete(channel.name.downcase)
@@ -107,16 +206,6 @@ module Axial
         end
       end
 
-      def send_login_info()
-        send_raw "USER #{@bot_user} 0 * :#{@bot_realname}"
-        send_raw "NICK #{@bot_nick}"
-        LOGGER.info("sent credentials to server")
-      end
-
-      def join_channel(channel)
-        send_raw "JOIN #{channel}"
-      end
-
       def send_privmsg(nick, message)
         send_raw "PRIVMSG #{nick} :#{message}"
         sleep 1 
@@ -125,10 +214,6 @@ module Axial
       def send_channel(channel, message)
         send_raw "PRIVMSG #{channel} :#{message}"
         sleep 1
-      end
-  
-      def handle_server_ping(response)
-        send_raw "PONG #{response}"
       end
   
       def handle_server_notice(msg)

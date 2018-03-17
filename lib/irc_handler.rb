@@ -177,9 +177,6 @@ module Axial
                 end
               end
               next
-            elsif (raw_server_msg =~ /^NOTICE \S+ :(.*)/)
-              handle_server_notice(Regexp.last_match[1])
-              next
             elsif (raw_server_msg =~ /^:(\S+) PRIVMSG (\S+) :(.*)/)
               nick = Axial::Nick.from_uhost(self, Regexp.last_match[1])
               dest = Regexp.last_match[2]

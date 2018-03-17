@@ -1,0 +1,24 @@
+---
+server:
+  address: sylence.org
+  port: 6667
+  ssl: false
+bot:
+  nick: axial
+  real_name: axial
+  user_name: axial
+channels:
+  - '#lulz'
+addons:
+  - AutoOp
+  - GoogleSearch
+  - LearnerOfThings
+  - MAGA
+  - RSSSubscriber
+  - Seen
+  - Translation
+  - UserManagement
+  - Weather
+  - WhoFrom
+  - Wikipedia
+  - YouTubeSniffer
