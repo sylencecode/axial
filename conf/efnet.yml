@@ -1,6 +1,6 @@
 ---
 server:
-  name: irc.choopa.net
+  address: irc.choopa.net
   port: 9999
   ssl: true
 bot:

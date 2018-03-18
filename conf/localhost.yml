@@ -1,6 +1,6 @@
 ---
 server:
-  name: localhost
+  address: localhost
   port: 6667
   ssl: false
 bot:
