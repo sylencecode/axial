@@ -12,7 +12,7 @@ module Axial
       end
 
       def op(nick)
-        @server_interface.set_channel_mode(@name, "+o-o+o-o #{nick.name} #{nick.name} #{nick.name} #{nick.name}")
+        @server_interface.set_channel_mode(@name, "+o #{nick.name}")
       end
 
       def voice(nick)
