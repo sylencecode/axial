@@ -68,7 +68,7 @@ module Axial
 
                   msg += " #{Colors.gray}|#{Colors.reset} "
                   msg += link.to_s
-                  @irc.send_channel(channel_name, msg)
+                  @server_interface.send_channel_message(channel_name, text)
                   ingested = ingested + 1
                 end
 
