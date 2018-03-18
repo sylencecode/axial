@@ -7,7 +7,7 @@ module Axial
       def initialize(address, port, ssl, password, timeout)
         @address = address
         @password = password
-        @port = 6667
+        @port = port
         @ssl = ssl
         @timeout = timeout
         @channel_list = {}
