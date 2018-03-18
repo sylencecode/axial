@@ -108,23 +108,3 @@ module Axial
     end
   end
 end
-
-module Unused
-  module Unused2
-    module Unused3
-      def handle_part(channel, nick, reason)
-        @binds.select{|bind| bind[:type] == :part}.each do |bind|
-          bind[:object].public_send(bind[:method], channel, nick, reason)
-        end
-      end
-
-      def handle_quit(nick, reason)
-        # remove nick from channels
-        @binds.select{|bind| bind[:type] == :quit}.each do |bind|
-          bind[:object].public_send(bind[:method], nick, reason)
-        end
-        LOGGER.debug("#{nick.uhost} left IRC (#{reason})")
-      end
-    end
-  end
-end
