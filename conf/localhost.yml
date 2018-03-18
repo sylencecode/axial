@@ -8,9 +8,10 @@ bot:
   real_name: axial
   user_name: axial
 channels:
-  - '#lulz'
+  - name: '#lulz'
+    password: ''
 addons:
-  - AutoOp
+  - AutoModes
   - GoogleSearch
   - LearnerOfThings
   - MAGA

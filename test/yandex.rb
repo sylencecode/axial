@@ -17,15 +17,13 @@ require 'json'
             }
             rest_endpoint.query  = URI.encode_www_form(params)
         
-#            headers = {
-#              content_type: 'application/json',
-#                    accept: 'application/json'
-#            }
+            headers = {
+                    accept: 'application/json'
+            }
         
             payload = "text=hello, ny name is robert"
             RestClient.log = 'stdout'
-            response = RestClient.post(rest_endpoint.to_s, payload)
-            #response = RestClient.post(rest_endpoint.to_s, payload.to_json, headers)
+            response = RestClient::Request.execute(method: :post, headers: headers, payload: payload.to_json, url: rest_endpoint.to_s, verify_ssl: false)
             json = JSON.parse(response)
       puts JSON.pretty_generate(json)
 
@@ -35,6 +33,6 @@ require 'json'
 
  #     uri = URI::parse(@rest_api)
  #     uri.query = URI.encode_www_form(params)
- #     response = RestClient.get(uri.to_s)
+ #     response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
  #     json = JSON.parse(response)
       #puts JSON.pretty_generate(json)

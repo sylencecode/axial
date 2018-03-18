@@ -1,5 +1,6 @@
-require 'models/user.rb'
-require 'models/mask.rb'
+require 'axial/addon'
+require 'axial/models/user'
+require 'axial/models/mask'
 
 module Axial
   module Addons

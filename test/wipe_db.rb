@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
+
+$LOAD_PATH.unshift('../lib')
+
 gem 'sequel'
 require 'sequel'
-require_relative '../lib/models/init.rb'
+#require_relative '../lib/axial/models/init.rb'
 # DB_OPTIONS = {
 #   adapter: 'postgres',
 #   host: ENV['AXIAL_DB_HOST'],
@@ -13,15 +16,21 @@ require_relative '../lib/models/init.rb'
 # 
 # DB = Sequel.connect(DB_OPTIONS)
 
+raise "Sure you wanna?"
+exit 1
+
+ENV['USE_SQLITE'] = 'true'
+DB = Sequel.sqlite('../test.db')
+
 if (DB.adapter_scheme == :postgres)
-  DB.drop_table?(:seens, :users, :masks, :things, :rss_feeds, cascade: true)
+  DB.drop_table?(:seens, :masks, :things, :rss_feeds, :users, cacade: true)
 else
-  DB.drop_table?(:seens, :users, :masks, :things, :rss_feeds)
+  DB.drop_table?(:seens, :masks, :things, :rss_feeds, :users)
 end
 
-DB.create_table :usersnew do
+DB.create_table :users do
   primary_key :id
-  String :user, size: 32, unique: true
+  String :name, size: 32, unique: true
   String :pretty_name, size: 32
   String :role, size: 16, default: 'friend'
 end
@@ -62,7 +71,8 @@ DB.create_table :things do
 end
 
 #DB.create_join_table(user_id: :users, mask_id: :masks)
-require_relative '../lib/models/user.rb'
-require_relative '../lib/models/mask.rb'
+require 'axial/models/user.rb'
+require 'axial/models/mask.rb'
 
 Axial::Models::User.create_from_nickname_mask('sylence', '*sylence@*.sylence.org')
+Axial::Models::User[name: 'sylence'].update(role: 'director')

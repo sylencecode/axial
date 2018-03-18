@@ -1,5 +1,6 @@
-require 'models/user.rb'
-require 'models/mask.rb'
+require 'axial/addon'
+require 'axial/models/user'
+require 'axial/models/mask'
 
 module Axial
   module Addons
@@ -24,14 +25,14 @@ module Axial
           channel.message("#{nick.name}: try ?seen <nick> instead of whatever you just did.")
           return
         end
-        user_model = Models::User[name: who.downcase]
-        if (user_model.nil?)
+        subject_model = Models::User[name: who.downcase]
+        if (subject_model.nil?)
           channel.message("#{nick.name}: I don't recall seeing #{who}.")
           return
         end
-        seen_at = Axial::TimeSpan.new(user_model.seen.last, Time.now)
-        LOGGER.debug("reported seeing #{user_model.pretty_name} to #{nick.uhost}")
-        msg = "#{nick.name}: #{who} was last seen #{user_model.seen.status} #{seen_at.approximate_to_s} ago."
+        seen_at = Axial::TimeSpan.new(subject_model.seen.last, Time.now)
+        LOGGER.debug("reported seeing #{subject_model.pretty_name} to #{nick.uhost}")
+        msg = "#{nick.name}: #{who} was last seen #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -58,7 +59,7 @@ module Axial
       def update_seen_part(channel, nick, reason)
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
-          if (reason.empty?)
+          if (reason.nil? || reason.empty?)
             user.seen.update(last: Time.now, status: "leaving #{channel.name}")
             LOGGER.debug("updated seen for #{user.pretty_name} (leaving #{channel.name})")
           else
@@ -77,7 +78,7 @@ module Axial
       def update_seen_quit(nick, reason)
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
-          if (reason.empty?)
+          if (reason.nil? || reason.empty?)
             user.seen.update(last: Time.now, status: "quitting IRC")
             LOGGER.debug("updated seen for #{user.pretty_name} (quitting IRC)")
           else

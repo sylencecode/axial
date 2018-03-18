@@ -2,9 +2,10 @@ gem 'nokogiri'
 gem 'feedjira'
 require 'feedjira'
 require 'nokogiri'
-require 'uri_utils.rb'
-require 'models/user.rb'
-require 'models/rss_feed.rb'
+require 'axial/uri_utils.rb'
+require 'axial/addon'
+require 'axial/models/user'
+require 'axial/models/rss_feed'
 
 Feedjira.logger.level = Logger::FATAL
 
@@ -32,7 +33,7 @@ module Axial
       end
 
       def start_ingest_thread(channel_name)
-        DB[:rss_feeds].update(last_ingest: Time.now)
+        DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
         @thread = Thread.new do
           sleep 15
           while (true)

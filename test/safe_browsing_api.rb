@@ -43,7 +43,7 @@ puts safe.inspect
 #         }
 #       }
 # 
-#       response = RestClient.post(rest_endpoint.to_s, payload.to_json, headers)
+#       response = RestClient::Request.execute(method: :post, headers: headers, payload: payload.to_json, url: rest_endpoint.to_s, verify_ssl: false)
 # 
 #       json = JSON.parse(response)
 #       puts JSON.pretty_generate(json)

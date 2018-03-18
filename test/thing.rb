@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
 $:.unshift('../lib')
-require_relative '../lib/models/init.rb'
-require_relative '../lib/models/thing.rb'
+require_relative '../lib/axial/models/init.rb'
+require_relative '../lib/axial/models/thing.rb'
 
 module Axial
   thing = "foo"

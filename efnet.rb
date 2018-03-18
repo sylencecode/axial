@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
+$stdout.sync = true
+$stderr.sync = true
 
-require_relative './lib/irc_handler.rb'
+require_relative 'lib/axial/bot.rb'
 
-bot = Axial::IRCHandler.new('conf/efnet.yml')
+config_file = 'conf/efnet.yml'
+
+bot = Axial::Bot.create(File.join(File.dirname(__FILE__), config_file))
 bot.run

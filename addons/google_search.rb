@@ -1,5 +1,6 @@
-require 'uri_utils.rb'
-require 'api/google/custom_search/v1.rb'
+require 'axial/addon'
+require 'axial/uri_utils'
+require 'axial/api/google/custom_search/v1'
 
 module Axial
   module Addons

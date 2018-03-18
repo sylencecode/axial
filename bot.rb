@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative 'lib/bot.rb'
+require_relative 'lib/axial/irc_types/bot.rb'
 
 config_file = 'conf/localhost.yml'
 

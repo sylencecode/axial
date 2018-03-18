@@ -1,5 +1,6 @@
-require 'api/wikipedia/w.rb'
-require 'uri_utils.rb'
+require 'axial/addon'
+require 'axial/api/wikipedia/w'
+require 'axial/uri_utils'
 
 module Axial
   module Addons

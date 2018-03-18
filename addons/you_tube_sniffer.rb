@@ -1,5 +1,6 @@
-require 'api/you_tube/v3.rb'
-require 'uri_utils.rb'
+require 'axial/addon'
+require 'axial/api/you_tube/v3'
+require 'axial/uri_utils'
 
 module Axial
   module Addons

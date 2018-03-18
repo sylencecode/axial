@@ -1,5 +1,6 @@
-require 'models/user.rb'
-require 'models/mask.rb'
+require 'axial/addon'
+require 'axial/models/user'
+require 'axial/models/mask'
 
 module Axial
   module Addons
@@ -20,7 +21,7 @@ module Axial
       def get_masks(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.admin?)
+          if (user_model.nil? || !user_model.manager?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -52,7 +53,7 @@ module Axial
       def add_mask(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user.admin?)
+          if (user_model.nil? || !user_model.manager?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -152,7 +153,7 @@ module Axial
       def add_user(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.admin?)
+          if (user_model.nil? || !user_model.manager?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end

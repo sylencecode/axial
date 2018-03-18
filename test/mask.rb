@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 gem 'sequel'
-require_relative '../lib/mask_utils.rb'
+require_relative '../lib/axial/irc_types/.rb'
 
 masks = [
   '*!~xjester@foo.com',

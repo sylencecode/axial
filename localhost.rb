@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
+$stdout.sync = true
+$stderr.sync = true
 
-require_relative './lib/irc_handler.rb'
+require_relative 'lib/axial/bot.rb'
 
-puts RUBY_VERSION
+config_file = 'conf/localhost.yml'
 
-bot = Axial::IRCHandler.new('conf/localhost.yml')
+bot = Axial::Bot.create(File.join(File.dirname(__FILE__), config_file))
 bot.run

@@ -1,4 +1,5 @@
-require 'api/yandex/v1_5/tr_json.rb'
+require 'axial/addon'
+require 'axial/api/yandex/v1_5/tr_json'
 
 module Axial
   module Addons
@@ -203,6 +204,7 @@ module Axial
         on_channel '?english',   :translate_english
         on_channel '?french',    :translate_french
         on_channel '?german',    :translate_german
+        on_channel '?hebrew',    :translate_hebrew
         on_channel '?japanese',  :translate_japanese
         on_channel '?russian',   :translate_russian
         on_channel '?spanish',   :translate_spanish
@@ -237,6 +239,11 @@ module Axial
       def translate_german(channel, nick, command)
         text = get_text(channel, nick, command)
         translate(channel, nick, 'en', 'de', text)
+      end
+
+      def translate_hebrew(channel, nick, command)
+        text = get_text(channel, nick, command)
+        translate(channel, nick, 'en', 'he', text)
       end
 
       def translate_japanese(channel, nick, command)

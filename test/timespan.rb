@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/timespan.rb'
+require_relative '../lib/axial/timespan.rb'
 time_string = "2018-01-12 19:55:13.295445"
 if (time_string =~ /(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)/)
   year = $1
