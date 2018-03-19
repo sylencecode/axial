@@ -54,20 +54,20 @@ module Axial
 
                   link = URIUtils.shorten(article_url)
 
-                  msg =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
-                  msg += title
+                  text =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
+                  text += title
 
                   if (!summary.empty?)
-                    msg += " #{Colors.gray}|#{Colors.reset} "
+                    text += " #{Colors.gray}|#{Colors.reset} "
                     if (summary.length > 299)
-                      msg += summary[0..296] + "..."
+                      text += summary[0..296] + "..."
                     else
-                      msg += summary
+                      text += summary
                     end
                   end
 
-                  msg += " #{Colors.gray}|#{Colors.reset} "
-                  msg += link.to_s
+                  text += " #{Colors.gray}|#{Colors.reset} "
+                  text += link.to_s
                   @server_interface.send_channel_message(channel_name, text)
                   ingested = ingested + 1
                 end
@@ -78,12 +78,13 @@ module Axial
                   feed.update(last_ingest: Time.now)
                 end
               end
-              sleep 60
             rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
+            ensure
+              sleep 60
             end
           end
         end

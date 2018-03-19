@@ -7,13 +7,14 @@ module Axial
   module IRCTypes
     class Channel
       attr_reader :name
-      attr_accessor :password, :mode, :topic
+      attr_accessor :password, :nick_list, :topic
 
       def initialize(server_interface, channel_name)
         @server_interface = server_interface
         @name = channel_name
         @topic = ""
         @mode = IRCTypes::Mode.new
+        @nick_list = []
       end
 
       def op(nick)

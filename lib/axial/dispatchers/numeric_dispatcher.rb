@@ -24,11 +24,11 @@ module Axial
           when Channel::NOT_OPERATOR
             LOGGER.warn("I tried to do something to #{Regexp.last_match[1]} but I'm not opped.")
           when Channel::WHO_LIST_END
-            @bot.server_handler.handle_who_list_end(Regexp.last_match[1])
+            @bot.channel_handler.handle_who_list_end(Regexp.last_match[1])
           when Channel::WHO_LIST_ENTRY
             channel_name, user, host, server, nick, mode, junk, realname = Regexp.last_match.captures
             uhost = "#{nick}!#{user}@#{host}"
-            @bot.server_handler.handle_who_list_entry(nick, uhost, channel_name, mode)
+            @bot.channel_handler.handle_who_list_entry(nick, uhost, channel_name, mode)
           when Channel::NAMES_LIST_ENTRY
             LOGGER.debug(numeric_string)
           when Channel::NAMES_LIST_END
