@@ -57,19 +57,3 @@ module Axial
     end
   end
 end
-
-#
-#       def handle_privmsg(nick, msg)
-#         LOGGER.info("#{nick.name} PRIVMSG: #{msg}")
-#         if (msg =~ /exec (.*)/)
-#           command = Regexp.last_match[1].strip
-#           user_model = Models::User.get_from_nick_object(nick)
-#           if (user_model.nil?)
-#             nick.message(Constants::ACCESS_DENIED)
-#             return
-#           end
-#           nick.message("sending command: #{command}")
-#           send_raw(command)
-#         end
-#       end
-#

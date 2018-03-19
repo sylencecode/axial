@@ -14,22 +14,22 @@ module Axial
         @name = channel_name
         @topic = ""
         @mode = IRCTypes::Mode.new
-        @nick_list = []
+        @nick_list = {}
       end
 
       def op(nick)
         mode = IRCTypes::Mode.new
         mode.op(nick.name)
-        @server_interface.set_channel_mode(@name, mode)
+        set_mode(mode)
       end
 
       def voice(nick)
         mode = IRCTypes::Mode.new
         mode.voice(nick.name)
-        @server_interface.set_channel_mode(@name, mode)
+        set_mode(mode)
       end
 
-      def mode(mode)
+      def set_mode(mode)
         if (!mode.is_a?(Axial::IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
         end

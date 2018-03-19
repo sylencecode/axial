@@ -16,13 +16,13 @@ module Axial
       end
 
       module Server
-        NUMERIC           = /^:{0,1}\S+\s+([0-9][0-9][0-9]) \S+ :{0,1}(.*)/
-        PARAMETERS        = /^005\s+(.*)/
-        MOTD_BEGIN        = /^375 (.*)/
-        MOTD_ENTRY        = /^372 (.*)/
-        MOTD_END          = /^376 (.*)/
-        MOTD_ERROR        = /^422/
-        NICK_IN_USE       = /^433\s+(.*)/
+        ANY_NUMERIC       = /^:{0,1}\S+\s+([0-9][0-9][0-9]) \S+ :{0,1}(.*)/
+        PARAMETERS        = /^:{0,1}\S+\s+005 \S+ :{0,1}(.*)/
+        MOTD_BEGIN        = /^:{0,1}\S+\s+375/
+        MOTD_ENTRY        = /^:{0,1}\S+\s+372 \S+ :{0,1}(.*)/
+        MOTD_END          = /^:{0,1}\S+\s+376/
+        MOTD_ERROR        = /^:{0,1}\S+\s+422/
+        NICK_IN_USE       = /^:{0,1}\S+\s+433 \S+ :{0,1}(.*)/
         NICK_MODE         = /^(\S+)\s+MODE\s+:{0,1}(.*)/
       end
 

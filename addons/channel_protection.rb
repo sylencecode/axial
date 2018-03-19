@@ -38,7 +38,7 @@ module Axial
         end
 
         if (response_mode.to_string_array.any?)
-          channel.mode(response_mode)
+          channel.set_mode(response_mode)
         end
       end
 
@@ -52,7 +52,7 @@ module Axial
         end
 
         if (response_mode.to_string_array.any?)
-          channel.mode(response_mode)
+          channel.set_mode(response_mode)
         end
       end
 

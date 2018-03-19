@@ -14,13 +14,25 @@ module Axial
         @bot = bot
       end
 
+      # start from NAMES nick list
+      # update the list with data from the WHO
+      # run a select on the nick list for any nicks not in the channel any longer
+      # make the nick list a hash of nick string to nick objects?
+
       def handle_who_list_entry(nick, uhost, channel_name, mode)
         LOGGER.debug("|#{nick}|#{uhost}|#{channel_name}|#{mode}|")
+        # start populating this shit
+        if (mode.include?('@'))
+          LOGGER.debug "#{nick} is an op"
+        elsif (mode.include?('+'))
+          LOGGER.debug "#{nick} is a voice"
+        end
       end
 
       def handle_who_list_end(channel_name)
         if (@bot.server.channel_list.has_key?(channel_name.downcase))
           channel = @bot.server.channel_list[channel_name.downcase]
+          # unlock whatever else was waiting?
         else
           raise(ChannelHandlerException, "No channel list entry found for #{channel_name}")
         end
