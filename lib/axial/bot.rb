@@ -22,6 +22,7 @@ module Axial
     attr_accessor :real_nick
     @class_instance = nil
     @class_props_yaml = ''
+    @server = nil
 
     def self.create(props_yaml)
       if (@class_instance.nil?)
@@ -29,6 +30,14 @@ module Axial
         @class_instance = new
       end
       return @class_instance
+    end
+
+    def self.server()
+      return @server
+    end
+
+    def self.server=(server)
+      @server = server
     end
 
     def initialize()
@@ -91,7 +100,12 @@ module Axial
           addon_object.server_interface = @server_interface
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
           addon_object.listeners.each do |listener|
-            @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
+            if (listener[:type] == :mode)
+              puts "binding modes #{listener[:modes].inspect}"
+              @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym, modes: listener[:modes])
+            else
+              @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
+            end
           end
         end
       end
@@ -152,6 +166,7 @@ module Axial
       ssl                 = @props['server']['ssl']      || false
       password            = @props['server']['password'] || ''
       @server             = IRCTypes::Server.new(address, port, ssl, password, timeout)
+      Bot.server          = @server
     end
     private :load_server_settings
 

@@ -3,8 +3,36 @@ require 'axial/irc_types/command'
 module Axial
   module Handlers
     class BindHandler
+
       def initialize(binds)
         @binds = binds
+      end
+
+      def dispatch_mode_binds(channel, nick, mode)
+        @binds.select{|bind| bind[:type] == :mode}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:modes].include?(:all) || (bind[:modes] & mode.channel_modes).any?)
+                if (bind[:object].respond_to?(bind[:method]))
+                  bind[:object].public_send(bind[:method], channel, nick, mode)
+                else
+                  LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+                end
+              end
+            rescue Exception => ex
+              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_quit_binds(nick, reason)

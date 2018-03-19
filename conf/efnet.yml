@@ -11,7 +11,7 @@ channels:
   - name: '#lulz'
     password: ''
 addons:
-  - AutoModes
+  - ChannelProtection
   - GoogleSearch
   - LearnerOfThings
   - MAGA

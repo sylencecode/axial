@@ -1,7 +1,7 @@
 module Axial
   module IRCTypes
     class Server
-      attr_accessor :address, :modes
+      attr_accessor :address, :max_modes
       attr_reader   :port, :password, :timeout, :channel_list
 
       def initialize(address, port, ssl, password, timeout)
@@ -11,7 +11,7 @@ module Axial
         @ssl = ssl
         @timeout = timeout
         @channel_list = {}
-        @modes = 4
+        @max_modes = 4
       end
 
       def ssl?()

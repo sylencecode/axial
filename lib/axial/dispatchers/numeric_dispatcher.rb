@@ -35,7 +35,7 @@ module Axial
             LOGGER.debug(numeric_string)
           when Server::PARAMETERS
             if (text =~ /MODES=(\d+)/)
-              @bot.server.modes = Regexp.last_match[1]
+              @bot.server.max_modes = Regexp.last_match[1]
             end
           else
             LOGGER.warn("[#{code}] #{text}")

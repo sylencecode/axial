@@ -2,6 +2,7 @@ require 'axial/constants'
 require 'axial/handlers/patterns'
 require 'axial/colors'
 require 'axial/irc_types/channel'
+require 'axial/irc_types/mode'
 
 class ChannelHandlerException < StandardError
 end
@@ -203,12 +204,20 @@ module Axial
         LOGGER.debug("server sets #{channel.name} mode: #{mode}")
       end
 
-      def handle_mode(nick, channel, mode)
+      def handle_mode(nick, channel, raw_mode_string)
+        mode_string = raw_mode_string.strip
         if (nick.name == @bot.real_nick)
-          LOGGER.debug("I set #{channel.name} mode: #{mode}")
+          LOGGER.debug("I set #{channel.name} mode: #{raw_mode_string}")
         else
-          # TODO: dispatches go here
-          LOGGER.debug("#{nick.name} sets #{channel.name} mode: #{mode}")
+          mode = IRCTypes::Mode.new
+          mode.parse_string(mode_string)
+          @bot.bind_handler.dispatch_mode_binds(channel, nick, mode)
+          LOGGER.debug("#{nick.name} sets #{channel.name} mode: #{mode_string.inspect}")
+        end
+      rescue Exception => ex
+        LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
     end

@@ -1,3 +1,8 @@
+require 'axial/irc_types/mode'
+
+class ChannelError < StandardError
+end
+
 module Axial
   module IRCTypes
     class Channel
@@ -7,17 +12,28 @@ module Axial
       def initialize(server_interface, channel_name)
         @server_interface = server_interface
         @name = channel_name
-        @mode = ""
         @topic = ""
+        @mode = IRCTypes::Mode.new
       end
 
       def op(nick)
-        @server_interface.set_channel_mode(@name, "+o #{nick.name}")
+        mode = IRCTypes::Mode.new
+        mode.op(nick.name)
+        @server_interface.set_channel_mode(@name, mode)
       end
 
       def voice(nick)
-        @server_interface.set_channel_mode(@name, "+v #{nick.name}")
+        mode = IRCTypes::Mode.new
+        mode.voice(nick.name)
+        @server_interface.set_channel_mode(@name, mode)
       end
+
+      def mode(mode)
+        if (!mode.is_a?(Axial::IRCTypes::Mode))
+          raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
+        end
+        @server_interface.set_channel_mode(@name, mode)
+       end
 
       def message(text)
         @server_interface.send_channel_message(@name, text)

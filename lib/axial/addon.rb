@@ -1,3 +1,6 @@
+class AddonError < StandardError
+end
+
 module Axial
   # parent class for new addons
   class Addon
@@ -11,6 +14,17 @@ module Axial
       @author           = 'unknown author'
       @version          = 'uknown version'
       @server_interface = nil
+    end
+
+    def on_mode(*in_args)
+      if (in_args.nil? || in_args.count < 2)
+        raise(AddonError, "#{self.class}.on_mode called without at least one mode and a callback method")
+      end
+      args = in_args.flatten
+      method = args.pop
+      modes = args
+      LOGGER.debug("Channel mode change (#{modes.join(', ')}) will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :mode, method: method, modes: modes)
     end
 
     def on_part(method)
