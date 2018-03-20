@@ -1,8 +1,12 @@
 #!/usr/bin/env ruby
 
+$LOAD_PATH.unshift('../lib')
+
 require 'openssl'
 require 'socket'
 require 'yaml'
+require 'sequel'
+require_relative '../lib/axial/models/user.rb'
 
 module Axial
   module Exceptions
@@ -18,6 +22,9 @@ context.cert = OpenSSL::X509::Certificate.new(File.read('/home/axial/botnet.crt'
 context.key = OpenSSL::PKey::RSA.new(File.read('/home/axial/botnet.key'))
 context.ca_file = '/home/axial/botnet-ca.crt'
 context.ssl_version = :TLSv1_2
+
+foo = Axial::Models::User[1]
+puts foo.inspect
 
 context.ciphers = [
   ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
@@ -50,13 +57,13 @@ loop do
   puts user_cn.inspect
 #  foo = YAML::dump(client)
   big_array = []
-  20.times do
-    little_array = []
-    little_array.push(File.read('sequel.rb'))
-    big_array.push(little_array)
-  end
-  puts "objects: #{big_array.count}"
-  raw_yml = YAML.dump(big_array)
+#  20.times do
+#    little_array = []
+#    little_array.push(File.read('sequel.rb'))
+#    big_array.push(little_array)
+#  end
+#  puts "objects: #{big_array.count}"
+  raw_yml = YAML.dump(foo)
   packet = raw_yml.gsub(/\n/, "\0")
   client.puts(packet)
   puts "end stream"

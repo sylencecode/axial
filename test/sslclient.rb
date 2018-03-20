@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
+$LOAD_PATH.unshift('../lib')
 
 require 'openssl'
 require 'socket'
 require 'yaml'
+require 'sequel'
+require_relative '../lib/axial/models/user.rb'
 
 
 context = OpenSSL::SSL::SSLContext::new
@@ -20,13 +23,11 @@ sslsocket.connect
 while (line = sslsocket.gets)
   raw_string = line
   yml_string = line.gsub(/\0/, "\n")
-  ary = YAML.load(yml_string)
-  ary.each do |foo|
-    puts foo.class
-    foo.each do |poo|
-      puts poo.class
-    end
-  end
+  obj = YAML.load(yml_string)
+  puts obj.inspect
+  puts obj.masks.inspect
+  puts obj.seen.inspect
+  puts obj.friend?.inspect
 #  puts object.class
 #  puts object.inspect
 end
