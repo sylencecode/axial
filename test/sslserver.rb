@@ -23,14 +23,13 @@ context.key = OpenSSL::PKey::RSA.new(File.read('/home/axial/botnet.key'))
 context.ca_file = '/home/axial/botnet-ca.crt'
 context.ssl_version = :TLSv1_2
 
-foo = Axial::Models::User[1]
-puts foo.inspect
-
 context.ciphers = [
   ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
 ]
 
-tcp_listener = TCPServer.new(2020)
+tcp_port = 34567
+
+tcp_listener = TCPServer.new(tcp_port)
 loop do
   begin
   listener = OpenSSL::SSL::SSLServer::new(tcp_listener, context)
@@ -63,10 +62,12 @@ loop do
 #    big_array.push(little_array)
 #  end
 #  puts "objects: #{big_array.count}"
-  raw_yml = YAML.dump(foo)
-  packet = raw_yml.gsub(/\n/, "\0")
-  client.puts(packet)
-  puts "end stream"
+  Axial::Models::User.each do |user|
+    raw_yml = YAML.dump(user.masks)
+    packet = raw_yml.gsub(/\n/, "\0")
+    client.puts(packet)
+    puts "end stream"
+  end
   rescue OpenSSL::SSL::SSLError => ex
     puts "#{ex.class}: #{ex.message}"
     puts "#{ex.inspect}"

@@ -34,7 +34,7 @@ module Axial
             uhost, channel_name, reason = Regexp.last_match.captures
             @bot.channel_handler.dispatch_part(uhost, channel_name, reason)
           when Channel::QUIT, Channel::QUIT_NO_REASON
-            uhost, reason = captures
+            uhost, reason = Regexp.last_match.captures
             @bot.channel_handler.dispatch_quit(uhost, reason)
           when Messages::PRIVMSG
             uhost, dest, text = Regexp.last_match.captures
@@ -57,6 +57,11 @@ module Axial
             LOGGER.warn("[#{Regexp.last_match[1]}] #{Regexp.last_match[2]}")
           else
             LOGGER.warn("Unhandled server message: #{text}")
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
     end
