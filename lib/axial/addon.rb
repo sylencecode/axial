@@ -5,15 +5,21 @@ module Axial
   # parent class for new addons
   class Addon
     include Axial::Handlers::Logging
-    attr_reader     :listeners, :name, :version, :author
-    attr_accessor   :server_interface
+    attr_reader     :listeners, :name, :version, :author, :throttle_secs
+    attr_accessor   :last
 
-    def initialize()
+    def initialize(server_interface)
       @listeners = []
       @name             = 'unnamed addon'
       @author           = 'unknown author'
       @version          = 'uknown version'
-      @server_interface = nil
+      @throttle_secs    = 0
+      @server_interface = server_interface
+    end
+
+    def throttle(seconds)
+      @throttle_secs = seconds
+      @last = Time.now - @throttle_secs
     end
 
     def on_mode(*in_args)
@@ -35,6 +41,11 @@ module Axial
     def on_quit(method)
       LOGGER.debug("IRC quit will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :quit, method: method)
+    end
+
+    def on_channel_sync(method)
+      LOGGER.debug("Channel sync will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :channel_sync, method: method)
     end
 
     def on_join(method)

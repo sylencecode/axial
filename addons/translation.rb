@@ -4,7 +4,7 @@ require 'axial/api/yandex/v1_5/tr_json'
 module Axial
   module Addons
     class Translation < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'translation by yandex'
@@ -198,6 +198,8 @@ module Axial
           'za' => 'Zhuang',
           'zu' => 'Zulu'
         }
+
+        throttle   2
 
         on_channel '?arabic',    :translate_arabic
         on_channel '?chinese',   :translate_chinese

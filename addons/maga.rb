@@ -5,7 +5,7 @@ require 'axial/addon'
 module Axial
   module Addons
     class MAGA < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @markov  = MarkyMarkov::Dictionary.new('maga')

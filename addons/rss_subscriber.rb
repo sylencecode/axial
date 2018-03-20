@@ -12,7 +12,7 @@ Feedjira.logger.level = Logger::FATAL
 module Axial
   module Addons
     class RSSSubscriber < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'rss feed ingest'
@@ -24,20 +24,24 @@ module Axial
         on_channel '?rss',  :handle_rss_command
 
         @ingest_thread = start_ingest_thread('#lulz')
+        @ingesting = false
       end
 
       def stop_ingest_thread()
+        @ingesting = false
         if (!@ingest_thread.nil?)
           @ingest_thread.kill
         end
       end
 
       def start_ingest_thread(channel_name)
+        @ingesting = true
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
         @thread = Thread.new do
           sleep 15
-          while (true)
+          while (@ingesting)
             begin
+              channel = @server_interface.channel_list.get(channel_name)
               Models::RSSFeed.where(enabled: true).each do |feed|
                 ingested = 0
                 rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
@@ -68,7 +72,7 @@ module Axial
 
                   text += " #{Colors.gray}|#{Colors.reset} "
                   text += link.to_s
-                  @server_interface.send_channel_message(channel_name, text)
+                  channel.message(text)
                   ingested = ingested + 1
                 end
 

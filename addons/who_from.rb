@@ -5,7 +5,7 @@ require 'axial/models/mask'
 module Axial
   module Addons
     class WhoFrom < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'who from?'

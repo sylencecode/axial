@@ -5,7 +5,7 @@ require 'axial/models/mask'
 module Axial
   module Addons
     class ChannelProtection < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'channel protection'
@@ -13,13 +13,36 @@ module Axial
         @version = '1.0.0'
 
         # :bans, :unbans, :invite_only, :keyword, :limit, :moderated, :no_outside_messages, :ops, :deops, :secret, :topic_ops_only, :voices, :devoices
-        @enforce_modes = [ :topic_ops_only, :no_outside_messages ]
-        @prevent_modes  = [ :invite_only, :limit, :keyword, :moderated ]
-        on_join :auto_op
-        on_privmsg 'exec', :privmsg_exec
+        @enforce_modes          = [ :topic_ops_only, :no_outside_messages ]
+        @prevent_modes          = [ :invite_only, :limit, :keyword, :moderated ]
+        @op_deop_modes          = [ :ops, :deops ]
+
+        throttle                2
+        on_join                 :handle_auto_op
+        on_privmsg      'exec', :handle_privmsg_exec
+        on_channel     'topic', :handle_topic
         on_mode @prevent_modes, :handle_prevent_modes
         on_mode @enforce_modes, :handle_enforce_modes
+        on_mode @op_deop_modes, :handle_op_deop
         #on_mode :all, :handle_all
+      end
+
+      def handle_op_deop(channel, nick, mode)
+        return
+        # if (mode.ops.any?)
+        #   if (nick == @server_interface.myself)
+        #     channel.message("I opped #{mode.ops.inspect}")
+        #   else
+        #     channel.message("#{nick.name} opped #{mode.ops.inspect}")
+        #   end
+        # end
+        # if (mode.deops.any?)
+        #   if (nick == @server_interface.myself)
+        #     channel.message("I voiced #{mode.ops.inspect}")
+        #   else
+        #     channel.message("#{nick.name} voiced #{mode.ops.inspect}")
+        #   end
+        # end
       end
 
       def handle_prevent_modes(channel, nick, mode)
@@ -56,9 +79,12 @@ module Axial
         end
       end
 
-      def auto_op(channel, nick)
+      def handle_auto_op(channel, nick)
         begin
-          #TODO: Only if you're opped. Make a queue for modes to set when opped?
+          if (!channel.opped?)
+            return
+          end
+
           user = Models::Mask.get_user_from_mask(nick.uhost)
           if (!user.nil?)
             if (user.op?)
@@ -78,7 +104,7 @@ module Axial
         end
       end
 
-      def privmsg_exec(nick, command)
+      def handle_privmsg_exec(nick, command)
         user_model = Models::User.get_from_nick_object(nick)
         if (user_model.nil? || !user_model.director?)
           nick.message(Constants::ACCESS_DENIED)

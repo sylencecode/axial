@@ -15,7 +15,6 @@ module Axial
       attr_reader :server, :raw_consumer, :chat_consumer
 
       def initialize(bot, server)
-        @server_detected = false
         @server          = server
         @bot             = bot
         @send_monitor    = Monitor.new
@@ -24,6 +23,8 @@ module Axial
       end
 
       def connect()
+        @bot.server_interface.myself = IRCTypes::Nick.new(@bot.server_interface)
+        @bot.server_interface.myself.name = @bot.real_nick
         @raw_consumer.start
         @chat_consumer.start
         LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
@@ -74,9 +75,8 @@ module Axial
 
       def dispatch(raw)
         if (raw =~ /^:(\S+)\s+001\s+#{@bot.real_nick}/)
-          @server.address = Regexp.last_match[1]
-          @server_detected = true
-          LOGGER.info("actual server host: #{@server.address}")
+          @server.real_address = Regexp.last_match[1]
+          LOGGER.info("actual server host: #{@server.real_address}")
           @bot.server_consumer.send(raw)
         elsif (raw =~ /^PING\s+(.*)/)
           pong(Regexp.last_match[1])

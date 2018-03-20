@@ -5,7 +5,7 @@ require 'axial/models/mask'
 module Axial
   module Addons
     class Seen < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'last seen'
@@ -16,6 +16,7 @@ module Axial
         on_join    :update_seen_join
         on_part    :update_seen_part
         on_quit    :update_seen_quit
+        throttle   2
         #on_kick    :update_seen_kick
       end
 

@@ -12,14 +12,17 @@ module Axial
       def dispatch(text)
         case text
           when Channel::JOIN
-            @bot.channel_handler.dispatch_join(Regexp.last_match.captures)
+            uhost, channel_name = Regexp.last_match.captures
+            @bot.channel_handler.dispatch_join(uhost, channel_name)
           when Channel::MODE
-            @bot.channel_handler.dispatch_mode(Regexp.last_match.captures)
+            uhost, channel_name, mode = Regexp.last_match.captures
+            @bot.channel_handler.dispatch_mode(uhost, channel_name, mode)
           when Channel::NOT_OPERATOR
             LOGGER.warn("I tried to do something to #{Regexp.last_match[1]} but I'm not opped.")
           when Channel::WHO_LIST_END
             @bot.channel_handler.handle_who_list_end(Regexp.last_match[1])
           when Channel::WHO_LIST_ENTRY
+            puts text.inspect
             channel_name, user, host, server, nick, mode, junk, realname = Regexp.last_match.captures
             uhost = "#{nick}!#{user}@#{host}"
             @bot.channel_handler.handle_who_list_entry(nick, uhost, channel_name, mode)
@@ -28,13 +31,17 @@ module Axial
           when Channel::NAMES_LIST_END
             LOGGER.debug(Regexp.last_match[1])
           when Channel::PART, Channel::PART_NO_REASON
-            @bot.channel_handler.dispatch_part(Regexp.last_match.captures)
+            uhost, channel_name, reason = Regexp.last_match.captures
+            @bot.channel_handler.dispatch_part(uhost, channel_name, reason)
           when Channel::QUIT, Channel::QUIT_NO_REASON
-            @bot.channel_handler.dispatch_quit(Regexp.last_match.captures)
+            uhost, reason = captures
+            @bot.channel_handler.dispatch_quit(uhost, reason)
           when Messages::PRIVMSG
-            @bot.message_handler.dispatch_privmsg(Regexp.last_match.captures)
+            uhost, dest, text = Regexp.last_match.captures
+            @bot.message_handler.dispatch_privmsg(uhost, dest, text)
           when Messages::NOTICE, Messages::NOTICE_NOPREFIX
-            @bot.message_handler.dispatch_notice(Regexp.last_match.captures)
+            uhost, dest, text = Regexp.last_match.captures
+            @bot.message_handler.dispatch_notice(uhost, dest, text)
           when Server::MOTD_END, Server::MOTD_ERROR
             LOGGER.info("end of motd, performing autojoin")
             @bot.autojoin_channels

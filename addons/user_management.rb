@@ -5,7 +5,7 @@ require 'axial/models/mask'
 module Axial
   module Addons
     class UserManagement < Axial::Addon
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'user management'
@@ -17,7 +17,19 @@ module Axial
         on_channel '?adduser',  :add_user
         on_channel '?getmasks', :get_masks
         on_channel '?setrole',  :set_role
+        on_channel_sync         :handle_channel_sync
       end
+
+      def handle_channel_sync(channel)
+        channel.nick_list.all_nicks.each do |nick|
+          user_model = Models::User.get_from_nick_object(nick)
+          if (!user_model.nil?)
+            channel.message("#{nick.name} is here and is user #{user_model.pretty_name}")
+            # check for bans
+          end
+        end
+      end
+
       def get_masks(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)

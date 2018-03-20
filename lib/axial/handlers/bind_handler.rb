@@ -85,6 +85,32 @@ module Axial
         end
       end
 
+      def dispatch_channel_sync_binds(channel)
+        @binds.select{|bind| bind[:type] == :channel_sync}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+
       def dispatch_join_binds(channel, nick)
         @binds.select{|bind| bind[:type] == :join}.each do |bind|
           Thread.new do
@@ -112,6 +138,13 @@ module Axial
 
       def dispatch_channel_binds(channel, nick, text)
         @binds.select{|bind| bind[:type] == :channel}.each do |bind|
+          if (bind[:object].throttle_secs > 0)
+            if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
+              next
+            else
+              bind[:object].last = Time.now
+            end
+          end
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
@@ -193,6 +226,13 @@ module Axial
 
       def dispatch_privmsg_binds(nick, text)
         @binds.select{|bind| bind[:type] == :privmsg}.each do |bind|
+          if (bind[:object].throttle_secs > 0)
+            if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
+              next
+            else
+              bind[:object].last = Time.now
+            end
+          end
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'

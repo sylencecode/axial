@@ -6,7 +6,7 @@ module Axial
   module Addons
     class YouTubeSniffer < Axial::Addon
 
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'youtube link sniffer'

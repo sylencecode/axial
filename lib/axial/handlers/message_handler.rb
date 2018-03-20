@@ -5,43 +5,35 @@ module Axial
     class MessageHandler
       def initialize(bot)
         @bot = bot
+        @server_interface = @bot.server_interface
+        @channel_list = @server_interface.channel_list
       end
 
-      def dispatch_notice(captures)
-        uhost, dest, text = captures
-        # hack for notices from places like ratbox with no uhost
+      def dispatch_notice(uhost, dest, text)
+        # hack for notices from implementations like ratbox that may not have an initial server prefix
         if (dest.nil? || dest.empty?)
           @bot.server_handler.handle_server_notice(uhost)
-        elsif (uhost.casecmp(@bot.server.address).zero? || !uhost.include?('!'))
+        elsif (uhost.casecmp(@bot.server.real_address).zero? || !uhost.include?('!'))
           @bot.server_handler.handle_server_notice(text)
         elsif (dest.start_with?("#"))
-          if (@bot.server.channel_list.has_key?(dest.downcase))
-            channel = @bot.server.channel_list[dest.downcase]
-          else
-            raise(RuntimeError, "No channel object for #{dest}")
-          end
-          # use uhost to fetch nick from channel list
-          nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
+          nick_name = uhost.split('!').first
+          channel = @channel_list.get(dest)
+          nick = channel.nick_list.get(nick_name)
           @bot.channel_handler.handle_channel_notice(channel, nick, text)
         else
-          nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
+          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           handle_private_notice(nick, text)
         end
       end
 
-      def dispatch_privmsg(captures)
-        uhost, dest, text = captures
+      def dispatch_privmsg(uhost, dest, text)
         if (dest.start_with?("#"))
-          if (@bot.server.channel_list.has_key?(dest.downcase))
-            channel = @bot.server.channel_list[dest.downcase]
-          else
-            raise(RuntimeError, "No channel object for #{dest}")
-          end
-          # use uhost to fetch nick from channel list
-          nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
+          nick_name = uhost.split('!').first
+          channel = @channel_list.get(dest)
+          nick = channel.nick_list.get(nick_name)
           @bot.channel_handler.handle_channel_message(channel, nick, text)
         else
-          nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
+          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           handle_private_message(nick, text)
         end
       end

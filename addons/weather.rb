@@ -6,7 +6,7 @@ module Axial
   module Addons
     class Weather < Axial::Addon
 
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'weather underground'

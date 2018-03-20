@@ -1,3 +1,4 @@
+require 'axial/irc_types/nick_list'
 require 'axial/irc_types/mode'
 
 class ChannelError < StandardError
@@ -6,15 +7,30 @@ end
 module Axial
   module IRCTypes
     class Channel
-      attr_reader :name
-      attr_accessor :password, :nick_list, :topic
+      attr_reader :name, :monitor
+      attr_accessor :password, :nick_list, :opped, :voiced
 
       def initialize(server_interface, channel_name)
         @server_interface = server_interface
         @name = channel_name
         @topic = ""
         @mode = IRCTypes::Mode.new
-        @nick_list = {}
+        @nick_list = IRCTypes::NickList.new(@server_interface)
+        @synced = false
+        @opped = false
+        @voiced = false
+      end
+
+      def set_topic(topic)
+        @server_interface.set_channel_topic(@name, topic)
+      end
+
+      def opped?()
+        return @opped
+      end
+
+      def voiced?()
+        return @voiced
       end
 
       def op(nick)
@@ -38,6 +54,21 @@ module Axial
 
       def message(text)
         @server_interface.send_channel_message(@name, text)
+      end
+
+      # placeholder methods for possible eventual method blocking until the channel has been synced
+      def sync_complete()
+        LOGGER.debug("#{self.name} sync completed")
+        @synced = true
+      end
+
+      def synced?()
+        return @synced
+      end
+
+      def sync_begin()
+        LOGGER.debug("#{self.name} sync beginning")
+        @synced = false
       end
     end
   end

@@ -47,15 +47,19 @@ module Axial
       load_server_settings
       load_properties
       load_consumers
+      load_interfaces
       load_handlers
       load_dispatchers
-      load_interfaces
       load_addons
     end
 
     def load_consumers
       @server_consumer            = Consumers::RawConsumer.new(self, :receive_server_text)
       @server_consumer_monitor    = Monitor.new
+    end
+
+    def load_interfaces()
+      @server_interface           = ServerInterface.new(self)
     end
 
     def load_handlers()
@@ -68,11 +72,6 @@ module Axial
     def load_dispatchers()
       @server_message_dispatcher  = Dispatchers::ServerMessageDispatcher.new(self)
     end
-
-    def load_interfaces()
-      @server_interface           = ServerInterface.new(self)
-    end
-
 
     def self.instance()
       if (@class_instance.nil?)
@@ -96,8 +95,7 @@ module Axial
       else
         @addon_list.each do |addon|
           load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
-          addon_object = Object.const_get("Axial::Addons::#{addon}").new
-          addon_object.server_interface = @server_interface
+          addon_object = Object.const_get("Axial::Addons::#{addon}").new(server_interface)
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
           addon_object.listeners.each do |listener|
             if (listener[:type] == :mode)
@@ -155,7 +153,6 @@ module Axial
       @addons             = []
       @binds              = []
       @running            = true
-      @channel_list       = {}
     end
     private :set_defaults
 

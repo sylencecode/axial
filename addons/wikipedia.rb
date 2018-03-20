@@ -6,7 +6,7 @@ module Axial
   module Addons
     class Wikipedia < Axial::Addon
 
-      def initialize()
+      def initialize(server_interface)
         super
 
         @name    = 'wikipedia search'
