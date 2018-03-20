@@ -24,7 +24,7 @@ module Axial
         channel.nick_list.all_nicks.each do |nick|
           user_model = Models::User.get_from_nick_object(nick)
           if (!user_model.nil?)
-            channel.message("#{nick.name} is here and is user #{user_model.pretty_name}")
+#            channel.message("#{nick.name} is here and is user #{user_model.pretty_name}")
             # check for bans
           end
         end

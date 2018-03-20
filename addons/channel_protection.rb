@@ -16,6 +16,7 @@ module Axial
         @enforce_modes          = [ :topic_ops_only, :no_outside_messages ]
         @prevent_modes          = [ :invite_only, :limit, :keyword, :moderated ]
         @op_deop_modes          = [ :ops, :deops ]
+        @ban_modes              = [ :bans, :unbans ]
 
         throttle                2
         on_join                 :handle_auto_op
@@ -24,7 +25,40 @@ module Axial
         on_mode @prevent_modes, :handle_prevent_modes
         on_mode @enforce_modes, :handle_enforce_modes
         on_mode @op_deop_modes, :handle_op_deop
+        on_mode @ban_modes,     :handle_ban_unban
         #on_mode :all, :handle_all
+      end
+
+      def handle_ban_unban(channel, nick, mode)
+        response_mode = IRCTypes::Mode.new
+        if (mode.bans.any?)
+          if (nick == @server_interface.myself)
+            # kick, do something, etc
+            # need channel.ban_list
+            # set an unban timer?
+          else
+            mode.bans.each do |in_mask|
+              mask = in_mask.strip
+              possible_users = Models::Mask.get_users_from_mask(mask)
+              cantban = possible_users.collect{|user| user.name}
+              if (possible_users.any?)
+                channel.message("#{nick.name}: you can't ban #{cantban.join(', ')}")
+                response_mode.unban(mask)
+              end
+            end
+          end
+        end
+
+        if (mode.unbans.any?)
+          if (nick == @server_interface.myself)
+            # kick, do something, etc
+            # need channel.ban_list
+          end
+        end
+
+        if (response_mode.to_string_array.any?)
+          channel.set_mode(response_mode)
+        end
       end
 
       def handle_op_deop(channel, nick, mode)

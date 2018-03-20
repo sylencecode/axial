@@ -25,7 +25,6 @@ module Axial
       end
 
       def ==(other_nick)
-        puts "#{self.name} -> #{other_nick.name}"
         return (self.uhost == other_nick.uhost)
       end
 

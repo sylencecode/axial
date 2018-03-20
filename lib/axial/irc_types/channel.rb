@@ -49,8 +49,12 @@ module Axial
         if (!mode.is_a?(Axial::IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
         end
-        @server_interface.set_channel_mode(@name, mode)
-       end
+        if (opped?)
+          @server_interface.set_channel_mode(@name, mode)
+        else
+          LOGGER.info("Tried to set channel mode #{mode.to_string_array.inspect} on #{channel}, but I am not an op.")
+        end
+      end
 
       def message(text)
         @server_interface.send_channel_message(@name, text)

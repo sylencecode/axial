@@ -41,6 +41,19 @@ module Axial
         end
 
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
+      rescue OpenSSL::SSL::SSLError => ex
+        LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
+        LOGGER.info("reconnecting in 30 seconds...")
+        sleep 30
+        retry
+      rescue Exception => ex
+        LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+        LOGGER.info("reconnecting in 30 seconds...")
+        sleep 30
+        retry
       end
       private :connect
 
