@@ -27,7 +27,7 @@ module Axial
 
       def has_channel?(channel_or_name)
         key = nil
-        if (channel_or_name.is_a?(IRCType::Channel))
+        if (channel_or_name.is_a?(IRCTypes::Channel))
           key = channel_or_name.name.downcase
         elsif (channel_or_name.is_a?(String))
           key = channel_or_name.downcase
@@ -46,7 +46,7 @@ module Axial
 
       def delete(channel_or_name)
         key = nil
-        if (channel_or_name.is_a?(IRCType::Channel))
+        if (channel_or_name.is_a?(IRCTypes::Channel))
           key = channel_or_name.name.downcase
         elsif (channel_or_name.is_a?(String))
           key = channel_or_name.downcase

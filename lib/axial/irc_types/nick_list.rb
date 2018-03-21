@@ -13,14 +13,14 @@ module Axial
 
       def rename(old_nick_or_name, new_nick_or_name)
         old_key = nil
-        if (old_nick_or_name.is_a?(IRCType::Nick))
+        if (old_nick_or_name.is_a?(IRCTypes::Nick))
           old_key = old_nick_or_name.name.downcase
         elsif (old_nick_or_name.is_a?(String))
           old_key = old_nick_or_name.downcase
         end
 
         new_key = nil
-        if (new_nick_or_name.is_a?(IRCType::Nick))
+        if (new_nick_or_name.is_a?(IRCTypes::Nick))
           new_key = new_nick_or_name.name.downcase
         elsif (new_nick_or_name.is_a?(String))
           new_key = new_nick_or_name.downcase
@@ -60,7 +60,7 @@ module Axial
 
       def has_nick?(channel_or_name)
         key = nil
-        if (nick_or_name.is_a?(IRCType::Nick))
+        if (nick_or_name.is_a?(IRCTypes::Nick))
           key = nick_or_name.name.downcase
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
@@ -94,7 +94,7 @@ module Axial
 
       def delete_silent(nick_or_name)
         key = nil
-        if (nick_or_name.is_a?(IRCType::Nick))
+        if (nick_or_name.is_a?(IRCTypes::Nick))
           key = nick_or_name.name.downcase
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase

@@ -24,11 +24,20 @@ module Axial
         nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
 
         if (mode.include?('@'))
-          nick.opped = true
+          if (nick == @server_interface.myself)
+            channel.opped = true
+          else
+            nick.opped = true
+            channel.nick_list.add(nick)
+          end
         elsif (mode.include?('+'))
-          nick.voiced = true
+          if (nick == @server_interface.myself)
+            channel.voiced = true
+          else
+            nick.voiced = true
+            channel.nick_list.add(nick)
+          end
         end
-        channel.nick_list.add(nick)
       end
 
       def handle_who_list_end(channel_name)
@@ -62,12 +71,12 @@ module Axial
           LOGGER.debug("#{nick.name} quit IRC (#{reason})")
         end
         @bot.bind_handler.dispatch_quit_binds(nick, reason)
-        @server_interface.channel_list.all_channels do |channel|
+        @server_interface.channel_list.all_channels.each do |channel|
           if (!channel.synced?)
             LOGGER.debug("rejected quit on #{channel.name} because it is not synced yet.")
             return
           end
-          channel.delete_silent(nick)
+          channel.nick_list.delete_silent(nick)
         end
       end
 
