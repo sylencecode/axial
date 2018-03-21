@@ -46,10 +46,14 @@ module Axial
         end
 
         LOGGER.info("#{nick.uhost} reloaded addons.")
-        channel.message("unloading addons: #{@bot.addons.collect{|addon| addon[:name]}.join(', ')}")
+        addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
+        addon_names = addon_list.collect{|addon| addon[:name]}
+        channel.message("unloading addons: #{addon_names.join(', ')}")
         @bot.unload_addons
         @bot.load_addons
-        channel.message("loaded addons: #{@bot.addons.collect{|addon| addon[:name]}.join(', ')}")
+        addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
+        addon_names = addon_list.collect{|addon| addon[:name]}
+        channel.message("loaded addons: #{addon_names.join(', ')}")
       rescue Exception => ex
         LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

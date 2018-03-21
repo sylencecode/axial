@@ -46,10 +46,9 @@ module Axial
 
     def initialize()
       @props_yaml = Bot.instance_variable_get('@class_props_yaml')
-      @props = YAML.load_file(@props_yaml)
       set_defaults
-      load_server_settings
       load_properties
+      load_server_settings
       load_consumers
       load_interfaces
       load_handlers
@@ -101,6 +100,13 @@ module Axial
       while (@running)
         @connection_handler.loop
       end
+    end
+
+    def reload_addons()
+      unload_addons
+      props             = YAML.load_file(@props_yaml)
+      @addon_list       = @props['addons'] || []
+      load_addons
     end
 
     def load_addons()
@@ -182,6 +188,7 @@ module Axial
     private :load_server_settings
 
     def load_properties()
+      @props              = YAML.load_file(@props_yaml)
       @addon_list         = @props['addons']             || []
       @autojoin_channels  = @props['channels']           || []
       @nick               = @props['bot']['nick']        || 'unnamed'

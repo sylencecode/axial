@@ -65,9 +65,13 @@ module Axial
         tcp_listener = TCPServer.new(@port)
         loop do
           begin
+            Signal.trap('INT') do
+              stop_master_thread
+              exit 0
+            end
             LOGGER.debug("listener accepting more connections on port #{@port}")
             listener = OpenSSL::SSL::SSLServer::new(tcp_listener, context)
-            client = listener.accept
+            client = listener.accept.nonblock
             handler = Axial::Axnet::ClientHandler.new(client)
             thread = Thread.new do
               handler.ssl_handshake
@@ -87,12 +91,12 @@ module Axial
       end
 
       def start_master_thread()
-        Thread.new do
-          while (true)
-            broadcast(YAML.dump(@bot.user_list))
-            sleep 5
-            end
-        end
+#        Thread.new do
+#          while (true)
+#            broadcast(YAML.dump(@bot.user_list))
+#            sleep 5
+#          end
+#        end
         @running = true
         @master_thread = Thread.new do
           while (@running)
@@ -103,8 +107,8 @@ module Axial
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
-            ensure
               sleep 5
+              retry
             end
           end
         end
