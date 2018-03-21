@@ -75,7 +75,7 @@ module Axial
         channel = @server_interface.channel_list.get(channel_name)
         nick_name = uhost.split('!').first
         if (nick_name == @bot.real_nick)
-          handle_self_part(channel_namee, reason)
+          handle_self_part(channel_name, reason)
         else
           nick = channel.nick_list.get(nick_name)
           handle_part(channel, nick, reason)
@@ -130,7 +130,7 @@ module Axial
       end
 
       def handle_self_join(channel_name)
-        LOGGER.info("joined channel #{channel.name}")
+        LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
       end
