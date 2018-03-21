@@ -164,6 +164,39 @@ module Axial
         LOGGER.debug("server sets #{channel.name} mode: #{mode}")
       end
 
+      def dispatch_nick_change(uhost, new_nick_name)
+        if (uhost == @server_interface.myself.uhost)
+          handle_self_nick(new_nick_name)
+        else
+          old_nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+          handle_nick_change(old_nick, new_nick_name)
+        end
+      end
+
+      def handle_self_nick(new_nick)
+        LOGGER.debug("I changed nicks: #{new_nick}")
+      end
+
+      def handle_nick_change(old_nick, new_nick_name)
+        new_nick = nil
+        @server_interface.channel_list.all_channels.each do |channel|
+          if (!channel.synced?)
+            LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
+            return
+          end
+          if (channel.nick_list.include?(old_nick))
+            if (new_nick.nil?)
+              new_nick = channel.nick_list.rename(old_nick, new_nick_name)
+              puts new_nick.name
+            else
+              channel.nick_list.rename(old_nick, new_nick_name)
+            end
+          end
+        end
+        LOGGER.debug("#{old_nick.name} changed nick to #{new_nick.name}")
+        @bot.bind_handler.dispatch_nick_change_binds(old_nick, new_nick)
+      end
+
       def handle_mode(nick, channel, raw_mode_string)
         mode = IRCTypes::Mode.new
         mode_string = raw_mode_string.strip
@@ -248,51 +281,9 @@ module Axial
         case text
           when /^\x01ACTION/i
             handle_channel_action(channel, nick, text)
-          when /^\?about$/i, /^\?help$/i
-            send_help(channel)
-          when /^\?reload$/i
-            reload_addons(channel, nick)
           else
             LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
             @bot.bind_handler.dispatch_channel_binds(channel, nick, text)
-        end
-      end
-
-      def send_help(channel)
-        channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
-        if (@bot.addons.count > 0)
-          @bot.addons.each do |addon|
-            channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel && listener[:command].is_a?(String)}
-            listener_string = ""
-            if (channel_listeners.count > 0)
-              commands = channel_listeners.collect{|foo| foo[:command]}
-              listener_string = " (" + commands.join(', ') + ")"
-            end
-            channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{listener_string}")
-          end
-        end
-      end
-
-      def reload_addons(channel, nick)
-        user_model = Models::User.get_from_nick_object(nick)
-        if (user_model.nil? || !user_model.manager?)
-          LOGGER.warn("#{nick.uhost} tried to reload addons!")
-          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-          return
-        elsif (@bot.addons.count == 0)
-          channel.message("#{nick.name}: No addons loaded...")
-          return
-        end
-
-        LOGGER.info("#{nick.uhost} reloaded addons.")
-        channel.message("unloading addons: #{@bot.addons.collect{|addon| addon[:name]}.join(', ')}")
-        @bot.unload_addons
-        @bot.load_addons
-        channel.message("loaded addons: #{@bot.addons.collect{|addon| addon[:name]}.join(', ')}")
-      rescue Exception => ex
-        LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
         end
       end
 

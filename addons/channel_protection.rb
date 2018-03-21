@@ -27,7 +27,12 @@ module Axial
         on_mode @enforce_modes, :handle_enforce_modes
         on_mode @op_deop_modes, :handle_op_deop
         on_mode @ban_modes,     :handle_ban_unban
+        on_nick_change          :handle_nick_change
         #on_mode :all, :handle_all
+      end
+
+      def handle_nick_change(old_nick, new_nick)
+        LOGGER.debug("#{self.class} received a nick change from #{old_nick.name} to #{new_nick.name}")
       end
 
       def handle_ban_unban(channel, nick, mode)

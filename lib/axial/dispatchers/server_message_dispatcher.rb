@@ -17,6 +17,9 @@ module Axial
           when Channel::MODE
             uhost, channel_name, mode = Regexp.last_match.captures
             @bot.channel_handler.dispatch_mode(uhost, channel_name, mode)
+          when Channel::NICK_CHANGE
+            uhost, new_nick = Regexp.last_match.captures
+            @bot.channel_handler.dispatch_nick_change(uhost, new_nick)
           when Channel::NOT_OPERATOR
             LOGGER.warn("I tried to do something to #{Regexp.last_match[1]} but I'm not opped.")
           when Channel::WHO_LIST_END

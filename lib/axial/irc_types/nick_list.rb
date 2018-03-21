@@ -35,6 +35,13 @@ module Axial
         end
 
         @nick_list[new_key] = @nick_list.delete(old_key)
+
+        if (new_nick_or_name.is_a?(IRCTypes::Nick))
+          @nick_list[new_key].name = new_nick_or_name.name
+        elsif (new_nick_or_name.is_a?(String))
+          @nick_list[new_key].name = new_nick_or_name
+        end
+
         return @nick_list[new_key]
       end
 
@@ -43,6 +50,7 @@ module Axial
           raise(NickListError, "attempted to create a duplicate of nick '#{nick.name}'")
         end
         @nick_list[nick.name.downcase] = nick
+        return nick
       end
 
       def create_from_uhost(uhost)
@@ -58,7 +66,7 @@ module Axial
         return @nick_list.values
       end
 
-      def has_nick?(channel_or_name)
+      def include?(nick_or_name)
         key = nil
         if (nick_or_name.is_a?(IRCTypes::Nick))
           key = nick_or_name.name.downcase
@@ -84,12 +92,15 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
-        
+
+        deleted_nick = @nick_list[key]
+
         if (!key.nil? && @nick_list.has_key?(key))
           @nick_list.delete(key)
         else
           raise(NickListError, "attempted to delete non-existent nick '#{key}")
         end
+        return deleted_nick
       end
 
       def delete_silent(nick_or_name)
@@ -100,11 +111,14 @@ module Axial
           key = nick_or_name.downcase
         end
 
+        deleted_nick = @nick_list[key]
+
         if (!key.nil? && @nick_list.has_key?(key))
           LOGGER.debug("removing #{key} from nicklist")
           @nick_list.delete(key)
           puts @nick_list.keys.inspect
         end
+        return deleted_nick
       end
 
       def clear()

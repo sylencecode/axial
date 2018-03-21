@@ -22,6 +22,11 @@ module Axial
       @last = Time.now - @throttle_secs
     end
 
+    def on_nick_change(method)
+      LOGGER.debug("Nick changes will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :nick_change, method: method)
+    end
+
     def on_mode(*in_args)
       if (in_args.nil? || in_args.count < 2)
         raise(AddonError, "#{self.class}.on_mode called without at least one mode and a callback method")

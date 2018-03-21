@@ -4,6 +4,7 @@ module Axial
       module Channel
         JOIN              = /^:{0,1}(\S+) JOIN :{0,1}(\S+)/
         MODE              = /^:{0,1}(\S+) MODE (#\S+)\s+(.*)/
+        NICK_CHANGE       = /^:{0,1}(\S+) NICK :{0,1}(\S+)/
         QUIT              = /^:{0,1}(\S+) QUIT (\S+)\s+:{0,1}(.*)/
         QUIT_NO_REASON    = /^:{0,1}(\S+) QUIT (\S+)/
         PART              = /^:{0,1}(\S+) PART (\S+)\s+:{0,1}(.*)/
