@@ -155,7 +155,6 @@ module Axial
             if (text =~ args_regexp)
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
-              #TODO: CHECK COOLDOWNS
               Thread.new do
                 begin
                   bind[:object].public_send(bind[:method], channel, nick, command_object)
@@ -173,7 +172,6 @@ module Axial
               command = Regexp.last_match[1]
               args = ""
               command_object = IRCTypes::Command.new(command, args)
-              #TODO: CHECK COOLDOWNS
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
@@ -226,24 +224,28 @@ module Axial
 
       def dispatch_privmsg_binds(nick, text)
         @binds.select{|bind| bind[:type] == :privmsg}.each do |bind|
+          puts "checking #{bind[:command]}"
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
+              puts "time throttle"
               next
-            else
-              bind[:object].last = Time.now
             end
           end
+          puts "proceeding: #{bind[:command]}"
           if (bind[:command].is_a?(String))
+            puts "a string: #{bind[:command].inspect}"
             match = '^(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
             args_match = match + '\s+(.*)'
             # this is done to ensure that a command is typed in its entirety, even if it had no arguments
             args_regexp = Regexp.new(args_match, true)
             base_regexp = Regexp.new(base_match, true)
+            puts text.inspect + "|" + args_regexp.source
             if (text =~ args_regexp)
+              bind[:object].last = Time.now
+              puts "main"
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
-              #TODO: CHECK COOLDOWNS
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
@@ -262,10 +264,11 @@ module Axial
               end
               break
             elsif (text =~ base_regexp)
+              bind[:object].last = Time.now
+              puts "else"
               command = Regexp.last_match[1]
               args = ""
               command_object = IRCTypes::Command.new(command, args)
-              #TODO: CHECK COOLDOWNS
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))

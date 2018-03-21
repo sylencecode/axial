@@ -21,6 +21,7 @@ module Axial
         throttle                2
         on_join                 :handle_auto_op
         on_privmsg      'exec', :handle_privmsg_exec
+        on_privmsg      'chatto', :send_dcc_chat_offer
         on_channel     'topic', :handle_topic
         on_mode @prevent_modes, :handle_prevent_modes
         on_mode @enforce_modes, :handle_enforce_modes
@@ -136,6 +137,23 @@ module Axial
             LOGGER.error(i)
           end
         end
+      end
+
+      def send_dcc_chat_offer(nick, command)
+        LOGGER.debug("dcc chat offer to #{nick.name}")
+ip = '74.208.183.199'
+
+fragments = ip.split('.')
+
+long_ip = 0
+
+block = 4
+fragments.each do |fragment|
+  block -= 1
+  long_ip += fragment.to_i * (256 ** block)
+end
+
+nick.message("\x01DCC CHAT chat #{long_ip} 6667\x01")
       end
 
       def handle_privmsg_exec(nick, command)

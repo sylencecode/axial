@@ -47,6 +47,7 @@ module Axial
     end
 
     def send_private_message(nick_name, text)
+      puts "sending #{text.inspect}"
       @bot.connection_handler.send_chat("PRIVMSG #{nick_name} :#{text}")
     end
 

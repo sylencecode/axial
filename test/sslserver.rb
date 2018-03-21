@@ -62,12 +62,43 @@ loop do
 #    big_array.push(little_array)
 #  end
 #  puts "objects: #{big_array.count}"
+
+module Axial
+  module BotNet
+    class User
+      attr_accessor :name, :pretty_name, :masks, :role, :id
+      def initialize()
+        @masks = []
+      end
+
+      def self.from_model(user_model)
+        user = new
+        user.masks = []
+        user.name = user_model.name
+        user.pretty_name = user_model.pretty_name
+        user_model.masks.each do |mask|
+          user.masks.push(mask.mask)
+        end
+        user.role = user_model.role
+        user.id = user_model.id
+        return user
+      end
+    end
+
+    class BanList
+    end
+  end
+end
+users = []
   Axial::Models::User.each do |user|
-    raw_yml = YAML.dump(user.masks)
+    netuser = Axial::BotNet::User.from_model(user)
+    puts netuser.inspect
+    users.push(netuser)
+  end
+    raw_yml = YAML.dump(users)
     packet = raw_yml.gsub(/\n/, "\0")
     client.puts(packet)
     puts "end stream"
-  end
   rescue OpenSSL::SSL::SSLError => ex
     puts "#{ex.class}: #{ex.message}"
     puts "#{ex.inspect}"
