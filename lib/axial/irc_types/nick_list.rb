@@ -101,7 +101,9 @@ module Axial
         end
 
         if (!key.nil? && @nick_list.has_key?(key))
+          LOGGER.debug("removing #{key} from nicklist")
           @nick_list.delete(key)
+          puts @nick_list.keys.inspect
         end
       end
 
