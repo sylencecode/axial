@@ -13,9 +13,9 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?help',   :help
-        on_channel '?about',  :about
-        on_channel '?reload', :reload
+        on_channel '?help',   :send_help
+        on_channel '?about',  :send_help
+        on_channel '?reload', :reload_addons
       end
 
       def send_help(channel, nick, command)
