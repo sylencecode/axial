@@ -4,7 +4,7 @@ require 'axial/api/wunderground/q'
 
 module Axial
   module Addons
-    class Weather < Axial::Addon
+    class Base < Axial::Addon
 
       def initialize(server_interface)
         super
