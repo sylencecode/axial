@@ -106,7 +106,7 @@ module Axial
       end
 
       def clear()
-        @channel_list.clear
+        @server_interface.channel_list.clear
       end
     end
   end

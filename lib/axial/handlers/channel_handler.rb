@@ -13,7 +13,6 @@ module Axial
       def initialize(bot)
         @bot = bot
         @server_interface = @bot.server_interface
-        @channel_list = @server_interface.channel_list
       end
 
       def handle_who_list_entry(nick_name, uhost, channel_name, mode)
@@ -21,7 +20,7 @@ module Axial
           @server_interface.myself = IRCTypes::Nick.from_uhost(@server_interface, uhost)
         end
 
-        channel = @channel_list.get(channel_name)
+        channel = @server_interface.channel_list.get(channel_name)
         nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
 
         if (mode.include?('@'))
@@ -33,7 +32,7 @@ module Axial
       end
 
       def handle_who_list_end(channel_name)
-        channel = @channel_list.get(channel_name)
+        channel = @server_interface.channel_list.get(channel_name)
         channel.sync_complete
         @bot.bind_handler.dispatch_channel_sync_binds(channel)
       end
@@ -53,7 +52,7 @@ module Axial
         else
           LOGGER.debug("I quit IRC. (#{reason})")
         end
-        @channel_list.clear
+        @server_interface.channel_list.clear
       end
 
       def handle_quit(nick, reason)
@@ -63,7 +62,7 @@ module Axial
           LOGGER.debug("#{nick.name} quit IRC (#{reason})")
         end
         @bot.bind_handler.dispatch_quit_binds(nick, reason)
-        @channel_list.all_channels do |channel|
+        @server_interface.channel_list.all_channels do |channel|
           if (!channel.synced?)
             LOGGER.debug("rejected quit on #{channel.name} because it is not synced yet.")
             return
@@ -73,7 +72,7 @@ module Axial
       end
 
       def dispatch_part(uhost, channel_name, reason)
-        channel = @channel_list.get(channel_name)
+        channel = @server_interface.channel_list.get(channel_name)
         nick_name = uhost.split('!').first
         if (nick_name == @bot.real_nick)
           handle_self_part(channel_namee, reason)
@@ -103,7 +102,7 @@ module Axial
         else
           LOGGER.debug("I left #{channel.name} (#{reason})")
         end
-        @channel_list.delete(channel)
+        @server_interface.channel_list.delete(channel)
       end
 
       def dispatch_join(uhost, channel_name)
@@ -114,7 +113,7 @@ module Axial
           end
           handle_self_join(channel_name)
         else
-          channel = @channel_list.get(channel_name)
+          channel = @server_interface.channel_list.get(channel_name)
           nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           handle_join(channel, nick)
         end
@@ -131,13 +130,13 @@ module Axial
       end
 
       def handle_self_join(channel_name)
-        logger.INFO("joined channel #{channel.name}"
-        channel = @channel_list.create(channel_name)
+        LOGGER.info("joined channel #{channel.name}")
+        channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
       end
 
       def dispatch_mode(uhost, channel_name, mode)
-        channel = @channel_list.get(channel_name)
+        channel = @server_interface.channel_list.get(channel_name)
         if (uhost == @bot.server.real_address)
           handle_server_mode(channel, mode)
         else
@@ -147,7 +146,7 @@ module Axial
             nick_name = uhost.split('!').first
             nick = channel.nick_list.get(nick_name)
           end
-          channel = @channel_list.get(channel_name)
+          channel = @server_interface.channel_list.get(channel_name)
           handle_mode(nick, channel, mode)
         end
       end

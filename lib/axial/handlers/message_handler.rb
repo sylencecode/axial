@@ -6,7 +6,7 @@ module Axial
       def initialize(bot)
         @bot = bot
         @server_interface = @bot.server_interface
-        @channel_list = @server_interface.channel_list
+        @server_interface.channel_list = @server_interface.channel_list
       end
 
       def dispatch_notice(uhost, dest, text)
@@ -17,7 +17,7 @@ module Axial
           @bot.server_handler.handle_server_notice(text)
         elsif (dest.start_with?("#"))
           nick_name = uhost.split('!').first
-          channel = @channel_list.get(dest)
+          channel = @server_interface.channel_list.get(dest)
           nick = channel.nick_list.get(nick_name)
           @bot.channel_handler.handle_channel_notice(channel, nick, text)
         else
@@ -29,7 +29,7 @@ module Axial
       def dispatch_privmsg(uhost, dest, text)
         if (dest.start_with?("#"))
           nick_name = uhost.split('!').first
-          channel = @channel_list.get(dest)
+          channel = @server_interface.channel_list.get(dest)
           nick = channel.nick_list.get(nick_name)
           @bot.channel_handler.handle_channel_message(channel, nick, text)
         else

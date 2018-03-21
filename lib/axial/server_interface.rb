@@ -12,7 +12,7 @@ module Axial
 
     def initialize(bot)
       @bot = bot
-      @channel_list = IRCTypes::ChannelList.new(self)
+      @server_interface.channel_list = IRCTypes::ChannelList.new(self)
       @myself = IRCTypes::Nick.new(self)
     end
 
