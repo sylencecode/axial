@@ -6,7 +6,6 @@ module Axial
       def initialize(bot)
         @bot = bot
         @server_interface = @bot.server_interface
-        @server_interface.channel_list = @server_interface.channel_list
       end
 
       def dispatch_notice(uhost, dest, text)
