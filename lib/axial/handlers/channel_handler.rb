@@ -131,6 +131,7 @@ module Axial
       end
 
       def handle_self_join(channel_name)
+        logger.INFO("joined channel #{channel.name}"
         channel = @channel_list.create(channel_name)
         channel.sync_begin
       end
@@ -160,7 +161,7 @@ module Axial
         mode_string = raw_mode_string.strip
         mode.parse_string(mode_string)
 
-        if (mode.ops.any?)
+        if (mode.ops.any? && channel.synced?)
           mode.ops.each do |nick_name|
             if (nick_name == @server_interface.myself.name)
               channel.opped = true
@@ -173,7 +174,7 @@ module Axial
           end
         end
 
-        if (mode.deops.any?)
+        if (mode.deops.any? && channel.synced?)
           mode.deops.each do |nick_name|
             if (nick_name == @server_interface.myself.name)
               channel.opped = false
@@ -186,7 +187,7 @@ module Axial
           end
         end
 
-        if (mode.voices.any?)
+        if (mode.voices.any? && channel.synced?)
           mode.voices.each do |nick_name|
             if (nick_name == @server_interface.myself.name)
               channel.voiced = true
@@ -199,7 +200,7 @@ module Axial
           end
         end
 
-        if (mode.devoices.any?)
+        if (mode.devoices.any? && channel.synced?)
           mode.devoices.each do |nick_name|
             if (nick_name == @server_interface.myself.name)
               channel.voiced = false
