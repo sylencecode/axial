@@ -21,7 +21,6 @@ module Axial
                 end
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -46,7 +45,6 @@ module Axial
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -71,7 +69,30 @@ module Axial
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def dispatch_startup_binds()
+        @binds.select{|bind| bind[:type] == :startup}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method])
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -96,7 +117,6 @@ module Axial
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -121,7 +141,6 @@ module Axial
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -147,7 +166,6 @@ module Axial
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -185,8 +203,6 @@ module Axial
                 begin
                   bind[:object].public_send(bind[:method], channel, nick, command_object)
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)
@@ -206,8 +222,6 @@ module Axial
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)
@@ -226,8 +240,6 @@ module Axial
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)
@@ -280,8 +292,6 @@ module Axial
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  nick.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)
@@ -303,8 +313,6 @@ module Axial
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  nick.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)
@@ -323,8 +331,6 @@ module Axial
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
                 rescue Exception => ex
-                  # TODO: move this to an addon handler
-                  nick.message("#{self.class} error: #{ex.class}: #{ex.message}")
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
                     LOGGER.error(i)

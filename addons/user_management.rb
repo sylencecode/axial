@@ -1,6 +1,7 @@
 require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/mask'
+require 'axial/axnet/user'
 
 module Axial
   module Addons
@@ -18,6 +19,16 @@ module Axial
         on_channel '?getmasks', :get_masks
         on_channel '?setrole',  :set_role
         on_channel_sync         :handle_channel_sync
+        on_startup              :populate_bot_user_list
+      end
+
+      def populate_bot_user_list()
+        user_list = Axnet::UserList.new
+        Models::User.each do |user_model|
+          user = Axnet::User.from_model(user_model)
+          user_list.add(user)
+        end
+        @bot.axnet_monitor.update_user_list(user_list)
       end
 
       def handle_channel_sync(channel)

@@ -18,11 +18,11 @@ require 'string/underscore'
 
 module Axial
   class Bot
-    attr_reader :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
-                :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                :user_list
+    attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
+                  :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
+                  :axnet_monitor
 
-    attr_accessor :real_nick
+    attr_accessor :real_nick, :user_list
     @class_instance = nil
     @class_props_yaml = ''
     @server = nil
@@ -56,6 +56,11 @@ module Axial
       load_dispatchers
       load_axnet
       load_addons
+      notify_startup
+    end
+
+    def notify_startup()
+      @bind_handler.dispatch_startup_binds
     end
 
     def load_consumers

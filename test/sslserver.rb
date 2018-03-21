@@ -15,6 +15,9 @@ module Axial
   end
 end
 
+class SSLCertError < Exception
+end
+
 context = OpenSSL::SSL::SSLContext::new
 #context.verify_mode = OpenSSL::SSL::VERIFY_PEER
 context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT

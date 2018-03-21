@@ -1,6 +1,4 @@
 require 'axial/addon'
-require 'axial/api/geo_names/search_json'
-require 'axial/api/wunderground/q'
 
 module Axial
   module Addons

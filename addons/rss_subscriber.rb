@@ -29,6 +29,7 @@ module Axial
       end
 
       def stop_ingest_thread()
+        LOGGER.debug("stopping ingest thread")
         @ingesting = false
         if (!@ingest_thread.nil?)
           @ingest_thread.kill
@@ -36,6 +37,7 @@ module Axial
       end
 
       def start_ingest_thread()
+        LOGGER.debug("starting ingest thread")
         @ingesting = true
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
         @ingest_thread = Thread.new do

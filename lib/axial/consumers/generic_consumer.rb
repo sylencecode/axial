@@ -35,7 +35,7 @@ module Axial
         raise(RuntimeError, "No 'consume' method defined for #{self.class}")
       end
 
-      def stop_consumer()
+      def stop()
         @queue.clear
         if (!@thread.nil?)
           @thread.kill

@@ -48,7 +48,7 @@ module Axial
 
       def dispatch_quit(uhost, reason)
         nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
-        if (nick.name == @bot.real_nick)
+        if (nick == @server_interface.myself)
           handle_self_quit(reason)
         else
           handle_quit(nick, reason)
@@ -83,7 +83,7 @@ module Axial
       def dispatch_part(uhost, channel_name, reason)
         channel = @server_interface.channel_list.get(channel_name)
         nick_name = uhost.split('!').first
-        if (nick_name == @bot.real_nick)
+        if (uhost == @server_interface.myself.uhost)
           handle_self_part(channel_name, reason)
         else
           nick = channel.nick_list.get(nick_name)
@@ -116,10 +116,13 @@ module Axial
 
       def dispatch_join(uhost, channel_name)
         nick_name = uhost.split('!').first
-        if (nick_name == @bot.real_nick)
-          if (nick_name == @bot.real_nick && @server_interface.myself.uhost.empty?)
+        if (@server_interface.myself.uhost.empty?)
+          if (nick_name == @bot.real_nick)
             @server_interface.myself = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           end
+        end
+
+        if (uhost == @server_interface.myself.uhost)
           handle_self_join(channel_name)
         else
           channel = @server_interface.channel_list.get(channel_name)
