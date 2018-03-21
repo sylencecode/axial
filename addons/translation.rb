@@ -4,7 +4,7 @@ require 'axial/api/yandex/v1_5/tr_json'
 module Axial
   module Addons
     class Translation < Axial::Addon
-      def initialize(server_interface)
+      def initialize(bot)
         super
 
         @name    = 'translation by yandex'

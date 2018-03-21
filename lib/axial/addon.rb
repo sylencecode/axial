@@ -8,13 +8,14 @@ module Axial
     attr_reader     :listeners, :name, :version, :author, :throttle_secs
     attr_accessor   :last
 
-    def initialize(server_interface)
+    def initialize(bot)
       @listeners = []
       @name             = 'unnamed addon'
       @author           = 'unknown author'
       @version          = 'uknown version'
       @throttle_secs    = 0
-      @server_interface = server_interface
+      @bot              = bot
+      @server_interface = @bot.server_interface
     end
 
     def throttle(seconds)

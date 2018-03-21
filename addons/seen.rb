@@ -5,7 +5,7 @@ require 'axial/models/mask'
 module Axial
   module Addons
     class Seen < Axial::Addon
-      def initialize(server_interface)
+      def initialize(bot)
         super
 
         @name    = 'last seen'

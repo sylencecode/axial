@@ -44,6 +44,14 @@ module Axial
         end
       end
 
+      def get_silent(channel_name)
+        channel = nil
+        if (@channel_list.has_key?(channel_name.downcase))
+          channel = @channel_list[channel_name.downcase]
+        end
+        return channel
+      end
+
       def delete(channel_or_name)
         key = nil
         if (channel_or_name.is_a?(IRCTypes::Channel))

@@ -12,17 +12,21 @@ require 'axial/handlers/bind_handler'
 require 'axial/handlers/patterns'
 require 'axial/dispatchers/server_message_dispatcher'
 require 'axial/server_interface'
+require 'axial/axnet/user_list'
+require 'axial/axnet/axnet_monitor'
 require 'string/underscore'
 
 module Axial
   class Bot
     attr_reader :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
-                :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler
+                :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
+                :user_list
 
     attr_accessor :real_nick
     @class_instance = nil
     @class_props_yaml = ''
     @server = nil
+    @user_list = Axnet::UserList.new
 
     def self.create(props_yaml)
       if (@class_instance.nil?)
@@ -50,6 +54,7 @@ module Axial
       load_interfaces
       load_handlers
       load_dispatchers
+      load_axnet
       load_addons
     end
 
@@ -66,7 +71,11 @@ module Axial
       @message_handler            = Handlers::MessageHandler.new(self)
       @server_handler             = Handlers::ServerHandler.new(self)
       @channel_handler            = Handlers::ChannelHandler.new(self)
-      @bind_handler               = Handlers::BindHandler.new(@binds)
+      @bind_handler               = Handlers::BindHandler.new(self)
+    end
+
+    def load_axnet()
+      @axnet_monitor              = Axnet::AxnetMonitor.new(self)
     end
 
     def load_dispatchers()
@@ -95,7 +104,7 @@ module Axial
       else
         @addon_list.each do |addon|
           load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
-          addon_object = Object.const_get("Axial::Addons::#{addon}").new(server_interface)
+          addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
           addon_object.listeners.each do |listener|
             if (listener[:type] == :mode)

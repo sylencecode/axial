@@ -5,7 +5,7 @@ require 'axial/api/google/custom_search/v1'
 module Axial
   module Addons
     class GoogleSearch < Axial::Addon
-      def initialize(server_interface)
+      def initialize(bot)
         super
 
         @name    = 'google custom search'

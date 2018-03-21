@@ -4,8 +4,9 @@ module Axial
   module Handlers
     class BindHandler
 
-      def initialize(binds)
-        @binds = binds
+      def initialize(bot)
+        @bot = bot
+        @binds = @bot.binds
       end
 
       def dispatch_mode_binds(channel, nick, mode)

@@ -6,7 +6,7 @@ require 'axial/timespan'
 module Axial
   module Addons
     class LearnerOfThings < Axial::Addon
-      def initialize(server_interface)
+      def initialize(bot)
         super
 
         @name    = 'learner of things'
