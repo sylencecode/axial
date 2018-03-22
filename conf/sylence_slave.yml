@@ -1,0 +1,15 @@
+---
+server:
+  address: sylence.org
+  port: 6667
+  ssl: false
+bot:
+  nick: k-paxial
+  real_name: k-paxial
+  user_name: k-paxial
+channels:
+  - name: '#lulz'
+    password: ''
+addons:
+  - AxnetSlave
+  - ChannelProtection

@@ -13,12 +13,15 @@ module Axial
         @method = method.to_sym
       end
 
+      def clear()
+        @queue.clear
+      end
+
       def start()
         if (!@callback_object.respond_to?(@method))
           raise(ConsumerError, "Class #{@callback_object.class} does not respond to method #{@method}")
         end
 
-        @queue.clear
         @thread = Thread.new do
           begin
             consume

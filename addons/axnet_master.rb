@@ -13,7 +13,7 @@ module Axial
         @version = '1.0.0'
 
         @master_thread  = nil
-        @connections    = []
+        @handlers       = []
         @tcp_listener   = nil
         @ssl_listener   = nil
         @running        = false
@@ -25,14 +25,25 @@ module Axial
         on_startup  :start_master_thread
         on_reload   :start_master_thread
         on_axnet    'USERLIST', :send_user_list
+        on_axnet    'OP', :op_and_repeat
       end
 
-      def send_user_list(socket, payload)
-        LOGGER.debug("user list requested from #{socket.remote_cn}")
-        user_list_yaml = YAML.dump(@bot.user_list)
-        payload = user_list_yaml.gsub(/\n/, "\0")
-        socket.send('USERLIST_RESPONSE ' + payload)
-        LOGGER.debug("send user list to #{socket.remote_cn}")
+      def op_and_repeat(handler, command)
+        if (command.args.strip =~ /(\S+)\s+(\S+)/)
+          channel_name, peer_nick_name = Regexp.last_match.captures
+          @server_interface.channel_list.all_channels.each do |channel|
+            puts channel.nick_list.inspect
+            LOGGER.debug("opping #{peer_nick_name} in #{channel.name}")
+          end
+          repeat_except(handler, "#{command.args}")
+        end
+      end
+
+      def send_user_list(handler, command)
+        LOGGER.debug("user list requested from #{handler.remote_cn}")
+        user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
+        handler.send('USERLIST_RESPONSE ' + user_list_yaml
+        LOGGER.debug("sent user list to #{socket.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -41,10 +52,10 @@ module Axial
       end
 
       def close_connections()
-        @connections.each do |conn|
+        @handlers.each do |conn|
           conn.close
         end
-        @connections = []
+        @handlers = []
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -52,9 +63,20 @@ module Axial
         end
       end
 
+      def repeat_except(exclude_handler, text)
+        LOGGER.debug("repeating to #{@handlers.count - 1} connections")
+        @handlers.each do |handler|
+          if (handler.object_id == exclude_handler.object_id)
+            next
+          else
+            handler.send(text)
+          end
+        end
+      end
+
       def broadcast(payload)
-        LOGGER.debug("broadcasting to #{@connections.count} connections")
-        @connections.each do |conn|
+        LOGGER.debug("broadcasting to #{@handlers.count} connections")
+        @handlers.each do |conn|
           conn.send(payload)
         end
       rescue Exception => ex
@@ -99,7 +121,7 @@ module Axial
             Thread.new do
               begin
                 handler.loop
-                @connections.delete(handler)
+                @handlers.delete(handler)
               rescue Exception => ex
                 LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                 ex.backtrace.each do |i|
@@ -107,7 +129,7 @@ module Axial
                 end
               end
             end
-            @connections.push(handler)
+            @handlers.push(handler)
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
             ex.backtrace.each do |i|

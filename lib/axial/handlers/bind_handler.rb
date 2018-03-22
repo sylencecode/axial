@@ -218,7 +218,7 @@ module Axial
               bind[:object].last = Time.now
               Thread.new do
                 begin
-                  bind[:object].public_send(bind[:method], socket_handler, text)
+                  bind[:object].public_send(bind[:method], socket_handler, command_object)
                 rescue Exception => ex
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
@@ -235,7 +235,7 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], socket_handler, text)
+                    bind[:object].public_send(bind[:method], socket_handler, command_object)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -254,7 +254,7 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], socket_handler, text)
+                    bind[:object].public_send(bind[:method], socket_handler, command_object)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end

@@ -11,5 +11,17 @@ channels:
   - name: '#lulz'
     password: ''
 addons:
-  - AxnetSlave
+  - AxnetMaster
+  - Base
   - ChannelProtection
+  - GoogleSearch
+  - LearnerOfThings
+  - MAGA
+  - RSSSubscriber
+  - Seen
+  - Translation
+  - UserManagement
+  - Weather
+  - WhoFrom
+  - Wikipedia
+  - YouTubeSniffer

@@ -27,13 +27,13 @@ module Axial
         on_axnet    'USERLIST_RESPONSE', :update_user_list
       end
 
-      def update_user_list(socket, payload)
-        user_list_yaml = payload.gsub(/\0/, "\n")
+      def update_user_list(handler, command)
+        user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
-        @monitor.synchronize do
-          @bot.update_user_list(new_user_list)
+        @slave_monitor.synchronize do
+          @bot.axnet_monitor.update_user_list(new_user_list)
         end
-        LOGGER.info("downloaded new userlist from #{socket.remote_cn}")
+        LOGGER.info("downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -72,6 +72,7 @@ module Axial
           server_socket = ssl_socket.connect
           @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
           LOGGER.debug("fetching userlist from #{@handler.remote_cn}")
+          @handler.clear_queue
           @handler.send('USERLIST')
           @handler.loop
         end

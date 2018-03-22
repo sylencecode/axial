@@ -32,6 +32,10 @@ module Axial
         end
       end
 
+      def clear_queue()
+        @transmit_consumer.clear
+      end
+
       def ssl_handshake()
         x509_cert = @socket.context.cert
         x509_array = x509_cert.subject.to_a
