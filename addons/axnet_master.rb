@@ -28,9 +28,11 @@ module Axial
       end
 
       def send_user_list(socket, payload)
+        LOGGER.debug("user list requested from #{socket.remote_cn}")
         user_list_yaml = YAML.dump(@bot.user_list)
         payload = user_list_yaml.gsub(/\n/, "\0")
         socket.send('USERLIST_RESPONSE ' + payload)
+        LOGGER.debug("send user list to #{socket.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

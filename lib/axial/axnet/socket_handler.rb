@@ -1,7 +1,7 @@
 module Axial
   module Axnet
     class SocketHandler
-      attr_reader :socket, :thread
+      attr_reader :socket, :thread, :remote_cn
 
       def initialize(bot, socket)
         @bot                  = bot
@@ -59,12 +59,12 @@ module Axial
       def loop()
         ssl_handshake
         @transmit_consumer.start
-        LOGGER.info("accepted axnet connection from '#{@remote_cn}' from #{@remote_address}")
+        LOGGER.info("established axnet connection with '#{@remote_cn}' (#{@remote_address})")
         while (text = @socket.gets)
           text.strip!
           @bot.bind_handler.dispatch_axnet_binds(self, text)
         end
-        LOGGER.info("closed axnet connection to '#{@remote_cn}' from #{@remote_address}")
+        LOGGER.info("closeed axnet connection with '#{@remote_cn}' (#{@remote_address})")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

@@ -19,6 +19,7 @@ module Axial
           LOGGER.info("attempting userlist update...")
           @bot.user_list = user_list
           LOGGER.info("userlist updated successfully")
+          puts @bot.user_list.inspect
         end
       end
     end
