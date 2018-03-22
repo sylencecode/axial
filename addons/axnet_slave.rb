@@ -35,6 +35,7 @@ module Axial
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
+        puts new_user_list.inspect
         @bot.axnet_monitor.update_user_list(new_user_list)
         LOGGER.info("downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex

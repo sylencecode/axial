@@ -17,6 +17,12 @@ module Axial
         return @user_list.clone
       end
 
+      def add(user)
+        if (!user.is_a?(Axnet::User))
+          raise(AxnetError, "attempted to add an object of type other than Axnet::User: #{user_list.inspect}")
+        end
+      end
+
       def reload(user_list)
         if (!user_list.is_a?(Axnet::UserList))
           raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")
