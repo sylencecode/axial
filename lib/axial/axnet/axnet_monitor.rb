@@ -8,7 +8,20 @@ module Axial
     class AxnetMonitor
       def initialize(bot)
         @bot = bot
-        @user_list_monitor = Monitor.new
+        @user_list_monitor  = Monitor.new
+        @axnet_interface    = nil
+        @axnet_method       = nil
+      end
+
+      def register_sender(object, method)
+        @axnet_interface    = object
+        @axnet_method       = method.to_sym
+      end
+
+      def send(text)
+        if (@axnet_interface.respond_to?(@axnet_method))
+          @axnet_interface.public_send(@axnet_method, text)
+        end
       end
 
       def update_user_list(user_list)

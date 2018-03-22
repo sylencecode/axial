@@ -14,10 +14,10 @@ context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_N
 context.ssl_version = :TLSv1_2
 
 begin
-tcp_socket = TCPSocket.new('localhost', 34567)
+  tcp_socket = TCPSocket.new('sylence.org', 34567)
 sslsocket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
 sslsocket.connect
-sslsocket.puts "USERLIST"
+sslsocket.puts "OP #joe joe"
 while (line = sslsocket.gets)
   raw_string = line
   yml_string = line.gsub(/\0/, "\n")

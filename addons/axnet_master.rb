@@ -22,10 +22,15 @@ module Axial
         @key            = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup  :start_master_thread
-        on_reload   :start_master_thread
-        on_axnet    'USERLIST', :send_user_list
-        on_axnet    'OP', :op_and_repeat
+        on_startup                :start_master_thread
+        on_reload                 :start_master_thread
+        on_channel '?broadcast',  :handle_channel_broadcast
+        on_axnet     'USERLIST',  :send_user_list
+        on_axnet           'OP',  :op_and_repeat
+      end
+
+      def handle_channel_broadcast(nick, channel, command)
+        @bot.axnet_monitor.send(command.args)
       end
 
       def op_and_repeat(handler, command)
@@ -145,6 +150,7 @@ module Axial
 
       def start_master_thread()
         LOGGER.debug("starting axial master thread")
+        @bot.axnet_monitor.register_interface(self, :broadcast)
         @running = true
         @master_thread = Thread.new do
           while (@running)
