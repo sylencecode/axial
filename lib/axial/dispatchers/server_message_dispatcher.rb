@@ -25,7 +25,6 @@ module Axial
           when Channel::WHO_LIST_END
             @bot.channel_handler.handle_who_list_end(Regexp.last_match[1])
           when Channel::WHO_LIST_ENTRY
-            puts text.inspect
             channel_name, user, host, server, nick, mode, junk, realname = Regexp.last_match.captures
             uhost = "#{nick}!#{user}@#{host}"
             @bot.channel_handler.handle_who_list_entry(nick, uhost, channel_name, mode)

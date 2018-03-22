@@ -49,8 +49,7 @@ module Axial
         addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
         addon_names = addon_list.collect{|addon| addon[:name]}
         channel.message("unloading addons: #{addon_names.join(', ')}")
-        @bot.unload_addons
-        @bot.load_addons
+        @bot.reload_addons
         addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
         addon_names = addon_list.collect{|addon| addon[:name]}
         channel.message("loaded addons: #{addon_names.join(', ')}")

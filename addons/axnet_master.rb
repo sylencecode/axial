@@ -1,6 +1,6 @@
 require 'yaml'
 require 'axial/addon'
-require 'axial/axnet/client_handler'
+require 'axial/axnet/socket_handler'
 
 module Axial
   module Addons
@@ -14,7 +14,8 @@ module Axial
 
         @master_thread  = nil
         @connections    = []
-        @listener       = nil
+        @tcp_listener   = nil
+        @ssl_listener   = nil
         @running        = false
         @port           = 34567
         @cacert         = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
@@ -22,6 +23,18 @@ module Axial
         @cert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
         on_startup  :start_master_thread
+        on_reload   :start_master_thread
+        on_axnet    'USERLIST', :send_user_list
+      end
+
+      def send_user_list(socket, payload)
+        yml = YAML.dump(@bot.user_list)
+        socket.send(yml)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def close_connections()
@@ -29,6 +42,11 @@ module Axial
           conn.close
         end
         @connections = []
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def broadcast(payload)
@@ -36,11 +54,17 @@ module Axial
         @connections.each do |conn|
           conn.send(payload)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def stop_master_thread()
         @running = false
         close_connections
+        @tcp_listener.shutdown
         if (!@master_thread.nil?)
           @master_thread.kill
         end
@@ -62,21 +86,23 @@ module Axial
             ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
         ]
 
-        tcp_listener = TCPServer.new(@port)
-        loop do
+        @tcp_listener = TCPServer.new(@port)
+        while (@running)
           begin
-            Signal.trap('INT') do
-              stop_master_thread
-              exit 0
-            end
             LOGGER.debug("listener accepting more connections on port #{@port}")
-            listener = OpenSSL::SSL::SSLServer::new(tcp_listener, context)
-            client = listener.accept.nonblock
-            handler = Axial::Axnet::ClientHandler.new(client)
-            thread = Thread.new do
-              handler.ssl_handshake
-              handler.loop
-              @connections.delete(handler)
+            @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
+            client_socket = @ssl_listener.accept
+            handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
+            Thread.new do
+              begin
+                handler.loop
+                @connections.delete(handler)
+              rescue Exception => ex
+                LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                ex.backtrace.each do |i|
+                  LOGGER.error(i)
+                end
+              end
             end
             @connections.push(handler)
           rescue Exception => ex
@@ -88,15 +114,13 @@ module Axial
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def start_master_thread()
-#        Thread.new do
-#          while (true)
-#            broadcast(YAML.dump(@bot.user_list))
-#            sleep 5
-#          end
-#        end
+        LOGGER.debug("starting axial master thread")
         @running = true
         @master_thread = Thread.new do
           while (@running)
@@ -107,8 +131,6 @@ module Axial
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
-              sleep 5
-              retry
             end
           end
         end
@@ -116,7 +138,7 @@ module Axial
 
       def before_reload()
         super
-        LOGGER.info("#{self.class}: shutting down connection to master")
+        LOGGER.info("#{self.class}: shutting down axnet master listener")
         stop_master_thread
       end
     end

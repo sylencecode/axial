@@ -23,6 +23,7 @@ module Axial
         on_channel '?news', :handle_rss_command
         on_channel '?rss',  :handle_rss_command
         on_startup  :start_ingest_thread
+        on_reload   :start_ingest_thread
 
         @ingest_thread = nil
         @ingesting = false

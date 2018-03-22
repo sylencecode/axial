@@ -11,6 +11,11 @@ module Axial
         while (msg = @queue.deq)
           @callback_object.public_send(@method, msg)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
     end
   end

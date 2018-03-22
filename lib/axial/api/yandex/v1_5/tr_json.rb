@@ -40,7 +40,7 @@ module Axial
             end
             return translation
           rescue RestClient::Exception => ex
-            puts "#{self.class} error: #{ex.class}: #{ex.message}"
+            LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
             return nil
           end
 
@@ -71,7 +71,7 @@ module Axial
             end
             return detected_language
           rescue RestClient::Exception => ex
-            puts "#{self.class} error: #{ex.class}: #{ex.message}"
+            LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
             return nil
           end
         end

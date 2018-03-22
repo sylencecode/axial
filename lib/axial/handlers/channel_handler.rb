@@ -190,7 +190,6 @@ module Axial
           if (channel.nick_list.include?(old_nick))
             if (new_nick.nil?)
               new_nick = channel.nick_list.rename(old_nick, new_nick_name)
-              puts new_nick.name
             else
               channel.nick_list.rename(old_nick, new_nick_name)
             end

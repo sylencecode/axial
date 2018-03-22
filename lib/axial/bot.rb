@@ -107,6 +107,7 @@ module Axial
       props             = YAML.load_file(@props_yaml)
       @addon_list       = @props['addons'] || []
       load_addons
+      @bind_handler.dispatch_reload_binds
     end
 
     def load_addons()
@@ -119,7 +120,6 @@ module Axial
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
           addon_object.listeners.each do |listener|
             if (listener[:type] == :mode)
-              puts "binding modes #{listener[:modes].inspect}"
               @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym, modes: listener[:modes])
             else
               @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)

@@ -33,6 +33,11 @@ module Axial
       @listeners.push(type: :startup, method: method)
     end
 
+    def on_reload(method)
+      LOGGER.debug("Addon reload will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :reload, method: method)
+    end
+
     def on_mode(*in_args)
       if (in_args.nil? || in_args.count < 2)
         raise(AddonError, "#{self.class}.on_mode called without at least one mode and a callback method")
@@ -71,6 +76,15 @@ module Axial
         LOGGER.debug("Channel command '#{command}' will invoke method '#{self.class}.#{method}'")
       end
       @listeners.push(type: :channel, command: command, method: method)
+    end
+
+    def on_axnet(command, method)
+      if (command.is_a?(Regexp))
+        LOGGER.debug("axnet text pattern '#{command.source}' will invoke method '#{self.class}.#{method}'")
+      else
+        LOGGER.debug("axnet command '#{command}' will invoke method '#{self.class}.#{method}'")
+      end
+      @listeners.push(type: :axnet, command: command, method: method)
     end
 
     def on_privmsg(command, method)

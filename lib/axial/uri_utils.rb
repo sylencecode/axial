@@ -72,7 +72,10 @@ module Axial
           end
           return short_url
         rescue Exception => ex
-          puts "problem: #{ex.class}: #{ex.message}"
+          LOGGER.warn("#{self.class} error: #{ex.class}: #{ex.message.inspect}")
+          ex.backtrace.each do |i|
+            LOGGER.warn(i)
+          end
           return stripped_url
         end
       end

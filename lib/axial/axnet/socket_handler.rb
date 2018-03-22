@@ -1,14 +1,17 @@
 module Axial
   module Axnet
-    class ClientHandler
-      attr_reader :client, :thread, :monitor
+    class SocketHandler
+      attr_reader :socket, :thread
 
-      def initialize(client)
-        @client               = client
-        @client.sync_close    = true
+      def initialize(bot, socket)
+        @bot                  = bot
+        @remote_cn            = 'unknown'
+        @socket               = socket
+        @socket.sync_close    = true
         @transmit_consumer    = Consumers::RawConsumer.new(self, :socket_send)
         @thread               = Thread.current
         @monitor              = Monitor.new
+        @remote_address       = @socket.to_io.peeraddr[2]
       end
 
       def send(payload)
@@ -21,7 +24,7 @@ module Axial
       end
 
       def socket_send(payload)
-        @client.puts(payload)
+        @socket.puts(payload)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -30,7 +33,7 @@ module Axial
       end
 
       def ssl_handshake()
-        x509_cert = @client.context.cert
+        x509_cert = @socket.context.cert
         x509_array = x509_cert.subject.to_a
         if (x509_array.count == 0)
           raise(AxnetError, "No subject info found in certificate: #{x509_cert.inspect}")
@@ -46,23 +49,23 @@ module Axial
           raise(AxnetError, "CN fragment appears to be corrupt: #{x509_cn_fragment.inspect}")
         end
 
-        user_cn = x509_cn_fragment[1]
-        @cn = user_cn
+        @remote_cn = x509_cn_fragment[1]
       end
 
       def close()
-        @client.sysclose
+        @socket.sysclose
         @thread.kill
       end
 
       def loop()
         ssl_handshake
         @transmit_consumer.start
-        LOGGER.info("axnet connection established to '#{@cn}'")
-        while (line = @client.gets)
-          line.strip!
-          puts line.inspect
+        LOGGER.info("accepted axnet connection from '#{@remote_cn}' from #{@remote_address}")
+        while (text = @socket.gets)
+          text.strip!
+          @bot.bind_handler.dispatch_axnet_binds(self, text)
         end
+        LOGGER.info("closed axnet connection to '#{@remote_cn}' from #{@remote_address}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -70,8 +73,7 @@ module Axial
         end
       ensure
         @transmit_consumer.stop
-        @client.sysclose
-        @thread.kill
+        @socket.sysclose
       end
     end
   end

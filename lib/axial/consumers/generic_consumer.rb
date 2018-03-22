@@ -45,6 +45,11 @@ module Axial
 
       def send(msg)
         @queue.enq(msg)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
     end
   end

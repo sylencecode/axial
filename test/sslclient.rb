@@ -17,7 +17,7 @@ begin
 tcp_socket = TCPSocket.new('localhost', 34567)
 sslsocket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
 sslsocket.connect
-sslsocket.puts "foo"
+sslsocket.puts "USERLIST"
 while (line = sslsocket.gets)
   raw_string = line
   yml_string = line.gsub(/\0/, "\n")
