@@ -27,6 +27,8 @@ module Axial
         on_channel '?broadcast',  :handle_channel_broadcast
         on_axnet     'USERLIST',  :send_user_list
         on_axnet           'OP',  :op_and_repeat
+
+        @bot.axnet_monitor.register_sender(self, :broadcast)
       end
 
       def handle_channel_broadcast(nick, channel, command)
@@ -150,7 +152,6 @@ module Axial
 
       def start_master_thread()
         LOGGER.debug("starting axial master thread")
-        @bot.axnet_monitor.register_interface(self, :broadcast)
         @running = true
         @master_thread = Thread.new do
           while (@running)
