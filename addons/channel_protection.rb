@@ -45,7 +45,7 @@ module Axial
           else
             mode.bans.each do |in_mask|
               mask = in_mask.strip
-              possible_users = @bot.UserList.get_users_from_mask(mask)
+              possible_users = @bot.user_list.get_users_from_mask(mask)
               cantban = possible_users.collect{|user| user.name}
               if (possible_users.any?)
                 channel.message("#{nick.name}: you can't ban #{cantban.join(', ')}")

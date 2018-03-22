@@ -27,6 +27,8 @@ module Axial
 
         @ingest_thread = nil
         @ingesting = false
+        #TODO: move to rss database?
+        @channel_names = [ '#lulz' ]
       end
 
       def stop_ingest_thread()
