@@ -23,12 +23,19 @@ module Axial
       end
 
       def populate_bot_user_list()
-        user_list = Axnet::UserList.new
-        Models::User.each do |user_model|
+        new_user_list = Axnet::UserList.new
+        Models::User.all.each do |user_model|
           user = Axnet::User.from_model(user_model)
-          user_list.add(user)
+          new_user_list.add(user)
         end
-        @bot.axnet_monitor.reload(user_list)
+        @bot.axnet_monitor.update_user_list(new_user_list)
+
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_channel_sync(channel)

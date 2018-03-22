@@ -23,15 +23,13 @@ module Axial
         end
       end
 
-      def update_user_list(user_list)
-        if (!user_list.is_a?(Axnet::UserList))
+      def update_user_list(new_user_list)
+        if (!new_user_list.is_a?(Axnet::UserList))
           raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")
         end
         LOGGER.info("attempting userlist update...")
-        puts @bot.user_list.inspect
-        @bot.user_list.reload(user_list)
-        puts @bot.user_list.inspect
-        LOGGER.info("userlist updated successfully")
+        @bot.user_list.reload(new_user_list)
+        LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
       end
     end
   end
