@@ -32,7 +32,6 @@ module Axial
         if (command.args.strip =~ /(\S+)\s+(\S+)/)
           channel_name, peer_nick_name = Regexp.last_match.captures
           @server_interface.channel_list.all_channels.each do |channel|
-            puts channel.nick_list.inspect
             LOGGER.debug("opping #{peer_nick_name} in #{channel.name}")
           end
           repeat_except(handler, "#{command.args}")
@@ -42,7 +41,7 @@ module Axial
       def send_user_list(handler, command)
         LOGGER.debug("user list requested from #{handler.remote_cn}")
         user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
-        handler.send('USERLIST_RESPONSE ' + user_list_yaml
+        handler.send('USERLIST_RESPONSE ' + user_list_yaml)
         LOGGER.debug("sent user list to #{socket.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
