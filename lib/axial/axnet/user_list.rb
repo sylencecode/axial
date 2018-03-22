@@ -6,15 +6,32 @@ end
 module Axial
   module Axnet
     class UserList
+      attr_reader :monitor
+
       def initialize()
-        @users = []
+        @user_list = []
+        @monitor = Monitor.new
       end
 
-      def add(user)
-        if (!user.is_a?(Axnet::User))
-          raise(UserListError, "attempted to add an object of type other than Axnet::User: #{user.inspect}")
+      def all_users()
+        return @user_list.clone
+      end
+
+      def reload(user_list)
+        if (!user_list.is_a?(Axnet::UserList))
+          raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")
         end
-        @users.push(user)
+        @monitor.synchronize do
+          @user_list.clear
+          user_list.all_users.each do |user|
+            @user_list.push(user)
+          end
+        end
+      end
+
+      def some_read_op()
+        @monitor.synchronize do
+        end
       end
     end
   end

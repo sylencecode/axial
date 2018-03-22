@@ -21,7 +21,7 @@ module Axial
         throttle                2
         on_join                 :handle_auto_op
         on_privmsg      'exec', :handle_privmsg_exec
-        on_privmsg      'chatto', :send_dcc_chat_offer
+        on_privmsg    'chatto', :send_dcc_chat_offer
         on_channel     'topic', :handle_topic
         on_mode @prevent_modes, :handle_prevent_modes
         on_mode @enforce_modes, :handle_enforce_modes

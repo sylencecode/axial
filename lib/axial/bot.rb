@@ -20,13 +20,12 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet_monitor
+                  :axnet_monitor, :user_list
 
-    attr_accessor :real_nick, :user_list
+    attr_accessor :real_nick
     @class_instance = nil
     @class_props_yaml = ''
     @server = nil
-    @user_list = Axnet::UserList.new
 
     def self.create(props_yaml)
       if (@class_instance.nil?)
@@ -80,6 +79,7 @@ module Axial
 
     def load_axnet()
       @axnet_monitor              = Axnet::AxnetMonitor.new(self)
+      @user_list = Axnet::UserList.new
     end
 
     def load_dispatchers()

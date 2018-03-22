@@ -14,7 +14,6 @@ module Axial
 
         @slave_thread     = nil
         @running          = false
-        @slave_monitor    = Monitor.new
         @port             = 34567
         @handler          = nil
         @master_address   = 'axial.sylence.org'
@@ -26,7 +25,7 @@ module Axial
         on_reload   :start_slave_thread
         on_axnet    'USERLIST_RESPONSE', :update_user_list
 
-        @bot.axnet_monitor.register_sender(self, :send)
+        @bot.axnet_monitor.register_callback(self, :send)
       end
 
       def send(text)
@@ -36,9 +35,7 @@ module Axial
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
-        @slave_monitor.synchronize do
-          @bot.axnet_monitor.update_user_list(new_user_list)
-        end
+        @bot.axnet_monitor.update_user_list(new_user_list)
         LOGGER.info("downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

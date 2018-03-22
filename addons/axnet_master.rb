@@ -28,7 +28,7 @@ module Axial
         on_axnet     'USERLIST',  :send_user_list
         on_axnet           'OP',  :op_and_repeat
 
-        @bot.axnet_monitor.register_sender(self, :broadcast)
+        @bot.axnet_monitor.register_callback(self, :broadcast)
       end
 
       def handle_channel_broadcast(nick, channel, command)

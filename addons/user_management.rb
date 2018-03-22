@@ -28,7 +28,7 @@ module Axial
           user = Axnet::User.from_model(user_model)
           user_list.add(user)
         end
-        @bot.axnet_monitor.update_user_list(user_list)
+        @bot.axnet_monitor.reload(user_list)
       end
 
       def handle_channel_sync(channel)
