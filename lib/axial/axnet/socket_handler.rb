@@ -54,7 +54,6 @@ module Axial
 
       def close()
         @socket.sysclose
-        @thread.kill
       end
 
       def loop()
@@ -73,7 +72,7 @@ module Axial
         end
       ensure
         @transmit_consumer.stop
-        @socket.sysclose
+        close
       end
     end
   end
