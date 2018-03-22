@@ -25,6 +25,12 @@ module Axial
         on_startup  :start_slave_thread
         on_reload   :start_slave_thread
         on_axnet    'USERLIST_RESPONSE', :update_user_list
+
+        @bot.axnet_monitor.register_sender(self, :send)
+      end
+
+      def send(text)
+        @handler.send(text)
       end
 
       def update_user_list(handler, command)

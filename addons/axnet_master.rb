@@ -82,8 +82,8 @@ module Axial
 
       def broadcast(payload)
         LOGGER.debug("broadcasting to #{@handlers.count} connections")
-        @handlers.each do |conn|
-          conn.send(payload)
+        @handlers.each do |handler|
+          handler.send(payload)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
