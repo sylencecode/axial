@@ -86,6 +86,7 @@ module Axial
 
       def reload_axnet(channel, nick)
         channel.message("#{nick.name} issuing orders to axnet nodes to update and reload the axial codebase.")
+        @bot.reload_axnet
         @bot.axnet_interface.send('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_addons

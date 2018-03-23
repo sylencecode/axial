@@ -16,6 +16,25 @@ module Axial
         @command_queue        = Consumers::RawConsumer.new
       end
 
+      def self.copy(bot, old_interface)
+        new_interface                     = new
+        new_interface.bot                 = bot
+        new_interface.transmitter_object  = old_interface.transmitter_object
+        new_interface.transmitter_method  = old_interface.transmitter_method
+        new_interface.command_queue       = old_interface.command_queue
+        return new_interface
+      end
+
+      def stop()
+        LOGGER.debug("axnet interface command queue stopping")
+        @command_queue.stop
+      end
+
+      def start()
+        LOGGER.debug("axnet interface command queue starting")
+        @command_queue.start
+      end
+
       def register_queue_callback()
         @command_queue.register_callback(self, :transmit_to_axnet)
       end

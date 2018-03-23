@@ -36,6 +36,7 @@ module Axial
       def reload_axnet(handler, command)
         LOGGER.info("axnet reload request from #{handler.remote_cn}.")
         @bot.git_pull
+        @bot.reload_axnet
         @bot.reload_addons
         LOGGER.info("axnet reload complete.")
       end

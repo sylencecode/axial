@@ -15,7 +15,6 @@ require 'axial/handlers/patterns'
 require 'axial/axnet/user_list'
 require 'axial/dispatchers/server_message_dispatcher'
 require 'axial/interfaces/server_interface'
-require 'axial/interfaces/axnet_interface'
 require 'string/underscore'
 
 module Axial
@@ -82,10 +81,28 @@ module Axial
     end
 
     def load_axnet()
+      Kernel.load(File.join(File.expand_path(File.join(File.dirname(__FILE__)), 'lib', 'axnet', 'axnet_interface.rb')))
       @axnet_interface              = Interfaces::AxnetInterface.new(self)
-      @user_list = Axnet::UserList.new
+      @user_list                    = Axnet::UserList.new
       @axnet_interface.register_queue_callback
-      @axnet_interface.command_queue.start
+      @axnet_interface.start
+    end
+
+    def reload_axnet()
+      @axnet_interface.stop
+      LOGGER.debug("removing class definition for #{class_name}")
+      if (Object.constants.include?(:Axial))
+        if (Axial.constants.include?(:Addons))
+          if (Axial::Addons.constants.include?(class_name.to_sym))
+            LOGGER.debug("axnet interface found")
+            Axial::Addons.send(:remove_const, class_name.to_sym)
+            LOGGER.debug("axnet interface definition deleted")
+          end
+        end
+      end
+      old_axnet_interface = @axnet_interface
+      @axnet_interface = Interfaces::AxnetInterface.copy(self, old_axnet_interface)
+      @axnet_interface.start
     end
 
     def load_dispatchers()
@@ -110,8 +127,8 @@ module Axial
 
     def reload_addons()
       unload_addons
-      props             = YAML.load_file(@props_yaml)
-      @addon_list       = @props['addons'] || []
+      props               = YAML.load_file(@props_yaml)
+      @addon_list         = props['addons'] || []
       load_addons
       @bind_handler.dispatch_reload_binds
     end
