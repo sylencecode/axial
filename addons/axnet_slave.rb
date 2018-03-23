@@ -100,7 +100,6 @@ module Axial
               LOGGER.error(i)
             end
             sleep 5
-            retry
           end
         end
       rescue Exception => ex
