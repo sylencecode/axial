@@ -21,7 +21,7 @@ module Axial
       def send(payload)
         @transmit_consumer.send(payload)
       rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} consumer enqueue error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
@@ -30,7 +30,7 @@ module Axial
       def socket_send(payload)
         @socket.puts(payload)
       rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} socket error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
@@ -74,7 +74,7 @@ module Axial
         end
         LOGGER.info("closeed axnet connection with '#{@remote_cn}' (#{@remote_address})")
       rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} loop error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
