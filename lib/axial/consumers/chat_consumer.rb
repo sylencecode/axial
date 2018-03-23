@@ -3,13 +3,13 @@ require 'axial/consumers/generic_consumer'
 module Axial
   module Consumers
     class ChatConsumer < GenericConsumer
-      def initialize(callback_object, method)
+      def initialize()
         super
       end
 
       def consume()
         while (msg = @queue.deq)
-          @callback_object.public_send(@method, msg)
+          @transmitter_object.public_send(@transmitter_method, msg)
           sleep 0.5
         end
       rescue Exception => ex

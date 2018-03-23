@@ -25,7 +25,7 @@ module Axial
         on_reload   :start_slave_thread
         on_axnet    'USERLIST_RESPONSE', :update_user_list
 
-        @bot.axnet_monitor.register_callback(self, :send)
+        @bot.axnet_interface.register_transmitter(self, :send)
       end
 
       def send(text)
@@ -35,7 +35,7 @@ module Axial
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
-        @bot.axnet_monitor.update_user_list(new_user_list)
+        @bot.axnet_interface.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

@@ -1,3 +1,5 @@
+require 'axial/consumers/raw_consumer'
+
 module Axial
   module Axnet
     class SocketHandler
@@ -8,10 +10,12 @@ module Axial
         @remote_cn            = 'unknown'
         @socket               = socket
         @socket.sync_close    = true
-        @transmit_consumer    = Consumers::RawConsumer.new(self, :socket_send)
+        @transmit_consumer    = Consumers::RawConsumer.new
         @thread               = Thread.current
         @monitor              = Monitor.new
         @remote_address       = @socket.to_io.peeraddr[2]
+
+        @transmit_consumer.register_callback(self, :socket_send)
       end
 
       def send(payload)

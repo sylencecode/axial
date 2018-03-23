@@ -3,13 +3,13 @@ require 'axial/consumers/generic_consumer'
 module Axial
   module Consumers
     class RawConsumer < GenericConsumer
-      def initialize(callback_object, method)
+      def initialize()
         super
       end
 
       def consume()
         while (msg = @queue.deq)
-          @callback_object.public_send(@method, msg)
+          @transmitter_object.public_send(@transmitter_method, msg)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

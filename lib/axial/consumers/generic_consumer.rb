@@ -6,20 +6,28 @@ module Axial
     class GenericConsumer
       attr_reader :publisher
 
-      def initialize(callback_object, method)
-        @callback_object = callback_object
-        @queue = Queue.new
-        @thread = nil
-        @method = method.to_sym
+      def initialize()
+        @transmitter_object   = nil
+        @mtransmitter_ethod   = nil
+        @queue                = Queue.new
+        @thread               = nil
       end
 
       def clear()
         @queue.clear
       end
 
+      def register_callback(callback_object, callback_method)
+        if (!callback_object.respond_to?(callback_method))
+          raise(ConsumerError, "Class #{@transmitter_object.class} does not respond to method #{@method}")
+        end
+        @transmitter_object = callback_object
+        @transmitter_method = callback_method
+      end
+
       def start()
-        if (!@callback_object.respond_to?(@method))
-          raise(ConsumerError, "Class #{@callback_object.class} does not respond to method #{@method}")
+        if (@transmitter_object.nil? || @transmitter_method.nil?)
+          raise(ConsumerError, "No callback object/method registered.")
         end
 
         @thread = Thread.new do

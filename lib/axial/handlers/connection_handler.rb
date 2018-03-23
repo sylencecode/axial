@@ -18,8 +18,10 @@ module Axial
         @server          = server
         @bot             = bot
         @send_monitor    = Monitor.new
-        @raw_consumer    = Consumers::RawConsumer.new(self, :direct_send)
-        @chat_consumer   = Consumers::ChatConsumer.new(self, :direct_send)
+        @raw_consumer    = Consumers::RawConsumer.new
+        @chat_consumer   = Consumers::ChatConsumer.new
+        @raw_consumer.register_callback(self, :direct_send)
+        @chat_consumer.register_callback(self, :direct_send)
       end
 
       def connect()

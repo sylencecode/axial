@@ -10,17 +10,17 @@ require 'axial/handlers/message_handler'
 require 'axial/handlers/server_handler'
 require 'axial/handlers/bind_handler'
 require 'axial/handlers/patterns'
-require 'axial/dispatchers/server_message_dispatcher'
-require 'axial/server_interface'
 require 'axial/axnet/user_list'
-require 'axial/axnet/axnet_monitor'
+require 'axial/dispatchers/server_message_dispatcher'
+require 'axial/interfaces/server_interface'
+require 'axial/interfaces/axnet_interface'
 require 'string/underscore'
 
 module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet_monitor, :user_list
+                  :axnet_interface, :user_list
 
     attr_accessor :real_nick
     @class_instance = nil
@@ -62,12 +62,14 @@ module Axial
     end
 
     def load_consumers
-      @server_consumer            = Consumers::RawConsumer.new(self, :receive_server_text)
+      @server_consumer            = Consumers::RawConsumer.new
       @server_consumer_monitor    = Monitor.new
+
+      @server_consumer.register_callback(self, :receive_server_text)
     end
 
     def load_interfaces()
-      @server_interface           = ServerInterface.new(self)
+      @server_interface           = Interfaces::ServerInterface.new(self)
     end
 
     def load_handlers()
@@ -78,8 +80,10 @@ module Axial
     end
 
     def load_axnet()
-      @axnet_monitor              = Axnet::AxnetMonitor.new(self)
+      @axnet_interface              = Interfaces::AxnetInterface.new(self)
       @user_list = Axnet::UserList.new
+      @axnet_interface.register_queue_callback
+      @axnet_interface.command_queue.start
     end
 
     def load_dispatchers()
