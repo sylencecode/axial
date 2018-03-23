@@ -83,21 +83,31 @@ module Axial
         ]
 
         while (@running)
-          tcp_socket = TCPSocket.new(@master_address, @port)
-          ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
-          server_socket = ssl_socket.connect
-          @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
-          LOGGER.info("retrieving userlist from axnet...")
-          @handler.clear_queue
-          @handler.send('USERLIST')
-          @handler.loop
+          begin
+            tcp_socket = TCPSocket.new(@master_address, @port)
+            ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
+            server_socket = ssl_socket.connect
+            @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
+            LOGGER.info("retrieving userlist from axnet...")
+            @handler.clear_queue
+            @handler.send('USERLIST')
+            @handler.loop
+          rescue Exception => ex
+            LOGGER.error("#{self.class} slave connection error: #{ex.class}: #{ex.message}")
+            ex.backtrace.each do |i|
+              LOGGER.error(i)
+            end
+            sleep 5
+            retry
+          end
         end
       rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} slave SSL context initialization error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
         sleep 5
+        retry
       end
 
       def start_slave_thread()
