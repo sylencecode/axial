@@ -17,8 +17,7 @@ module Axial
       end
 
       def self.copy(bot, old_interface)
-        new_interface                     = new
-        new_interface.bot                 = bot
+        new_interface                     = new(bot)
         new_interface.transmitter_object  = old_interface.transmitter_object
         new_interface.transmitter_method  = old_interface.transmitter_method
         new_interface.command_queue       = old_interface.command_queue
