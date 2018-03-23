@@ -40,7 +40,6 @@ module Axial
 
       def reload_axnet(handler, command)
         LOGGER.warn("axnet reload request from #{handler.remote_cn}.")
-        sleep 5
         @bot.git_pull
         @bot.reload_axnet
         @bot.reload_addons

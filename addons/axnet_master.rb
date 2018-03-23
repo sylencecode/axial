@@ -196,7 +196,7 @@ module Axial
             @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
             client_socket = @ssl_listener.accept
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
-            Thread.new do
+            Thread.new(handler) do |handler|
               begin
                 LOGGER.warn("entering handler loop for #{handler.id} (#{handler.remote_cn})")
                 handler.loop
