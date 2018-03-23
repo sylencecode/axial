@@ -23,13 +23,21 @@ module Axial
 
         on_startup  :start_slave_thread
         on_reload   :start_slave_thread
-        on_axnet    'USERLIST_RESPONSE', :update_user_list
+        on_axnet    'USERLIST_RESPONSE',  :update_user_list
+        on_axnet    'RELOAD_AXNET',       :reload_axnet
 
         @bot.axnet_interface.register_transmitter(self, :send)
       end
 
       def send(text)
         @handler.send(text)
+      end
+
+      def reload_axnet(handler, command)
+        LOGGER.info("axnet reload request from #{handler.remote_cn}.")
+        @bot.git_pull
+        @bot.reload_addons
+        LOGGER.info("axnet reload complete.")
       end
 
       def update_user_list(handler, command)

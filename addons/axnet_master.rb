@@ -22,17 +22,69 @@ module Axial
         @key            = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup                :start_master_thread
-        on_reload                 :start_master_thread
-        on_channel '?broadcast',  :handle_channel_broadcast
-        on_axnet     'USERLIST',  :send_user_list
-        on_axnet           'OP',  :op_and_repeat
+        on_startup                  :start_master_thread
+        on_reload                   :start_master_thread
+        on_channel  '?broadcast',   :handle_channel_broadcast
+        on_channel      '?axnet',   :reload_axnet
+        on_axnet     'USERLIST',    :send_user_list
+        on_axnet           'OP',    :op_and_repeat
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
       end
 
       def handle_channel_broadcast(nick, channel, command)
         @bot.axnet_interface.send(command.args)
+      end
+
+      def send_help(channel, nick)
+        channel.message("#{nick.name}: try ?axnet reload, maybe?")
+      end
+
+      def handle_axnet_command(channel, nick, command)
+        begin
+          user_model = Models::User.get_from_nick_object(nick)
+          if (user_model.nil? || !user_model.director?)
+            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+            return
+          end
+
+          if (command.args.strip.empty?)
+            send_help(channel, nick)
+            return
+          end
+
+          case (command.args.strip)
+            when /^list$/i, /^list\s+/i
+              list_axnet_connections
+            when /^reload$/i, /^stop\s+/i
+              reload_axnet(channel, nick)
+              return
+            else
+              send_help(channel, nick)
+              return
+          end
+        rescue Exception => ex
+          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
+      end
+
+      def list_axnet_connections(channel, nick)
+        bots = []
+        @handlers.each do |handler|
+          bots.push(handler.remote_cn)
+        end
+        @channel.message("connected axnet nodes: #{bots.join(', ')}")
+      end
+
+      def reload_axnet(channel, nick)
+        channel.message("#{nick.name} issuing orders to axnet nodes to update and reload the axial codebase.")
+        @bot.axnet_interface.send('RELOAD_AXNET')
+        @bot.git_pull
+        @bot.reload_addons
       end
 
       def op_and_repeat(handler, command)

@@ -80,7 +80,7 @@ module Axial
         response_mode = IRCTypes::Mode.new
         if (mode.ops.any?)
           if (nick == @server_interface.myself)
-            channel.message("I opped #{mode.ops.inspect}")
+            LOGGER.debug("I opped #{mode.ops.inspect}")
           else
             mode.ops.each do |op|
               if (op == @server_interface.myself.name)
@@ -88,7 +88,8 @@ module Axial
               else
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                if (possible_user.nil? || !possible_user.op?)
+                paranoid = false
+                if (paranoid && possible_user.nil? || !possible_user.op?)
                   response_mode.deop(subject_nick.name)
                 end
               end
@@ -98,7 +99,7 @@ module Axial
 
         if (mode.deops.any?)
           if (nick == @server_interface.myself)
-            channel.message("I deopped #{mode.ops.inspect}")
+            LOGGER.debug("I deopped #{mode.deops.inspect}")
           else
             mode.deops.each do |deop|
               if (deop == @server_interface.myself.name)
