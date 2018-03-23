@@ -105,7 +105,6 @@ module Axial
       old_axnet_interface = @axnet_interface
       @axnet_interface = Interfaces::AxnetInterface.copy(self, old_axnet_interface)
       @axnet_interface.start
-      reload_addons
     end
 
     def load_dispatchers()
