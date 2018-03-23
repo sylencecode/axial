@@ -87,7 +87,7 @@ module Axial
           ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
           server_socket = ssl_socket.connect
           @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
-          LOGGER.debug("fetching userlist from #{@handler.remote_cn}")
+          LOGGER.info("retrieving userlist from axnet...")
           @handler.clear_queue
           @handler.send('USERLIST')
           @handler.loop
