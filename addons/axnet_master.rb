@@ -25,7 +25,7 @@ module Axial
         on_startup                  :start_master_thread
         on_reload                   :start_master_thread
         on_channel  '?broadcast',   :handle_channel_broadcast
-        on_channel      '?axnet',   :reload_axnet
+        on_channel      '?axnet',   :handle_axnet_command
         on_axnet     'USERLIST',    :send_user_list
         on_axnet           'OP',    :op_and_repeat
 
