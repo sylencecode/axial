@@ -1,9 +1,10 @@
+require 'securerandom'
 require 'axial/consumers/raw_consumer'
 
 module Axial
   module Axnet
     class SocketHandler
-      attr_reader :socket, :thread, :remote_cn
+      attr_reader :socket, :thread, :remote_cn, :id
 
       def initialize(bot, socket)
         @bot                  = bot
@@ -14,6 +15,7 @@ module Axial
         @thread               = Thread.current
         @monitor              = Monitor.new
         @remote_address       = @socket.to_io.peeraddr[2]
+        @id                   = SecureRandom.uuid
 
         @transmit_consumer.register_callback(self, :socket_send)
       end
@@ -67,13 +69,13 @@ module Axial
       def loop()
         ssl_handshake
         @transmit_consumer.start
-        LOGGER.warn("established axnet connection with '#{@remote_cn}' (#{@remote_address}) - #{@socket.inspect}")
+        LOGGER.warn("established axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
         while (text = @socket.gets)
           text.strip!
           LOGGER.warn("command from #{@remote_cn}: #{text}")
           @bot.bind_handler.dispatch_axnet_binds(self, text)
         end
-        LOGGER.warn("closed axnet connection with '#{@remote_cn}' (#{@remote_address}) - #{@socket.inspect}")
+        LOGGER.warn("closed axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
       rescue Exception => ex
         LOGGER.error("#{self.class} loop error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
