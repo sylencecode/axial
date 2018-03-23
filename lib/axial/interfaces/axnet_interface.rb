@@ -7,7 +7,7 @@ end
 module Axial
   module Interfaces
     class AxnetInterface
-      attr_reader :command_queue
+      attr_accessor :bot, :command_queue, :transmitter_method, :transmitter_object
 
       def initialize(bot)
         @bot                  = bot
@@ -53,6 +53,13 @@ module Axial
         LOGGER.info("attempting userlist update...")
         @bot.user_list.reload(new_user_list)
         LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
+        LOGGER.info("transmitting new userlist to axnet...")
+        transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
     end
   end

@@ -55,7 +55,7 @@ module Axial
 
           case (command.args.strip)
             when /^list$/i, /^list\s+/i
-              list_axnet_connections
+              list_axnet_connections(channel, nick)
             when /^reload$/i, /^stop\s+/i
               reload_axnet(channel, nick)
               return
@@ -181,6 +181,7 @@ module Axial
                 handler.loop
                 @handlers.delete(handler)
               rescue Exception => ex
+                @handlers.delete(handler)
                 LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                 ex.backtrace.each do |i|
                   LOGGER.error(i)
