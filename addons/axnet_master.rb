@@ -199,10 +199,13 @@ module Axial
               begin
                 handler.loop
                 @handler_monitor.synchronize do
+                  LOGGER.debug("clean close for #{handler.remotee_cn}: #{@handlers.inspect}")
                   @handlers.delete(handler)
                 end
               rescue Exception => ex
-                @handlers.delete(handler)
+                @handler_monitor.synchronize do
+                  @handlers.delete(handler)
+                end
                 LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                 ex.backtrace.each do |i|
                   LOGGER.error(i)
@@ -210,6 +213,7 @@ module Axial
               end
             end
             @handler_monitor.synchronize do
+              LOGGER.debug("added handler for #{handler.remote_cn}: #{@handlers.inspect}")
               @handlers.push(handler)
             end
           rescue Exception => ex
