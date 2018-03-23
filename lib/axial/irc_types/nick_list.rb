@@ -81,6 +81,7 @@ module Axial
           nick = @nick_list[nick_name.downcase]
           return nick
         else
+          puts @nick_list.inspect
           raise(NickListError, "nick '#{nick_name}' does not exist")
         end
       end

@@ -45,9 +45,18 @@ module Axial
         return nil
       end
 
+      def get_user_from_mask(in_mask)
+        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
+        possible_users = get_users_from_mask(in_mask)
+        if (possible_users.count > 1)
+          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect{|user| user.pretty_name}.join(', ')}")
+        end
+        return possible_users.first
+      end
+
       def get_users_from_mask(in_mask)
+        possible_users = []
         @monitor.synchronize do
-          possible_users = []
           left_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
           left_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
           @user_list.each do |user|
@@ -62,15 +71,6 @@ module Axial
           end
         end
         return possible_users
-      end
-
-      def self.get_user_from_mask(in_mask)
-        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
-        possible_users = get_users_from_mask(in_mask)
-        if (possible_users.count > 1)
-          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect{|user| user.pretty_name}.join(', ')}")
-        end
-        return possible_users.first
       end
 
       def reload(user_list)

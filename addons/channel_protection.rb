@@ -34,6 +34,10 @@ module Axial
       end
 
       def handle_ban_unban(channel, nick, mode)
+        if (!channel.opped?)
+          LOGGER.debug("wish i could help #{channel}, but i am not opped")
+          return
+        end
         response_mode = IRCTypes::Mode.new
         if (mode.bans.any?)
           if (nick == @server_interface.myself)
@@ -66,21 +70,26 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
-        return
-        # if (mode.ops.any?)
-        #   if (nick == @server_interface.myself)
-        #     channel.message("I opped #{mode.ops.inspect}")
-        #   else
-        #     channel.message("#{nick.name} opped #{mode.ops.inspect}")
-        #   end
-        # end
-        # if (mode.deops.any?)
-        #   if (nick == @server_interface.myself)
-        #     channel.message("I voiced #{mode.ops.inspect}")
-        #   else
-        #     channel.message("#{nick.name} voiced #{mode.ops.inspect}")
-        #   end
-        # end
+        if (mode.ops.any?)
+          if (nick == @server_interface.myself)
+            channel.message("I opped #{mode.ops.inspect}")
+          else
+            mode.ops.each do |op|
+              if (op == @server_interface.myself.name)
+                channel.message("#{nick.name} opped me!")
+              else
+                channel.message("#{nick.name} opped #{mode.ops.inspect}")
+              end
+            end
+          end
+        end
+        if (mode.deops.any?)
+          if (nick == @server_interface.myself)
+            channel.message("I deopped #{mode.ops.inspect}")
+          else
+            channel.message("#{nick.name} deopped #{mode.ops.inspect}")
+          end
+        end
       end
 
       def handle_prevent_modes(channel, nick, mode)
