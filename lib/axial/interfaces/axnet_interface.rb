@@ -44,7 +44,7 @@ module Axial
       end
 
       def transmit_to_axnet(text)
-        LOGGER.debug("a reload test, i'm sending #{text}")
+        LOGGER.debug("another reload test #2, i'm sending #{text}")
         if (@transmitter_object.respond_to?(@transmitter_method))
           @transmitter_object.public_send(@transmitter_method, text)
         else
