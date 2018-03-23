@@ -67,7 +67,7 @@ module Axial
               list_axnet_connections(channel, nick)
             when /^reload$/i, /^stop\s+/i
               reload_axnet(channel, nick)
-            when /^reload$/i, /^stop\s+/i
+            when /^ping$/i
               ping_axnet
             else
               send_help(channel, nick)
