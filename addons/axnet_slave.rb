@@ -100,6 +100,7 @@ module Axial
             ex.backtrace.each do |i|
               LOGGER.error(i)
             end
+            LOGGER.error("loop restarts in 5 seconds...")
             sleep 5
           end
         end
@@ -108,6 +109,7 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+        LOGGER.error("retry executes in 5 seconds...")
         sleep 5
         retry
       end
