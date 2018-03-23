@@ -90,12 +90,13 @@ module Axial
 
     def reload_axnet()
       @axnet_interface.stop
+      class_name = "Axial::Interfaces::AxnetInterface"
       LOGGER.debug("removing class definition for #{class_name}")
       if (Object.constants.include?(:Axial))
         if (Axial.constants.include?(:Interfaces))
-          if (Axial::Interfaces.constants.include?(:AxnetInterface))
+          if (Axial::Interfaces.constants.include?(class_name.to_sym))
             LOGGER.debug("axnet interface found")
-            Axial::Interfaces.send(:remove_const, :AxnetInterface)
+            Axial::Interfaces.send(:remove_const, class_name.to_sym)
             LOGGER.debug("axnet interface definition deleted")
           end
         end
