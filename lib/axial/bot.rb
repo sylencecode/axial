@@ -81,7 +81,7 @@ module Axial
     end
 
     def load_axnet()
-      Kernel.load(File.join(File.expand_path(File.join(File.dirname(__FILE__)), 'lib', 'axnet', 'axnet_interface.rb')))
+      Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
       @axnet_interface              = Interfaces::AxnetInterface.new(self)
       @user_list                    = Axnet::UserList.new
       @axnet_interface.register_queue_callback
@@ -92,14 +92,15 @@ module Axial
       @axnet_interface.stop
       LOGGER.debug("removing class definition for #{class_name}")
       if (Object.constants.include?(:Axial))
-        if (Axial.constants.include?(:Addons))
-          if (Axial::Addons.constants.include?(class_name.to_sym))
+        if (Axial.constants.include?(:Interfaces))
+          if (Axial::Interfaces.constants.include?(:AxnetInterface))
             LOGGER.debug("axnet interface found")
-            Axial::Addons.send(:remove_const, class_name.to_sym)
+            Axial::Interfaces.send(:remove_const, :AxnetInterface)
             LOGGER.debug("axnet interface definition deleted")
           end
         end
       end
+      Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
       old_axnet_interface = @axnet_interface
       @axnet_interface = Interfaces::AxnetInterface.copy(self, old_axnet_interface)
       @axnet_interface.start
