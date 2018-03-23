@@ -60,6 +60,7 @@ module Axial
       end
 
       def stop_slave_thread()
+        LOGGER.debug("slave thread exiting")
         @running = false
         @handler.close
         if (!@slave_thread.nil?)
