@@ -72,7 +72,7 @@ module Axial
           text.strip!
           @bot.bind_handler.dispatch_axnet_binds(self, text)
         end
-        LOGGER.info("closeed axnet connection with '#{@remote_cn}' (#{@remote_address})")
+        LOGGER.info("closed axnet connection with '#{@remote_cn}' (#{@remote_address})")
       rescue Exception => ex
         LOGGER.error("#{self.class} loop error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

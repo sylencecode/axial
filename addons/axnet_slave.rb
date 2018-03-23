@@ -84,6 +84,7 @@ module Axial
 
         while (@running)
           begin
+            LOGGER.debug("entered slave connection loop")
             tcp_socket = TCPSocket.new(@master_address, @port)
             ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
             server_socket = ssl_socket.connect
@@ -92,6 +93,7 @@ module Axial
             @handler.clear_queue
             @handler.send('USERLIST')
             @handler.loop
+            LOGGER.debug("exited slave connection loop cleanly")
           rescue Exception => ex
             LOGGER.error("#{self.class} slave connection error: #{ex.class}: #{ex.message}")
             ex.backtrace.each do |i|
