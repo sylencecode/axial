@@ -44,6 +44,7 @@ module Axial
       end
 
       def transmit_to_axnet(text)
+        LOGGER.debug("a reload test, i'm sending #{text}")
         if (@transmitter_object.respond_to?(@transmitter_method))
           @transmitter_object.public_send(@transmitter_method, text)
         else
@@ -53,16 +54,6 @@ module Axial
 
       def clear_queue()
         @command_queue.clear
-      end
-
-      def send(text)
-        LOGGER.debug("a reload test, i'm sending #{text}")
-        @command_queue.send(text)
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
       end
 
       def update_user_list(new_user_list)

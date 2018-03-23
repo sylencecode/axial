@@ -34,7 +34,7 @@ module Axial
       end
 
       def handle_channel_broadcast(nick, channel, command)
-        @bot.axnet_interface.send(command.args)
+        @bot.axnet_interface.transmit_to_axnet(command.args)
       end
 
       def send_help(channel, nick)
@@ -96,7 +96,7 @@ module Axial
       def reload_axnet(channel, nick)
         channel.message("#{nick.name} issuing orders to axnet nodes to update and reload the axial codebase.")
         @bot.reload_axnet
-        @bot.axnet_interface.send('RELOAD_AXNET')
+        @bot.axnet_interface.transmit_to_axnet('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_addons
       end
