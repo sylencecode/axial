@@ -41,7 +41,7 @@ module Axial
       end
 
       def ssl_handshake()
-        x509_cert = @socket.context.cert
+        x509_cert = @socket.peer_cert
         x509_array = x509_cert.subject.to_a
         if (x509_array.count == 0)
           raise(AxnetError, "No subject info found in certificate: #{x509_cert.inspect}")

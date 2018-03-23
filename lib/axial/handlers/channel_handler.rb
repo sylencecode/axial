@@ -38,12 +38,22 @@ module Axial
             channel.nick_list.add(nick)
           end
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_who_list_end(channel_name)
         channel = @server_interface.channel_list.get(channel_name)
         channel.sync_complete
         @bot.bind_handler.dispatch_channel_sync_binds(channel)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_quit(uhost, reason)
@@ -52,6 +62,11 @@ module Axial
           handle_self_quit(reason)
         else
           handle_quit(nick, reason)
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -62,6 +77,11 @@ module Axial
           LOGGER.debug("I quit IRC. (#{reason})")
         end
         @server_interface.channel_list.clear
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_quit(nick, reason)
@@ -78,6 +98,11 @@ module Axial
           end
           channel.nick_list.delete_silent(nick)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_part(uhost, channel_name, reason)
@@ -88,6 +113,11 @@ module Axial
         else
           nick = channel.nick_list.get(nick_name)
           handle_part(channel, nick, reason)
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -103,6 +133,11 @@ module Axial
         end
         @bot.bind_handler.dispatch_part_binds(channel, nick, reason)
         channel.nick_list.delete(nick)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_self_part(channel, reason)
@@ -112,6 +147,11 @@ module Axial
           LOGGER.debug("I left #{channel.name} (#{reason})")
         end
         @server_interface.channel_list.delete(channel)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_join(uhost, channel_name)
@@ -129,6 +169,11 @@ module Axial
           nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           handle_join(channel, nick)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_join(channel, nick)
@@ -139,12 +184,22 @@ module Axial
         LOGGER.debug("#{nick.name} joined #{channel.name}")
         @bot.bind_handler.dispatch_join_binds(channel, nick)
         channel.nick_list.add(nick)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_self_join(channel_name)
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_mode(uhost, channel_name, mode)
@@ -161,10 +216,20 @@ module Axial
           channel = @server_interface.channel_list.get(channel_name)
           handle_mode(nick, channel, mode)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_server_mode(channel, mode)
         LOGGER.debug("server sets #{channel.name} mode: #{mode}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def dispatch_nick_change(uhost, new_nick_name)
@@ -174,10 +239,20 @@ module Axial
           old_nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           handle_nick_change(old_nick, new_nick_name)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_self_nick(new_nick)
         LOGGER.debug("I changed nicks: #{new_nick}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_nick_change(old_nick, new_nick_name)
@@ -197,6 +272,11 @@ module Axial
         end
         LOGGER.debug("#{old_nick.name} changed nick to #{new_nick.name}")
         @bot.bind_handler.dispatch_nick_change_binds(old_nick, new_nick)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_mode(nick, channel, raw_mode_string)
@@ -257,11 +337,21 @@ module Axial
         end
 
         @bot.bind_handler.dispatch_mode_binds(channel, nick, mode)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_channel_action(channel, nick, unstripped_text)
         text = unstripped_text.strip
         LOGGER.debug("ACTION #{channel.name}: * #{nick.name} #{text}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_channel_message(channel, nick, unstripped_text)
@@ -287,10 +377,20 @@ module Axial
             LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
             @bot.bind_handler.dispatch_channel_binds(channel, nick, text)
         end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def handle_channel_notice(channel, nick, text)
         LOGGER.debug("#{channel.name} NOTICE <#{nick.name}> #{text}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
     end
   end
