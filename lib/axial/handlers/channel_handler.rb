@@ -37,6 +37,8 @@ module Axial
             nick.voiced = true
             channel.nick_list.add(nick)
           end
+        else
+          channel.nick_list.add(nick)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

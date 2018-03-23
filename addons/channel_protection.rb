@@ -35,7 +35,6 @@ module Axial
 
       def handle_ban_unban(channel, nick, mode)
         if (!channel.opped?)
-          LOGGER.debug("wish i could help #{channel}, but i am not opped")
           return
         end
         response_mode = IRCTypes::Mode.new
@@ -49,9 +48,11 @@ module Axial
               mask = in_mask.strip
               possible_users = @bot.user_list.get_users_from_mask(mask)
               cantban = possible_users.collect{|user| user.name}
+              channel.message("#{nick.name}: #{in_mask} would ban protected users: #{cantban.join(', ')}")
               if (possible_users.any?)
-                channel.message("#{nick.name}: you can't ban #{cantban.join(', ')}")
                 response_mode.unban(mask)
+              else
+                # kick
               end
             end
           end
@@ -61,6 +62,8 @@ module Axial
           if (nick == @server_interface.myself)
             # kick, do something, etc
             # need channel.ban_list
+          else
+            # check sticky ban list
           end
         end
 
@@ -70,25 +73,49 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
+        if (!channel.opped?)
+          return
+        end
+
+        response_mode = IRCTypes::Mode.new
         if (mode.ops.any?)
           if (nick == @server_interface.myself)
             channel.message("I opped #{mode.ops.inspect}")
           else
             mode.ops.each do |op|
               if (op == @server_interface.myself.name)
-                channel.message("#{nick.name} opped me!")
+                channel.opped = true
               else
-                channel.message("#{nick.name} opped #{mode.ops.inspect}")
+                subject_nick = channel.nick_list.get(op)
+                possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+                if (possible_user.nil? || !possible_user.op?)
+                  response_mode.deop(subject_nick.name)
+                end
               end
             end
           end
         end
+
         if (mode.deops.any?)
           if (nick == @server_interface.myself)
             channel.message("I deopped #{mode.ops.inspect}")
           else
-            channel.message("#{nick.name} deopped #{mode.ops.inspect}")
+            mode.deops.each do |deop|
+              if (deop == @server_interface.myself.name)
+                channel.opped = false
+              else
+                subject_nick = channel.nick_list.get(deop)
+                possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+                if (!possible_user.nil? && possible_user.op?)
+                  response_mode.op(subject_nick.name)
+                end
+              end
+            end
           end
+        end
+
+        if (response_mode.to_string_array.any?)
+          channel.set_mode(response_mode)
         end
       end
 
