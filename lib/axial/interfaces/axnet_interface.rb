@@ -54,6 +54,7 @@ module Axial
         @bot.user_list.reload(new_user_list)
         LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
         LOGGER.info("transmitting new userlist to axnet...")
+        user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
         transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
