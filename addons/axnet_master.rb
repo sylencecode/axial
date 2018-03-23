@@ -38,7 +38,7 @@ module Axial
       end
 
       def send_help(channel, nick)
-        channel.message("#{nick.name}: try ?axnet reload, maybe?")
+        channel.message("#{nick.name}: try ?axnet reload, ?axnet list, or ?axnet ping")
       end
 
       def ping_axnet()

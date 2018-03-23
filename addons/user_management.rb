@@ -28,8 +28,8 @@ module Axial
           user = Axnet::User.from_model(user_model)
           new_user_list.add(user)
         end
-        @bot.axnet_interface.update_user_list(new_user_list)
-
+        @bot.axnet_interface.update_user_list(new_user_list, true)
+        @bot.axnet_interface.broadcast_user_list
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

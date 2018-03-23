@@ -56,16 +56,19 @@ module Axial
         @command_queue.clear
       end
 
-      def update_user_list(new_user_list)
+      def broadcast_user_list()
+        LOGGER.info("transmitting new userlist to axnet...")
+        user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
+        transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
+      end
+
+      def update_user_list(new_user_list, broadcast = false)
         if (!new_user_list.is_a?(Axnet::UserList))
           raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")
         end
         LOGGER.info("attempting userlist update...")
         @bot.user_list.reload(new_user_list)
         LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
-        LOGGER.info("transmitting new userlist to axnet...")
-        user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
-        transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
