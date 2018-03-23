@@ -23,6 +23,7 @@ module Axial
 
         on_startup  :start_slave_thread
         on_reload   :start_slave_thread
+        on_axnet    'PING',               :pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
 
@@ -31,6 +32,10 @@ module Axial
 
       def send(text)
         @handler.send(text)
+      end
+
+      def pong(handler, command)
+        @bot.axnet_interface.transmit_to_axnet('PONG')
       end
 
       def reload_axnet(handler, command)

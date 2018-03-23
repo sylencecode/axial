@@ -28,6 +28,7 @@ module Axial
         on_channel      '?axnet',   :handle_axnet_command
         on_axnet     'USERLIST',    :send_user_list
         on_axnet           'OP',    :op_and_repeat
+        on_axnet         'PONG',    :receive_pong
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
       end
@@ -40,6 +41,14 @@ module Axial
         channel.message("#{nick.name}: try ?axnet reload, maybe?")
       end
 
+      def ping_axnet()
+        @bot.axnet_interface.transmit_to_axnet('PING')
+      end
+
+      def receive_pong(handler, text)
+        LOGGER.debug("PONG from #{handler.remote_cn}")
+      end
+      
       def handle_axnet_command(channel, nick, command)
         begin
           user = @bot.user_list.get_from_nick_object(nick)
@@ -58,10 +67,10 @@ module Axial
               list_axnet_connections(channel, nick)
             when /^reload$/i, /^stop\s+/i
               reload_axnet(channel, nick)
-              return
+            when /^reload$/i, /^stop\s+/i
+              ping_axnet
             else
               send_help(channel, nick)
-              return
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
