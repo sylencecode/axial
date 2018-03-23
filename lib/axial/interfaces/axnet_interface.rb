@@ -56,6 +56,7 @@ module Axial
       end
 
       def send(text)
+        LOGGER.debug("a reload test, i'm sending #{text}")
         @command_queue.send(text)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
