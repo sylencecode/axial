@@ -85,9 +85,7 @@ module Axial
       def list_axnet_connections(channel, nick)
         bots = []
         @handler_monitor.synchronize do
-          @handlers.each do |handler|
-            bots.push(handler.remote_cn)
-          end
+          bots = @handlers.collect{|handler| handler.remote_cn}
         end
         if (bots.empty?)
           channel.message("#{nick.name}: no axnet nodes connected.")
@@ -199,8 +197,8 @@ module Axial
               begin
                 handler.loop
                 @handler_monitor.synchronize do
-                  LOGGER.debug("clean close for #{handler.remotee_cn}: #{@handlers.inspect}")
                   @handlers.delete(handler)
+                  LOGGER.debug("clean close for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
                 end
               rescue Exception => ex
                 @handler_monitor.synchronize do
@@ -213,8 +211,8 @@ module Axial
               end
             end
             @handler_monitor.synchronize do
-              LOGGER.debug("added handler for #{handler.remote_cn}: #{@handlers.inspect}")
               @handlers.push(handler)
+              LOGGER.debug("added handler for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
             end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
