@@ -198,6 +198,7 @@ module Axial
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
             Thread.new do
               begin
+                LOGGER.warn("entering handler loop for #{handler.id} (#{handler.remote_cn})")
                 handler.loop
                 @handler_monitor.synchronize do
                   LOGGER.warn("deleting handler #{handler.id} (#{handler.remote_cn})")
