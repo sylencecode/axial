@@ -152,7 +152,9 @@ module Axial
       def stop_master_thread()
         @running = false
         close_connections
-        @tcp_listener.shutdown
+        if (!@tcp_listener.nil?)
+          @tcp_listener.shutdown
+        end
         if (!@master_thread.nil?)
           @master_thread.kill
         end

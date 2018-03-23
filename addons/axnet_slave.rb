@@ -56,11 +56,10 @@ module Axial
       def stop_slave_thread()
         @running = false
         @handler.close
-        @tcp_listener.shutdown
         if (!@slave_thread.nil?)
           @slave_thread.kill
         end
-        @master_thread = nil
+        @slave_thread = nil
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
