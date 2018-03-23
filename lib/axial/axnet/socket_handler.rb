@@ -43,12 +43,12 @@ module Axial
       def ssl_handshake()
         x509_cert = @socket.peer_cert
         x509_array = x509_cert.subject.to_a
-        if (x509_array.count == 0)
+        if (x509_array.empty?)
           raise(AxnetError, "No subject info found in certificate: #{x509_cert.inspect}")
         end
 
         x509_fragments = x509_array.select{|subject_fragment| subject_fragment[0] == 'CN'}.flatten
-        if (x509_fragments.count == 0)
+        if (x509_fragments.empty?)
           raise(AxnetError, "No CN found in #{x509_array.inspect}")
         end
 

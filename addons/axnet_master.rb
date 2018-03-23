@@ -42,8 +42,8 @@ module Axial
 
       def handle_axnet_command(channel, nick, command)
         begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.director?)
+          user = @bot.user_list.get_from_nick_object(nick)
+          if (user.nil? || !user.director?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end
@@ -77,7 +77,11 @@ module Axial
         @handlers.each do |handler|
           bots.push(handler.remote_cn)
         end
-        @channel.message("connected axnet nodes: #{bots.join(', ')}")
+        if (bots.empty?)
+          channel.message("#{nick.name}: no axnet nodes connected.")
+        else
+          channel.message("#{nick.name}: connected axnet nodes: #{bots.join(', ')}")
+        end
       end
 
       def reload_axnet(channel, nick)
