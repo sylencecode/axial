@@ -19,10 +19,10 @@ module Axial
         on_channel '?getmasks', :get_masks
         on_channel '?setrole',  :set_role
         on_channel_sync         :handle_channel_sync
-        on_startup              :populate_bot_user_list
+        on_startup              :update_user_list
       end
 
-      def populate_bot_user_list()
+      def update_user_list()
         new_user_list = Axnet::UserList.new
         Models::User.all.each do |user_model|
           user = Axnet::User.from_model(user_model)
@@ -110,6 +110,7 @@ module Axial
           end
 
           mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
+          update_user_list
           channel.message("#{nick.name}: Mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -170,6 +171,7 @@ module Axial
           end
 
           subject_model.update(role: subject_role)
+          update_user_list
           channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role of #{subject_role}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -209,6 +211,7 @@ module Axial
           end
 
           subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+          update_user_list
           channel.message("#{nick.name}: User #{subject_model.pretty_name} created with mask '#{subject_mask}'.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
