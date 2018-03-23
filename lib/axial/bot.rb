@@ -2,6 +2,8 @@ $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname('.'), 'lib')))
 $stdout.sync = true
 $stderr.sync = true
 
+gem 'git'
+require 'git'
 require 'yaml'
 require 'axial/log'
 require 'axial/handlers/channel_handler'
@@ -162,6 +164,11 @@ module Axial
       @server_consumer_monitor.synchronize do
         @server_message_dispatcher.dispatch(text)
       end
+    end
+
+    def git_pull()
+      repo_object = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
+      repo_object.pull
     end
 
     def autojoin_channels()

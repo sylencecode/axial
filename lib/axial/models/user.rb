@@ -66,54 +66,6 @@ module Axial
         user_model.add_mask(mask_model)
         return user_model
       end
-
-      def director?()
-        if (role.casecmp('director').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def manager?()
-        if (role.casecmp('director').zero?)
-          return true
-        elsif (role.casecmp('manager').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def op?()
-        if (role.casecmp('director').zero?)
-          return true
-        elsif (role.casecmp('manager').zero?)
-          return true
-        elsif (role.casecmp('op').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def friend?()
-        if (role.casecmp('director').zero?)
-          return true
-        elsif (role.casecmp('manager').zero?)
-          return true
-        elsif (role.casecmp('op').zero?)
-          return true
-        elsif (role.casecmp('friend').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def self.get_from_nickname(nickname)
-        return self[name: nickname.downcase]
-      end
     end
   end
 end

@@ -22,6 +22,62 @@ module Axial
         user.id = user_model.id
         return user
       end
+
+      def match_mask?(in_mask)
+        match = false
+        @masks.each do |mask|
+          re_mask = Axial::MaskUtils.get_mask_regexp(mask)
+          if (re_mask.match(in_mask))
+            match = true
+            break
+          end
+        end
+        return match
+      end
+
+      def director?()
+        if (@role.casecmp('director').zero?)
+          return true
+        else
+          return false
+        end
+      end
+
+      def manager?()
+        if (@role.casecmp('director').zero?)
+          return true
+        elsif (@role.casecmp('manager').zero?)
+          return true
+        else
+          return false
+        end
+      end
+
+      def op?()
+        if (@role.casecmp('director').zero?)
+          return true
+        elsif (@role.casecmp('manager').zero?)
+          return true
+        elsif (@role.casecmp('op').zero?)
+          return true
+        else
+          return false
+        end
+      end
+
+      def friend?()
+        if (@role.casecmp('director').zero?)
+          return true
+        elsif (@role.casecmp('manager').zero?)
+          return true
+        elsif (@role.casecmp('op').zero?)
+          return true
+        elsif (@role.casecmp('friend').zero?)
+          return true
+        else
+          return false
+        end
+      end
     end
   end
 end

@@ -1,6 +1,4 @@
 require 'axial/addon'
-require 'axial/models/user'
-require 'axial/models/mask'
 
 module Axial
   module Addons
@@ -125,7 +123,7 @@ module Axial
             return
           end
 
-          user = Models::Mask.get_user_from_mask(nick.uhost)
+          user = @bot.user_list.get_user_from_mask(nick.uhost)
           if (!user.nil?)
             if (user.op?)
               channel.op(nick)
@@ -146,24 +144,24 @@ module Axial
 
       def send_dcc_chat_offer(nick, command)
         LOGGER.debug("dcc chat offer to #{nick.name}")
-ip = '74.208.183.199'
+        ip = '74.208.183.199'
 
-fragments = ip.split('.')
+        fragments = ip.split('.')
 
-long_ip = 0
+        long_ip = 0
 
-block = 4
-fragments.each do |fragment|
-  block -= 1
-  long_ip += fragment.to_i * (256 ** block)
-end
+        block = 4
+        fragments.each do |fragment|
+          block -= 1
+          long_ip += fragment.to_i * (256 ** block)
+        end
 
-nick.message("\x01DCC CHAT chat #{long_ip} 6667\x01")
+        nick.message("\x01DCC CHAT chat #{long_ip} 6667\x01")
       end
 
       def handle_privmsg_exec(nick, command)
-        user_model = Models::User.get_from_nick_object(nick)
-        if (user_model.nil? || !user_model.director?)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.director?)
           nick.message(Constants::ACCESS_DENIED)
           return
         end
