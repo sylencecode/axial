@@ -12,15 +12,16 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        @master_thread  = nil
-        @handlers       = []
-        @tcp_listener   = nil
-        @ssl_listener   = nil
-        @running        = false
-        @port           = 34567
-        @cacert         = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key            = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @master_thread    = nil
+        @handlers         = []
+        @tcp_listener     = nil
+        @ssl_listener     = nil
+        @running          = false
+        @handler_monitor  = Monitor.new
+        @port             = 34567
+        @cacert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
+        @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
+        @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
         on_startup                  :start_master_thread
         on_reload                   :start_master_thread
@@ -83,8 +84,10 @@ module Axial
 
       def list_axnet_connections(channel, nick)
         bots = []
-        @handlers.each do |handler|
-          bots.push(handler.remote_cn)
+        @handler_monitor.synchronize do
+          @handlers.each do |handler|
+            bots.push(handler.remote_cn)
+          end
         end
         if (bots.empty?)
           channel.message("#{nick.name}: no axnet nodes connected.")
@@ -195,7 +198,9 @@ module Axial
             Thread.new do
               begin
                 handler.loop
-                @handlers.delete(handler)
+                @handler_monitor.synchronize do
+                  @handlers.delete(handler)
+                end
               rescue Exception => ex
                 @handlers.delete(handler)
                 LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -204,7 +209,9 @@ module Axial
                 end
               end
             end
-            @handlers.push(handler)
+            @handler_monitor.synchronize do
+              @handlers.push(handler)
+            end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
             ex.backtrace.each do |i|
