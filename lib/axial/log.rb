@@ -1,6 +1,6 @@
 require 'logger'
 LOGGER = Logger.new(STDOUT)
-LOGGER.level = Logger::DEBUG
+LOGGER.level = Logger::WARN
 LOGGER.formatter = proc do |severity, time, unused, message|
   puts "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}"
 end

@@ -39,7 +39,7 @@ module Axial
       end
 
       def reload_axnet(handler, command)
-        LOGGER.info("axnet reload request from #{handler.remote_cn}.")
+        LOGGER.warn("axnet reload request from #{handler.remote_cn}.")
         sleep 5
         @bot.git_pull
         @bot.reload_axnet
@@ -51,7 +51,7 @@ module Axial
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
         @bot.axnet_interface.update_user_list(new_user_list)
-        LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
+        LOGGER.warn("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -60,7 +60,7 @@ module Axial
       end
 
       def stop_slave_thread()
-        LOGGER.debug("slave thread exiting")
+        LOGGER.warn("slave thread exiting")
         @running = false
         @handler.close
         if (!@slave_thread.nil?)
@@ -72,7 +72,7 @@ module Axial
       end
 
       def client()
-        LOGGER.info("connecting to #{@master_address}:#{@port}")
+        LOGGER.warn("connecting to #{@master_address}:#{@port}")
         context = OpenSSL::SSL::SSLContext::new
         context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
         context.cert = OpenSSL::X509::Certificate.new(File.read(@cert))
@@ -86,16 +86,16 @@ module Axial
 
         while (@running)
           begin
-            LOGGER.debug("entered slave connection loop")
+            LOGGER.warn("entered slave connection loop")
             tcp_socket = TCPSocket.new(@master_address, @port)
             ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
             server_socket = ssl_socket.connect
             @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
-            LOGGER.info("retrieving userlist from axnet...")
+            LOGGER.warn("retrieving userlist from axnet...")
             @handler.clear_queue
             @handler.send('USERLIST')
             @handler.loop
-            LOGGER.debug("exited slave connection loop cleanly")
+            LOGGER.warn("exited slave connection loop cleanly")
           rescue Exception => ex
             LOGGER.error("#{self.class} slave connection error: #{ex.class}: #{ex.message}")
             ex.backtrace.each do |i|
@@ -116,7 +116,7 @@ module Axial
       end
 
       def start_slave_thread()
-        LOGGER.debug("starting axial slave thread")
+        LOGGER.warn("starting axial slave thread")
         @running = true
         @slave_thread = Thread.new do
           while (@running)
@@ -135,7 +135,7 @@ module Axial
 
       def before_reload()
         super
-        LOGGER.info("#{self.class}: shutting down axnet slave connector")
+        LOGGER.warn("#{self.class}: shutting down axnet slave connector")
         stop_slave_thread
       end
     end

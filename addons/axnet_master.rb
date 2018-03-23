@@ -47,7 +47,7 @@ module Axial
       end
 
       def receive_pong(handler, text)
-        LOGGER.debug("PONG from #{handler.remote_cn}")
+        LOGGER.warn("PONG from #{handler.remote_cn}")
       end
       
       def handle_axnet_command(channel, nick, command)
@@ -137,7 +137,7 @@ module Axial
       end
 
       def repeat_except(exclude_handler, text)
-        LOGGER.debug("repeating to #{@handlers.count - 1} connections")
+        LOGGER.warn("repeating to #{@handlers.count - 1} connections")
         @handlers.each do |handler|
           if (handler.object_id == exclude_handler.object_id)
             next
@@ -148,7 +148,7 @@ module Axial
       end
 
       def broadcast(payload)
-        LOGGER.debug("broadcasting to #{@handlers.count} connections")
+        LOGGER.warn("broadcasting to #{@handlers.count} connections")
         @handlers.each do |handler|
           handler.send(payload)
         end
@@ -189,7 +189,7 @@ module Axial
         @tcp_listener = TCPServer.new(@port)
         while (@running)
           begin
-            LOGGER.debug("listener accepting more connections on port #{@port}")
+            LOGGER.warn("listener accepting more connections on port #{@port}")
             @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
             client_socket = @ssl_listener.accept
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
@@ -198,7 +198,7 @@ module Axial
                 handler.loop
                 @handler_monitor.synchronize do
                   @handlers.delete(handler)
-                  LOGGER.debug("clean close for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
+                  LOGGER.warn("clean close for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
                 end
               rescue Exception => ex
                 @handler_monitor.synchronize do
@@ -212,7 +212,7 @@ module Axial
             end
             @handler_monitor.synchronize do
               @handlers.push(handler)
-              LOGGER.debug("added handler for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
+              LOGGER.warn("added handler for #{handler.remote_cn}: #{@handlers.collect{|handler| handler.remote_cn}.inspect}")
             end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -229,7 +229,7 @@ module Axial
       end
 
       def start_master_thread()
-        LOGGER.debug("starting axial master thread")
+        LOGGER.warn("starting axial master thread")
         @running = true
         @master_thread = Thread.new do
           while (@running)
