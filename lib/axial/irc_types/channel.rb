@@ -45,6 +45,10 @@ module Axial
         set_mode(mode)
       end
 
+      def get_irc_ban_list()
+        @server_interface.set_channel_mode(@name, '+b')
+      end
+
       def set_mode(mode)
         if (!mode.is_a?(Axial::IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
@@ -52,7 +56,7 @@ module Axial
         if (opped?)
           @server_interface.set_channel_mode(@name, mode)
         else
-          LOGGER.info("Tried to set channel mode #{mode.to_string_array.inspect} on #{channel}, but I am not an op.")
+          LOGGER.info("Tried to set channel mode #{mode.to_string_array.inspect} on #{@name}, but I am not an op.")
         end
       end
 

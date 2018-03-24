@@ -22,6 +22,8 @@ module Axial
         on_channel  '?setrole',   :set_role
         on_channel      '?ban',   :handle_channel_ban
         on_dcc          '?ban',   :handle_dcc_ban
+        on_channel    '?unban',   :handle_channel_unban
+        on_dcc        '?unban',   :handle_dcc_unban
 
         on_channel_sync           :handle_channel_sync
         on_startup                :update_user_list
@@ -29,41 +31,88 @@ module Axial
       end
 
       def handle_dcc_ban(dcc, command)
-        handle_ban(dcc, dcc.user, command)
+        ban_mask(dcc, dcc.user, command)
       end
 
       def handle_channel_ban(channel, nick, command)
-        user_model = Models::User.get_from_nick_object(nick)
-        if (user_model.nil? || !user_model.op?)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.op?)
           return
         end
-        handle_ban(channel, user, command)
+        ban_mask(channel, user, command)
       end
 
-      def ban_mask(sender, nick, command)
-        mask = nil
+      def handle_dcc_unban(dcc, command)
+        unban_mask(dcc, dcc.user, command)
+      end
+
+      def handle_channel_unban(channel, nick, command)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.op?)
+          return
+        end
+        unban_mask(channel, user, command)
+      end
+
+      def ban_mask(sender, user, command)
         reason = 'general purposes'
         if (command.args.strip =~ /(\S+)\s+(\S+)/)
           mask, reason = Regexp.last_match.captures
         elsif (command.args.strip =~ /(\S+)/)
           mask = Regexp.last_match[1]
         else
-          dcc_or_channel(sender, nick, "try ?ban <mask> <reason>")
+          sender.message("try ?ban <mask> <reason>")
           return
         end
 
         mask = Axial::MaskUtils.ensure_wildcard(mask)
 
         begin
-          bans = get_bans_from_mask(mask)
+          bans = @bot.ban_list.get_bans_from_mask(mask)
           if (bans.count > 0)
             sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{|ban| ban.mask}.join(', ')}'")
+          else
+            ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
+            update_ban_list
+            sender.message("'#{ban_model.mask}' added to banlist.")
+          end
+
+          update_ban_list
+        rescue Exception => ex
+          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
+      end
+
+      def unban_mask(sender, user, command)
+        if (command.args.strip =~ /(\S+)/)
+          mask = Regexp.last_match[1]
+        else
+          sender.message("try ?unban <mask>")
+          return
+        end
+
+        mask = Axial::MaskUtils.ensure_wildcard(mask)
+
+        begin
+          bans = @bot.ban_list.get_bans_from_mask(mask)
+          if (bans.count == 0)
+            sender.message("no bans matching '#{mask}'")
             return
           end
 
-          ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
-          update_ban_list
-          sender.message("'#{ban_model.mask}' added to banlist.")
+          bans.each do |ban|
+            ban_model = Models::Ban[mask: ban.mask]
+            if (!ban_model.nil?)
+              ban_model.delete
+              sender.message("'#{ban.mask}' removed from banlist.")
+            else
+              sender.message("'#{ban.mask}' isn't in the database?")
+            end
+          end
         rescue Exception => ex
           sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

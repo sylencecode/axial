@@ -40,12 +40,12 @@ module Axial
         @monitor.synchronize do
           left_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
           left_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
-          @ban_list.each do |right_mask|
-            right_regexp = Axial::MaskUtils.get_mask_regexp(right_mask)
+          @ban_list.each do |right_ban|
+            right_regexp = Axial::MaskUtils.get_mask_regexp(right_ban.mask)
             if (right_regexp.match(left_mask))
-              bans.push(ban)
-            elsif (left_regexp.match(right_mask))
-              bans.push(ban)
+              bans.push(right_ban)
+            elsif (left_regexp.match(right_ban.mask))
+              bans.push(right_ban)
             end
           end
         end

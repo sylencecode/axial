@@ -47,6 +47,31 @@ module Axial
         end
       end
 
+      def handle_ban_list_entry(channel, mask, who_set, set_at)
+        puts "ban: #{channel} | #{mask} | #{who_set} | #{set_at}"
+#        channel = @server_interface.channel_list.get(channel_name)
+#        channel.irc_ban_list_monitor.synchronize do
+#          irc_ban_list = IRCTypes::BanList.new
+#          channel.irc_ban_list.clear
+#          channel.irc_ban_list.add
+#        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def handle_ban_list_end(channel_name)
+        channel = @server_interface.channel_list.get(channel_name)
+        @bot.bind_handler.dispatch_irc_ban_list_end_binds(channel)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def handle_who_list_end(channel_name)
         channel = @server_interface.channel_list.get(channel_name)
         channel.sync_complete

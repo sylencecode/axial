@@ -23,7 +23,7 @@ module Axial
         throttle                    2
         on_startup                  :start_complaint_thread
         on_reload                   :start_complaint_thread
-        on_join                     :handle_auto_op
+        on_join                     :handle_join
         on_privmsg      'exec',     :handle_privmsg_exec
         on_channel    '?topic',     :handle_topic
         on_mode @prevent_modes,     :handle_prevent_modes
@@ -33,8 +33,10 @@ module Axial
         on_nick_change              :handle_nick_change
         on_axnet   'COMPLAINT',     :handle_axnet_complaint
         on_self_join                :send_axnet_op_complaint
+        on_self_join                :get_irc_ban_list
         on_user_list                :handle_user_list_update
         on_ban_list                 :handle_ban_list_update
+        on_irc_banlist_end          :handle_irc_banlist_end
         # on kick...
         # on banned response
         # on invite only, invite
@@ -44,26 +46,44 @@ module Axial
         #on_mode :all, :handle_all
       end
 
+      def get_irc_ban_list(channel)
+        channel.get_irc_ban_list
+      end
+
       def handle_user_list_update()
         # check for any newly promoted users who arent opped/voiced
       end
 
       def handle_ban_list_update()
-        @bot.channel_list.all_channels.each do |channel|
-          kicks = []
-          @bot.ban_list.all_bans.each do |ban|
-            channel.nick_list.all_nicks.each do |nick|
-              if (ban.match_mask?(nick.uhost))
-                if (!response_mode.bans.include?(ban.mask))
-                  response_mode.ban(ban.mask)
-                end
-                kicks.push(nick: nick, reason: ban.reason)
+        @bot.server_interface.channel_list.all_channels.each do |channel|
+          check_channel_bans(channel)
+        end
+      end
+
+      def handle_irc_banlist_end(channel)
+        # TODO: timer to remove hour-old bans
+        # (Time.now - Time.at(1521931658))
+        LOGGER.debug("end of banlist reached channel protection")
+      end
+
+      def check_channel_bans(channel)
+        response_mode = IRCTypes::Mode.new
+        kicks = []
+        @bot.ban_list.all_bans.each do |ban|
+          channel.nick_list.all_nicks.each do |nick|
+            if (ban.match_mask?(nick.uhost))
+              if (!response_mode.bans.include?(ban.mask))
+                response_mode.ban(ban.mask)
               end
+              kicks.push(nick: nick, reason: ban.long_reason)
             end
           end
-          kicks.each do |kick|
-            channel.kick(kick[:nick], kick[:reason])
-          end
+        end
+        if (response_mode.to_string_array.any?)
+          channel.set_mode(response_mode)
+        end
+        kicks.each do |kick|
+          channel.kick(kick[:nick], kick[:reason])
         end
       end
         
@@ -177,9 +197,11 @@ module Axial
               mask = in_mask.strip
               possible_users = @bot.user_list.get_users_from_mask(mask)
               cantban = possible_users.collect{|user| user.name}
-              channel.message("#{nick.name}: #{in_mask} would ban protected users: #{cantban.join(', ')}")
-              if (possible_users.any?)
-                response_mode.unban(mask)
+              if (cantban.count > 0)
+                channel.message("#{nick.name}: #{in_mask} would ban protected users: #{cantban.join(', ')}")
+                if (possible_users.any?)
+                  response_mode.unban(mask)
+                end
               else
                 # kick
               end
@@ -210,6 +232,7 @@ module Axial
             mode.ops.each do |op|
               if (op == @server_interface.myself.name)
                 channel.opped = true
+                check_channel_bans(channel)
               else
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
@@ -280,28 +303,38 @@ module Axial
         end
       end
 
-      def handle_auto_op(channel, nick)
-        begin
-          if (!channel.opped?)
-            return
-          end
+      def handle_join(channel, nick)
+        if (!channel.opped?)
+          return
+        end
 
-          user = @bot.user_list.get_user_from_mask(nick.uhost)
-          if (!user.nil?)
-            if (user.op?)
-              channel.op(nick)
-              LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
-            elsif (user.friend?)
-              channel.voice(nick)
-              LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
-            end
+        # check for users
+        user = @bot.user_list.get_user_from_mask(nick.uhost)
+        if (!user.nil?)
+          if (user.op?)
+            channel.op(nick)
+            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+          elsif (user.friend?)
+            channel.voice(nick)
+            LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
           end
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
+          return
+        end
+
+        # if not a user, check for bans
+        @bot.ban_list.all_bans.each do |ban|
+          if (ban.match_mask?(nick.uhost))
+            response_mode = IRCTypes::Mode.new
+            response_mode.ban(ban.mask)
+            channel.set_mode(response_mode)
+            channel.kick(nick, ban.long_reason)
           end
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 

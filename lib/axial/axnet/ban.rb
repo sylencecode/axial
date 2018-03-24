@@ -16,10 +16,14 @@ module Axial
           @user_name = 'someone'
         end
 
+        def long_reason()
+          return "[a|x] banned #{@set_at.strftime("%m/%d/%Y")} by #{@user_name}: #{@reason}"
+        end
+
         if (reason.nil?)
-          @reason = reason
-        else
           @reason = 'banned.'
+        else
+          @reason = reason
         end
 
         if (set_at.nil?)

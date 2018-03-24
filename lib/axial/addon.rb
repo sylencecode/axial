@@ -34,12 +34,12 @@ module Axial
     end
 
     def on_ban_list(method)
-      LOGGER.debug("Startup willbind_ invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("Banlist update invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :ban_list, method: method)
     end
 
     def on_user_list(method)
-      LOGGER.debug("Startup will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("Userlist update will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :user_list, method: method)
     end
 
@@ -57,6 +57,11 @@ module Axial
       modes = args
       LOGGER.debug("Channel mode change (#{modes.join(', ')}) will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :mode, method: method, modes: modes)
+    end
+
+    def on_irc_banlist_end(method)
+      LOGGER.debug("IRC banlist end (368) will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :irc_ban_list_end, method: method)
     end
 
     def on_part(method)

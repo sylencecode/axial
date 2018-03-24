@@ -31,7 +31,7 @@ require_relative '../lib/axial/models/init.rb'
 DB.drop_table?(:bans)
 DB.create_table :bans do
   primary_key :id
-  foreign_key :user_id, :users, unique: true
+  foreign_key :user_id, :users
   String :mask, size: 255
   String :reason, size: 255
   DateTime :set_at, default: Time.now

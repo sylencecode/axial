@@ -90,7 +90,7 @@ module Axial
         LOGGER.info("attempting userlist update...")
         @bot.user_list.reload(new_user_list)
         LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
-        @bind_handler.dispatch_user_list_binds
+        @bot.bind_handler.dispatch_user_list_binds
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -105,7 +105,7 @@ module Axial
         LOGGER.info("attempting banlist update...")
         @bot.ban_list.reload(new_ban_list)
         LOGGER.info("banlist updated successfully (#{@bot.ban_list.count} bans)")
-        @bind_handler.dispatch_ban_list_binds
+        @bot.bind_handler.dispatch_ban_list_binds
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

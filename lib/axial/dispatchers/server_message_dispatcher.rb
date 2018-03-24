@@ -28,6 +28,11 @@ module Axial
             channel_name, user, host, server, nick, mode, junk, realname = Regexp.last_match.captures
             uhost = "#{nick}!#{user}@#{host}"
             @bot.channel_handler.handle_who_list_entry(nick, uhost, channel_name, mode)
+          when Channel::BAN_LIST_ENTRY
+            channel, mask, who_set, set_at = Regexp.last_match.captures
+            @bot.channel_handler.handle_ban_list_entry(channel, mask, who_set, set_at)
+          when Channel::BAN_LIST_END
+            @bot.channel_handler.handle_ban_list_end(Regexp.last_match[1])
           when Channel::NAMES_LIST_ENTRY
             LOGGER.debug(Regexp.last_match[1])
           when Channel::NAMES_LIST_END

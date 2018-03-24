@@ -13,6 +13,8 @@ module Axial
         WHO_LIST_ENTRY    = /^:{0,1}\S+ 352 \S+ (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)/
         NAMES_LIST_ENTRY  = /^:{0,1}\S+ 353 (.*)/
         NAMES_LIST_END    = /^:{0,1}\S+ 366 (.*)/
+        BAN_LIST_ENTRY    = /^:{0,1}\S+ 367 \S+ (\S+) (\S+) (\S+) (\S+)/
+        BAN_LIST_END      = /^:{0,1}\S+ 368 \S+ (\S+)/
         NOT_OPERATOR      = /^:{0,1}\S+ 482 (\S+)/
       end
 
