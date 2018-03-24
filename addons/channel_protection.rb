@@ -56,7 +56,7 @@ module Axial
         @complaining = true
         @complaint_thread = Thread.new do
           while (@complaining)
-            sleep 1
+            sleep 15
             begin
               @server_interface.channel_list.all_channels.each do |channel|
                 if (!channel.synced?)
