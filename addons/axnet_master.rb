@@ -143,6 +143,7 @@ module Axial
           return
         end
 
+        LOGGER.debug("relaying to #{@handlers.count - 1} connections")
         @handlers.each do |id, handler|
           if (id == exclude_handler.id)
             next
