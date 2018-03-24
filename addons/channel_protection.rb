@@ -105,7 +105,7 @@ module Axial
             return
           end
 
-          channel_nick = channel.nick_list.get_silent(bot)
+          channel_nick = channel.nick_list.get_silent(bot.name)
           if (channel_nick.nil)
             LOGGER.debug("can't help #{bot.name} - cannot find nickname in #{channel.name}")
             return
