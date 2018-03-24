@@ -26,7 +26,6 @@ module Axial
         on_axnet    'PING',               :pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
-        on_axnet    'COMPLAINT',          :handle_complaint
 
         @bot.axnet_interface.register_transmitter(self, :send)
       end

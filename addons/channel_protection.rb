@@ -80,8 +80,9 @@ module Axial
         end
       end
 
-      def handle_axnet_complaint(handler, serialized_yaml)
-        LOGGER.debug("received complaint from #{handler.remote_cn}: #{complaint.inspect}")
+      def handle_axnet_complaint(handler, command)
+        serialized_yaml = command.args
+        LOGGER.debug("received complaint from #{handler.remote_cn}: #{serialized_yaml.inspect}")
         @bot.axnet_interface.relay_to_axnet(handler, serialized_yaml)
         complaint = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
         bot = IRCTypes::Nick.from_uhost(@server_interface, complaint.uhost)
