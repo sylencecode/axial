@@ -16,8 +16,8 @@ require_relative '../lib/axial/models/init.rb'
  
  DB = Sequel.connect(DB_OPTIONS)
 
-raise "Sure you wanna?"
-exit 1
+#raise "Sure you wanna?"
+#exit 1
 
 #ENV['USE_SQLITE'] = 'true'
 #DB = Sequel.sqlite('../test.db')
@@ -28,7 +28,16 @@ exit 1
 #  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
 #end
 
-# DB.drop_table?(:bans)
+DB.drop_table?(:bans)
+DB.create_table :bans do
+  primary_key :id
+  foreign_key :user_id, :users, unique: true
+  String :mask, size: 255
+  String :reason, size: 255
+  DateTime :set_at, default: Time.now
+end
+
+exit 1
 
 DB.create_table :users do
   primary_key :id
@@ -42,7 +51,7 @@ DB.create_table :seens do
   primary_key :id
   foreign_key :user_id, :users, unique: true
   String :status, size: 255
-  DateTime :last, null: false
+  DateTime :last, default: Time.now
 end
 
 DB.create_table :masks do
@@ -78,7 +87,7 @@ DB.create_table :bans do
   foreign_key :user_id, :users, unique: true
   String :mask, size: 255
   String :reason, size: 255
-  DateTime :set_at, null: false
+  DateTime :set_at, default: Time.now
 end
 
 #DB.create_join_table(user_id: :users, mask_id: :masks)
