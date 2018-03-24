@@ -1,4 +1,5 @@
 require 'axial/irc_types/command'
+require 'axial/irc_types/dcc'
 
 module Axial
   module Handlers
@@ -473,6 +474,7 @@ module Axial
               next
             end
           end
+          dcc = IRCTypes::DCC.from_socket(@bot.server_interface, socket, user)
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
@@ -487,7 +489,7 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], user, socket, command_object)
+                    bind[:object].public_send(bind[:method], dcc, command_object)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -507,7 +509,7 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], user, socket, command_object)
+                    bind[:object].public_send(bind[:method], dcc, command_object)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -526,7 +528,7 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], user, socket, text)
+                    bind[:object].public_send(bind[:method], dcc, text)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end

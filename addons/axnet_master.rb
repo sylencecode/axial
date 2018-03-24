@@ -25,34 +25,35 @@ module Axial
 
         on_startup                  :start_master_thread
         on_reload                   :start_master_thread
-        on_channel  '?broadcast',   :handle_channel_broadcast
-        on_channel      '?axnet',   :handle_axnet_command
+
         on_axnet      'USERLIST',   :send_user_list
         on_axnet          'PONG',   :receive_pong
-        on_channel '?connstatus',   :display_conn_status
+
+        on_dcc       'broadcast',   :handle_broadcast
+        on_dcc           'axnet',   :handle_axnet_command
+        on_dcc      'connstatus',   :display_conn_status
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
         @bot.axnet_interface.register_relay(self, :relay)
       end
 
-      def display_conn_status(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.director?)
-          return
+      def display_conn_status(dcc, command)
+        if (@handlers.count == 0)
+          dcc.message("no bots connected.")
         end
         @handlers.each do |id, handler|
-          LOGGER.info("status for #{id} (#{handler.remote_cn})")
-          LOGGER.info(handler.socket.inspect)
-          LOGGER.info(handler.thread.inspect)
+          dcc.message("status for #{id} (#{handler.remote_cn})")
+          dcc.message(handler.socket.inspect)
+          dcc.message(handler.thread.inspect)
         end
       end
 
-      def handle_channel_broadcast(nick, channel, command)
+      def handle_broadcast(dcc, command)
         @bot.axnet_interface.transmit_to_axnet(command.args)
       end
 
-      def send_help(channel, nick)
-        channel.message("#{nick.name}: try ?axnet reload, ?axnet list, or ?axnet ping")
+      def send_help(dcc)
+        dcc.message("try axnet reload, axnet list, or axnet ping")
       end
 
       def ping_axnet()
@@ -63,31 +64,25 @@ module Axial
         LOGGER.debug("PONG from #{handler.id} (#{handler.remote_cn})")
       end
       
-      def handle_axnet_command(channel, nick, command)
+      def handle_axnet_command(dcc, command)
         begin
-          user = @bot.user_list.get_from_nick_object(nick)
-          if (user.nil? || !user.director?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-            return
-          end
-
           if (command.args.strip.empty?)
-            send_help(channel, nick)
+            send_help(dcc)
             return
           end
 
           case (command.args.strip)
             when /^list$/i, /^list\s+/i
-              list_axnet_connections(channel, nick)
+              list_axnet_connections(dcc)
             when /^reload$/i, /^stop\s+/i
-              reload_axnet(channel, nick)
+              reload_axnet(dcc)
             when /^ping$/i
               ping_axnet
             else
-              send_help(channel, nick)
+              send_help(dcc)
           end
         rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
             LOGGER.error(i)
@@ -95,20 +90,20 @@ module Axial
         end
       end
 
-      def list_axnet_connections(channel, nick)
+      def list_axnet_connections(dcc)
         bots = []
         @handler_monitor.synchronize do
           bots = @handlers.values.collect{|handler| handler.remote_cn}
         end
         if (bots.empty?)
-          channel.message("#{nick.name}: no axnet nodes connected.")
+          dcc.message("no axnet nodes connected.")
         else
-          channel.message("#{nick.name}: connected axnet nodes: #{bots.join(', ')}")
+          dcc.message("connected axnet nodes: #{bots.join(', ')}")
         end
       end
 
-      def reload_axnet(channel, nick)
-        channel.message("#{nick.name} issuing orders to axnet nodes to update and reload the axial codebase.")
+      def reload_axnet(dcc)
+        dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
         @bot.reload_axnet
         @bot.axnet_interface.transmit_to_axnet('RELOAD_AXNET')
         @bot.git_pull
