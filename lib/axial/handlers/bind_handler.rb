@@ -204,7 +204,7 @@ module Axial
       end
 
       def dispatch_self_join_binds(channel)
-        @binds.select{|bind| bind[:type] == :join}.each do |bind|
+        @binds.select{|bind| bind[:type] == :self_join}.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
