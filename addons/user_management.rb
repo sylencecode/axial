@@ -1,7 +1,9 @@
 require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/mask'
+require 'axial/models/ban'
 require 'axial/axnet/user'
+require 'axial/axnet/ban'
 
 module Axial
   module Addons
@@ -14,14 +16,70 @@ module Axial
         @version = '1.0.0'
         @valid_roles = %w(director manager op friend)
 
-        on_channel '?addmask',  :add_mask
-        on_channel '?adduser',  :add_user
-        on_channel '?getmasks', :get_masks
-        on_channel '?setrole',  :set_role
-        on_channel '?kickme',   :kick_user_test
-        on_channel_sync         :handle_channel_sync
-        on_startup              :update_user_list
-        on_startup              :update_ban_list
+        on_channel  '?addmask',   :add_mask
+        on_channel  '?adduser',   :add_user
+        on_channel '?getmasks',   :get_masks
+        on_channel  '?setrole',   :set_role
+        on_channel      '?ban',   :handle_channel_ban
+        on_dcc          '?ban',   :handle_dcc_ban
+
+        on_channel_sync           :handle_channel_sync
+        on_startup                :update_user_list
+        on_startup                :update_ban_list
+      end
+
+      def handle_dcc_ban(dcc, command)
+        handle_ban(dcc, dcc.user, command)
+      end
+
+      def handle_channel_ban(channel, nick, command)
+        user_model = Models::User.get_from_nick_object(nick)
+        if (user_model.nil? || !user_model.op?)
+          return
+        end
+        handle_ban(channel, nick, command)
+      end
+
+      def dcc_or_channel(sender, nick, text)
+        if (sender.is_a?(IRCTypes::Channel))
+          sender.send("#{nick.name}: #{text}")
+        else
+          sender.send("#{text}")
+        end
+      end
+
+      def ban_mask(sender, nick, command)
+        mask = nil
+        reason = 'general purposes'
+        if (command.args.strip =~ /(\S+)\s+(\S+)/)
+          mask, reason = Regexp.last_match.captures
+        elsif (command.args.strip =~ /(\S+)/)
+          mask = Regexp.last_match[1]
+        else
+          dcc_or_channel(nick, "try ?ban <mask> <reason>")
+          return
+        end
+
+        mask = Axial::MaskUtils.ensure_wildcard(mask)
+
+        begin
+          subject_models = Models::Ban.get_matches(mask)
+          if (subject_models.count > 0)
+            dcc_or_channel(sender, nick, ("mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
+            return
+          end
+
+          ban_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+          update_ban_list
+          dcc_or_channel(sender, nick, "added #{ban_model.mask} to banlist.")
+          end
+        rescue Exception => ex
+          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
       end
 
       def kick_user_test(channel, nick, command)
@@ -37,7 +95,6 @@ module Axial
         @bot.axnet_interface.update_user_list(new_user_list)
         @bot.axnet_interface.broadcast_user_list
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -46,14 +103,13 @@ module Axial
 
       def update_ban_list()
         new_ban_list = Axnet::BanList.new
-        Models::Bans.all.each do |ban_model|
+        Models::Ban.all.each do |ban_model|
           ban = Axnet::Ban.new(ban_model.mask, ban_model.user.pretty_name, ban_model.reason, ban_model.set_at)
           new_ban_list.add(ban)
         end
         @bot.axnet_interface.update_ban_list(new_ban_list)
         @bot.axnet_interface.broadcast_ban_list
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)

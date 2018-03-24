@@ -12,6 +12,7 @@ require 'axial/handlers/message_handler'
 require 'axial/handlers/server_handler'
 require 'axial/handlers/bind_handler'
 require 'axial/handlers/patterns'
+require 'axial/axnet/ban_list'
 require 'axial/axnet/user_list'
 require 'axial/dispatchers/server_message_dispatcher'
 require 'axial/interfaces/server_interface'
@@ -21,7 +22,7 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet_interface, :user_list
+                  :axnet_interface, :ban_list, :user_list
 
     attr_accessor :real_nick
     @class_instance = nil
@@ -84,6 +85,7 @@ module Axial
       Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
       @axnet_interface              = Interfaces::AxnetInterface.new(self)
       @user_list                    = Axnet::UserList.new
+      @ban_list                     = Axnet::BanList.new
       @axnet_interface.register_queue_callback
       @axnet_interface.start
     end

@@ -31,7 +31,7 @@ module Axial
           raise(AxnetError, "attempted to add an object of type other than Axnet::Ban: #{ban_list.inspect}")
         end
         @monitor.synchronize do
-          @ban_list.push(new_user)
+          @ban_list.push(new_ban)
         end
       end
 
@@ -43,9 +43,9 @@ module Axial
           @ban_list.each do |right_mask|
             right_regexp = Axial::MaskUtils.get_mask_regexp(right_mask)
             if (right_regexp.match(left_mask))
-              bans.push(user)
+              bans.push(ban)
             elsif (left_regexp.match(right_mask))
-              bans.push(user)
+              bans.push(ban)
             end
           end
         end

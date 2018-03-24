@@ -25,7 +25,7 @@ module Axial
         on_reload                   :start_complaint_thread
         on_join                     :handle_auto_op
         on_privmsg      'exec',     :handle_privmsg_exec
-        on_channel     'topic',     :handle_topic
+        on_channel    '?topic',     :handle_topic
         on_mode @prevent_modes,     :handle_prevent_modes
         on_mode @enforce_modes,     :handle_enforce_modes
         on_mode @op_deop_modes,     :handle_op_deop
@@ -41,7 +41,7 @@ module Axial
         # if not joined to channels in autojoin list, etc..
         #on_mode :all, :handle_all
       end
-
+        
       def stop_complaint_thread()
         LOGGER.debug("stopping ingest thread")
         @complaining = false
