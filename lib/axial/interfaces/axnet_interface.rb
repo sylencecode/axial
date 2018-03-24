@@ -50,11 +50,12 @@ module Axial
 
       def relay_to_axnet(handler, text)
         if (@relay_object.nil? || @relay_method.nil?)
+          LOGGER.debug("not relaying, no relay method registered")
           return
-        elsif (@relay_object.respond_to?(@relay_method))
-          raise(AxnetError, "there are no valid axnet relayers registered")
+        elsif (!@relay_object.respond_to?(@relay_method))
+          raise(AxnetError, "there are no valid axnet relayers registered - #{@relay_object.class} does not respond to #{@relay_method}")
         else
-          @relay_object.public_send(@relay, handler, text)
+          @relay_object.public_send(@relay_method, handler, text)
         end
       end
 

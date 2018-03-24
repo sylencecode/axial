@@ -143,6 +143,7 @@ module Axial
 
       def relay(exclude_handler, text)
         if (@handlers.count < 2)
+          LOGGER.debug("not enough handlers to relay message")
           return
         end
 
