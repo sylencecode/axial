@@ -4,32 +4,35 @@ $LOAD_PATH.unshift('../lib')
 
 gem 'sequel'
 require 'sequel'
-#require_relative '../lib/axial/models/init.rb'
-# DB_OPTIONS = {
-#   adapter: 'postgres',
-#   host: ENV['AXIAL_DB_HOST'],
-#   database: ENV['AXIAL_DB_NAME'],
-#   user: ENV['AXIAL_DB_USER'],
-#   password: ENV['AXIAL_DB_PASSWORD']
-# }
-# 
-# 
-# DB = Sequel.connect(DB_OPTIONS)
+require_relative '../lib/axial/models/init.rb'
+ DB_OPTIONS = {
+   adapter: 'postgres',
+   host: ENV['AXIAL_DB_HOST'],
+   database: ENV['AXIAL_DB_NAME'],
+   user: ENV['AXIAL_DB_USER'],
+   password: ENV['AXIAL_DB_PASSWORD']
+ }
+ 
+ 
+ DB = Sequel.connect(DB_OPTIONS)
 
 raise "Sure you wanna?"
 exit 1
 
-ENV['USE_SQLITE'] = 'true'
-DB = Sequel.sqlite('../test.db')
+#ENV['USE_SQLITE'] = 'true'
+#DB = Sequel.sqlite('../test.db')
 
-if (DB.adapter_scheme == :postgres)
-  DB.drop_table?(:seens, :masks, :things, :rss_feeds, :users, cacade: true)
-else
-  DB.drop_table?(:seens, :masks, :things, :rss_feeds, :users)
-end
+#if (DB.adapter_scheme == :postgres)
+#  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users, cacade: true)
+#else
+#  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
+#end
+
+# DB.drop_table?(:bans)
 
 DB.create_table :users do
   primary_key :id
+  foreign_key :user_id, :users, unique: true
   String :name, size: 32, unique: true
   String :pretty_name, size: 32
   String :role, size: 16, default: 'friend'
@@ -68,6 +71,14 @@ DB.create_table :things do
   String :pretty_thing, size: 64
   String :explanation, size: 255
   DateTime :learned_at, default: Time.now
+end
+
+DB.create_table :bans do
+  primary_key :id
+  foreign_key :user_id, :users, unique: true
+  String :mask, size: 255
+  String :reason, size: 255
+  DateTime :set_at, null: false
 end
 
 #DB.create_join_table(user_id: :users, mask_id: :masks)
