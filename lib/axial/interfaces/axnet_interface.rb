@@ -1,4 +1,5 @@
 require 'axial/axnet/user_list'
+require 'axial/axnet/ban_list'
 require 'axial/consumers/raw_consumer'
 
 class AxnetError < StandardError
@@ -76,13 +77,33 @@ module Axial
         transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
       end
 
-      def update_user_list(new_user_list, broadcast = false)
+      def broadcast_ban_list()
+        LOGGER.info("transmitting new ban to axnet...")
+        ban_list_yaml = YAML.dump(@bot.ban_list).gsub(/\n/, "\0")
+        transmit_to_axnet('BANLIST_RESPONSE ' + ban_list_yaml)
+      end
+
+      def update_user_list(new_user_list)
         if (!new_user_list.is_a?(Axnet::UserList))
           raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")
         end
         LOGGER.info("attempting userlist update...")
         @bot.user_list.reload(new_user_list)
         LOGGER.info("userlist updated successfully (#{@bot.user_list.count} users)")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def update_ban_list(new_ban_list)
+        if (!new_ban_list.is_a?(Axnet::BanList))
+          raise(AxnetError, "attempted to add an object of type other than Axnet::BanList: #{ban_list.inspect}")
+        end
+        LOGGER.info("attempting banlist update...")
+        @bot.ban_list.reload(new_ban_list)
+        LOGGER.info("banlist updated successfully (#{@bot.ban_list.count} bans)")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

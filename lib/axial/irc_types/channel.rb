@@ -60,6 +60,13 @@ module Axial
         @server_interface.send_channel_message(@name, text)
       end
 
+      def kick(nick, reason)
+        if (reason.nil? || reason.empty?)
+          reason = "kicked"
+        end
+        @server_interface.kick(@name, nick.name, reason)
+      end
+
       # placeholder methods for possible eventual method blocking until the channel has been synced
       def sync_complete()
         LOGGER.debug("#{self.name} sync completed")

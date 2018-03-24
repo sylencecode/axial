@@ -18,8 +18,14 @@ module Axial
         on_channel '?adduser',  :add_user
         on_channel '?getmasks', :get_masks
         on_channel '?setrole',  :set_role
+        on_channel '?kickme',   :kick_user_test
         on_channel_sync         :handle_channel_sync
         on_startup              :update_user_list
+        on_startup              :update_ban_list
+      end
+
+      def kick_user_test(channel, nick, command)
+        channel.kick(nick, command.args)
       end
 
       def update_user_list()
@@ -28,8 +34,24 @@ module Axial
           user = Axnet::User.from_model(user_model)
           new_user_list.add(user)
         end
-        @bot.axnet_interface.update_user_list(new_user_list, true)
+        @bot.axnet_interface.update_user_list(new_user_list)
         @bot.axnet_interface.broadcast_user_list
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def update_ban_list()
+        new_ban_list = Axnet::BanList.new
+        Models::Bans.all.each do |ban_model|
+          ban = Axnet::Ban.new(ban_model.mask, ban_model.user.pretty_name, ban_model.reason, ban_model.set_at)
+          new_ban_list.add(ban)
+        end
+        @bot.axnet_interface.update_ban_list(new_ban_list)
+        @bot.axnet_interface.broadcast_ban_list
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

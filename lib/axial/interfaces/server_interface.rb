@@ -47,6 +47,10 @@ module Axial
         @bot.connection_handler.send_raw(raw)
       end
 
+      def kick(channel_name, nick_name, reason)
+        @bot.connection_handler.send_raw("KICK #{channel_name} #{nick_name} :#{reason}")
+      end
+
       def send_private_message(nick_name, text)
         @bot.connection_handler.send_chat("PRIVMSG #{nick_name} :#{text}")
       end

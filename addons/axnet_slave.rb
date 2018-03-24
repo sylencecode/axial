@@ -25,6 +25,7 @@ module Axial
         on_reload                         :start_slave_thread
         on_axnet    'PING',               :pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
+        on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
         on_channel  '?connstatus',        :display_conn_status
 
@@ -62,6 +63,18 @@ module Axial
         new_user_list = YAML.load(user_list_yaml)
         @bot.axnet_interface.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def update_ban_list(handler, command)
+        ban_list_yaml = command.args.gsub(/\0/, "\n")
+        new_ban_list = YAML.load(ban_list_yaml)
+        @bot.axnet_interface.update_ban_list(new_ban_list)
+        LOGGER.info("successfully downloaded new banlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

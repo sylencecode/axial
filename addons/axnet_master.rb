@@ -26,6 +26,7 @@ module Axial
         on_startup                  :start_master_thread
         on_reload                   :start_master_thread
 
+        on_axnet       'BANLIST',   :send_ban_list
         on_axnet      'USERLIST',   :send_user_list
         on_axnet          'PONG',   :receive_pong
 
@@ -115,6 +116,18 @@ module Axial
         user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
         handler.send('USERLIST_RESPONSE ' + user_list_yaml)
         LOGGER.debug("sent user list to #{handler.remote_cn}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def send_ban_list(handler, command)
+        LOGGER.debug("ban list requested from #{handler.remote_cn}")
+        ban_list_yaml = YAML.dump(@bot.ban_list).gsub(/\n/, "\0")
+        handler.send('BANLIST_RESPONSE ' + ban_list_yaml)
+        LOGGER.debug("sent ban list to #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

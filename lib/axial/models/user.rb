@@ -24,7 +24,8 @@ module Axial
       one_to_many :masks
       one_to_many :things
       one_to_many :rss_feeds
-      one_to_one :seen
+      one_to_many :bans
+      one_to_one  :seen
 
       def possible_masks()
         res = []
