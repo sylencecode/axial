@@ -108,6 +108,54 @@ module Axial
         end
       end
 
+      def dispatch_user_list_binds()
+        @binds.select{|bind| bind[:type] == :user_list}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method])
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def dispatch_ban_list_binds()
+        @binds.select{|bind| bind[:type] == :ban_list}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method])
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def dispatch_reload_binds()
         @binds.select{|bind| bind[:type] == :reload}.each do |bind|
           Thread.new do

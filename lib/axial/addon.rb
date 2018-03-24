@@ -33,6 +33,16 @@ module Axial
       @listeners.push(type: :startup, method: method)
     end
 
+    def on_ban_list(method)
+      LOGGER.debug("Startup willbind_ invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :ban_list, method: method)
+    end
+
+    def on_user_list(method)
+      LOGGER.debug("Startup will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :user_list, method: method)
+    end
+
     def on_reload(method)
       LOGGER.debug("Addon reload will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :reload, method: method)

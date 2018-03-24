@@ -37,15 +37,7 @@ module Axial
         if (user_model.nil? || !user_model.op?)
           return
         end
-        handle_ban(channel, nick, command)
-      end
-
-      def dcc_or_channel(sender, nick, text)
-        if (sender.is_a?(IRCTypes::Channel))
-          sender.send("#{nick.name}: #{text}")
-        else
-          sender.send("#{text}")
-        end
+        handle_ban(channel, user, command)
       end
 
       def ban_mask(sender, nick, command)
@@ -56,23 +48,22 @@ module Axial
         elsif (command.args.strip =~ /(\S+)/)
           mask = Regexp.last_match[1]
         else
-          dcc_or_channel(nick, "try ?ban <mask> <reason>")
+          dcc_or_channel(sender, nick, "try ?ban <mask> <reason>")
           return
         end
 
         mask = Axial::MaskUtils.ensure_wildcard(mask)
 
         begin
-          subject_models = Models::Ban.get_matches(mask)
-          if (subject_models.count > 0)
-            dcc_or_channel(sender, nick, ("mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
+          bans = get_bans_from_mask(mask)
+          if (bans.count > 0)
+            sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{|ban| ban.mask}.join(', ')}'")
             return
           end
 
-          ban_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+          ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
           update_ban_list
-          dcc_or_channel(sender, nick, "added #{ban_model.mask} to banlist.")
-          end
+          sender.message("'#{ban_model.mask}' added to banlist.")
         rescue Exception => ex
           sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -80,10 +71,6 @@ module Axial
             LOGGER.error(i)
           end
         end
-      end
-
-      def kick_user_test(channel, nick, command)
-        channel.kick(nick, command.args)
       end
 
       def update_user_list()

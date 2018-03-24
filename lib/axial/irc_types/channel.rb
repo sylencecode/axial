@@ -62,7 +62,7 @@ module Axial
 
       def kick(nick, reason)
         if (reason.nil? || reason.empty?)
-          reason = "kicked"
+          reason = 'kicked'
         end
         @server_interface.kick(@name, nick.name, reason)
       end

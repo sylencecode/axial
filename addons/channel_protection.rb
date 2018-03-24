@@ -33,6 +33,8 @@ module Axial
         on_nick_change              :handle_nick_change
         on_axnet   'COMPLAINT',     :handle_axnet_complaint
         on_self_join                :send_axnet_op_complaint
+        on_user_list                :handle_user_list_update
+        on_ban_list                 :handle_ban_list_update
         # on kick...
         # on banned response
         # on invite only, invite
@@ -40,6 +42,29 @@ module Axial
         # on keyword, send keyword
         # if not joined to channels in autojoin list, etc..
         #on_mode :all, :handle_all
+      end
+
+      def handle_user_list_update()
+        # check for any newly promoted users who arent opped/voiced
+      end
+
+      def handle_ban_list_update()
+        @bot.channel_list.all_channels.each do |channel|
+          kicks = []
+          @bot.ban_list.all_bans.each do |ban|
+            channel.nick_list.all_nicks.each do |nick|
+              if (ban.match_mask?(nick.uhost))
+                if (!response_mode.bans.include?(ban.mask))
+                  response_mode.ban(ban.mask)
+                end
+                kicks.push(nick: nick, reason: ban.reason)
+              end
+            end
+          end
+          kicks.each do |kick|
+            channel.kick(kick[:nick], kick[:reason])
+          end
+        end
       end
         
       def stop_complaint_thread()

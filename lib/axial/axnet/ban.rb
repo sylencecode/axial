@@ -28,6 +28,15 @@ module Axial
           @set_at = set_at
         end
       end
+
+      def match_mask?(in_mask)
+        re_mask = Axial::MaskUtils.get_mask_regexp(@mask)
+        if (re_mask.match(in_mask))
+          return true
+        else
+          return false
+        end
+      end
     end
   end
 end
