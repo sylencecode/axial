@@ -50,7 +50,12 @@ module Axial
             begin
               Models::RSSFeed.where(enabled: true).each do |feed|
                 ingested = 0
-                rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
+                begin
+                  rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
+                rescue Feedjira::NoParserAvailable
+                  LOGGER.warn("RSS consumer: feed '#{feed.pretty_name}' did not present valid XML to feedjira. skipping.")
+                  next
+                end
                 recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
                 recent_entries.each do |entry|
                   published = entry.published
