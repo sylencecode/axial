@@ -26,7 +26,7 @@ module Axial
         on_axnet    'PING',               :pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
-        on_channel '?connstatus',         :display_conn_status
+        on_channel  '?connstatus',        :display_conn_status
 
         @bot.axnet_interface.register_transmitter(self, :send)
       end
@@ -37,7 +37,6 @@ module Axial
           return
         end
         LOGGER.info("status for #{@handler.id} (#{@handler.remote_cn})")
-        LOGGER.info(@handler.inspect)
         LOGGER.info(@handler.socket.inspect)
         LOGGER.info(@handler.thread.inspect)
       end

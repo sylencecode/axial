@@ -40,9 +40,8 @@ module Axial
         if (user.nil? || !user.director?)
           return
         end
-        @handlers.each do |handler|
-          LOGGER.info("status for #{handler.id} (#{handler.remote_cn})")
-          LOGGER.info(handler.inspect)
+        @handlers.each do |id, handler|
+          LOGGER.info("status for #{id} (#{handler.remote_cn})")
           LOGGER.info(handler.socket.inspect)
           LOGGER.info(handler.thread.inspect)
         end
