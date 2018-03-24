@@ -1,3 +1,6 @@
+require 'axial/irc_types/nick'
+require 'axial/axnet/complaint'
+require 'axial/consumers/raw_consumer'
 require 'axial/addon'
 
 module Axial
@@ -11,22 +14,116 @@ module Axial
         @version = '1.0.0'
 
         # :bans, :unbans, :invite_only, :keyword, :limit, :moderated, :no_outside_messages, :ops, :deops, :secret, :topic_ops_only, :voices, :devoices
-        @enforce_modes          = [ :topic_ops_only, :no_outside_messages ]
-        @prevent_modes          = [ :invite_only, :limit, :keyword, :moderated ]
-        @op_deop_modes          = [ :ops, :deops ]
-        @ban_modes              = [ :bans, :unbans ]
+        @enforce_modes              = [ :topic_ops_only, :no_outside_messages ]
+        @prevent_modes              = [ :invite_only, :limit, :keyword, :moderated ]
+        @op_deop_modes              = [ :ops, :deops ]
+        @ban_modes                  = [ :bans, :unbans ]
+        @complaint_thread           = nil
 
-        throttle                2
-        on_join                 :handle_auto_op
-        on_privmsg      'exec', :handle_privmsg_exec
-        on_privmsg    'chatto', :send_dcc_chat_offer
-        on_channel     'topic', :handle_topic
-        on_mode @prevent_modes, :handle_prevent_modes
-        on_mode @enforce_modes, :handle_enforce_modes
-        on_mode @op_deop_modes, :handle_op_deop
-        on_mode @ban_modes,     :handle_ban_unban
-        on_nick_change          :handle_nick_change
+        throttle                    2
+        on_startup                  :start_complaint_thread
+        on_reload                   :start_complaint_thread
+        on_join                     :handle_auto_op
+        on_privmsg      'exec',     :handle_privmsg_exec
+        on_privmsg    'chatto',     :send_dcc_chat_offer
+        on_channel     'topic',     :handle_topic
+        on_mode @prevent_modes,     :handle_prevent_modes
+        on_mode @enforce_modes,     :handle_enforce_modes
+        on_mode @op_deop_modes,     :handle_op_deop
+        on_mode @ban_modes,         :handle_ban_unban
+        on_nick_change              :handle_nick_change
+        on_axnet   'COMPLAINT',     :handle_axnet_complaint
+        # on kick...
+        # on banned response
+        # on invite only, invite
+        # on limit, increase or remove
+        # on keyword, send keyword
+        # if not joined to channels in autojoin list, etc..
         #on_mode :all, :handle_all
+      end
+
+      def stop_complaint_thread()
+        LOGGER.debug("stopping ingest thread")
+        @complaining = false
+        if (!@complaint_thread.nil?)
+          @complaint_thread.kill
+        end
+        @complaint_thread = nil
+      end
+
+      def start_complaint_thread()
+        LOGGER.debug("starting complaint thread")
+        @complaining = true
+        @complaint_thread = Thread.new do
+          while (@complaining)
+            sleep 15
+            begin
+              @server_interface.channel_list.all_channels.each do |channel|
+                if (!channel.synced?)
+                  return
+                end
+
+                if (!channel.opped?)
+                  complain(channel, :deopped)
+                end
+              end
+            rescue Exception => ex
+              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      end
+
+      def handle_axnet_complaint(handler, serialized_yaml)
+        @bot.axnet_interface.relay_to_axnet(handler, serialized_yaml)
+        complaint = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+        bot = IRCTypes::Nick.from_uhost(@server_interface, complaint.uhost)
+
+        if (bot.nil?)
+          LOGGER.debug("can't help #{complaint.uhost} - can't build a nick object")
+          return
+        end
+
+        if (complaint.type == :deopped)
+          channel = @server_interface.channel_list.get_silent(complaint.channel_name)
+
+          if (channel.nil?)
+            LOGGER.debug("can't help #{bot.name} - not on #{complaint.channel_name}")
+            return
+          elsif (!channel.synced?)
+            LOGGER.debug("can't help #{bot.name} - #{channel.name} is not synced yet")
+            return
+          elsif (!channel.opped?)
+            LOGGER.debug("can't help #{bot.name} - not an op #{channel.name}")
+            return
+          end
+
+          channel_nick = channel.nick_list.get_silent(bot)
+          if (channel_nick.nil)
+            LOGGER.debug("can't help #{bot.name} - cannot find nickname in #{channel.name}")
+            return
+          end
+
+          LOGGER.info("trying to op #{channel_nick.name}")
+          channel.op(channel_nick)
+        end
+      end
+
+      def send_complaint(complaint)
+        serialized_yaml = YAML.dump(serialized_yaml.gsub(/\n/, "\0"))
+        @bot.axnet_interface.transmit_to_axnet('COMPLAINT ' + serialized_yaml)
+      end
+
+      def complain(channel, complaint_type)
+        # :deopped, :banned, :invite, :keyword, :limit
+        complaint         = Axnet::Complaint.new
+        complaint.uhost   = @bot.server_interface.myself.uhost
+        complaint.channel = channel
+        complaint.type    = complaint_type
       end
 
       def handle_nick_change(old_nick, new_nick)
@@ -104,6 +201,7 @@ module Axial
             mode.deops.each do |deop|
               if (deop == @server_interface.myself.name)
                 channel.opped = false
+                complain(channel, :deopped)
               else
                 subject_nick = channel.nick_list.get(deop)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
@@ -204,6 +302,12 @@ module Axial
         end
         @server_interface.send_raw(command.args)
         LOGGER.info("#{nick.name} EXEC #{command.args.inspect}")
+      end
+
+      def before_reload()
+        super
+        LOGGER.info("#{self.class}: stopping complaint thread")
+        stop_complaint_thread
       end
     end
   end

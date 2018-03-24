@@ -13,6 +13,8 @@ module Axial
         @bot                  = bot
         @transmitter_object   = nil
         @transmitter_method   = nil
+        @relay_object         = nil
+        @relay_method         = nil
         @command_queue        = Consumers::RawConsumer.new
       end
 
@@ -25,12 +27,10 @@ module Axial
       end
 
       def stop()
-        LOGGER.debug("axnet interface command queue stopping")
         @command_queue.stop
       end
 
       def start()
-        LOGGER.debug("axnet interface command queue starting")
         @command_queue.start
       end
 
@@ -43,12 +43,22 @@ module Axial
         @transmitter_method = method.to_sym
       end
 
+      def relay_to_axnet(handler, text)
+        if (@relay_object.nil? || @relay_method.nil?)
+          return
+        elsif (@relay_object.respond_to?(@relay_method))
+          raise(AxnetError, "there are no valid axnet relayers registered")
+        else
+          @relay_object.public_send(@relay, handler, text)
+        end
+      end
+
       def transmit_to_axnet(text)
         LOGGER.debug("another reload test #2, i'm sending #{text}")
         if (@transmitter_object.respond_to?(@transmitter_method))
           @transmitter_object.public_send(@transmitter_method, text)
         else
-          raise(AxnetError, "there are no valid axnet handlers registered")
+          raise(AxnetError, "there are no valid axnet transmitters registered")
         end
       end
 

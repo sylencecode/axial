@@ -37,6 +37,7 @@ module Axial
         if (!@ingest_thread.nil?)
           @ingest_thread.kill
         end
+        @ingest_thread = nil
       end
 
       def start_ingest_thread()
@@ -284,7 +285,6 @@ module Axial
         super
         LOGGER.info("#{self.class}: stopping RSS thread")
         stop_ingest_thread
-        @ingest_thread = nil
       end
     end
   end

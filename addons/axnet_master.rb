@@ -27,11 +27,11 @@ module Axial
         on_reload                   :start_master_thread
         on_channel  '?broadcast',   :handle_channel_broadcast
         on_channel      '?axnet',   :handle_axnet_command
-        on_axnet     'USERLIST',    :send_user_list
-        on_axnet           'OP',    :op_and_repeat
-        on_axnet         'PONG',    :receive_pong
+        on_axnet      'USERLIST',   :send_user_list
+        on_axnet          'PONG',   :receive_pong
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
+        @bot.axnet_interface.register_relay(self, :relay)
       end
 
       def handle_channel_broadcast(nick, channel, command)
@@ -105,16 +105,6 @@ module Axial
         @bot.reload_addons
       end
 
-      def op_and_repeat(handler, command)
-        if (command.args.strip =~ /(\S+)\s+(\S+)/)
-          channel_name, peer_nick_name = Regexp.last_match.captures
-          @server_interface.channel_list.all_channels.each do |channel|
-            LOGGER.debug("opping #{peer_nick_name} in #{channel.name}")
-          end
-          repeat_except(handler, "#{command.args}")
-        end
-      end
-
       def send_user_list(handler, command)
         LOGGER.debug("user list requested from #{handler.remote_cn}")
         user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
@@ -139,17 +129,6 @@ module Axial
         end
       end
 
-      def repeat_except(exclude_handler, text)
-        LOGGER.warn("repeating to #{@handlers.count - 1} connections")
-        @handlers.each do |id, handler|
-          if (handler.id == exclude_handler.id)
-            next
-          else
-            handler.send(text)
-          end
-        end
-      end
-
       def broadcast(payload)
         LOGGER.warn("broadcasting to #{@handlers.count} connections")
         @handlers.each do |id, handler|
@@ -159,6 +138,21 @@ module Axial
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
+        end
+      end
+
+      def relay(exclude_handler, text)
+        if (@handlers.count < 2)
+          return
+        end
+
+        LOGGER.debug("relaying to #{@handlers.count - 1} connections")
+        @handlers.each do |id, handler|
+          if (id == exclude_handler.id)
+            next
+          else
+            handler.send(text)
+          end
         end
       end
 

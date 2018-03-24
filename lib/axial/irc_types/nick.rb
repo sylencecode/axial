@@ -37,7 +37,7 @@ module Axial
           nick.host = host
           return nick
         else
-          raise(ArgumentError, "Invalid uhost provided to #{self.class}: #{uhost}")
+          return nil
         end
       end
     end
