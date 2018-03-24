@@ -143,11 +143,9 @@ module Axial
 
       def relay(exclude_handler, text)
         if (@handlers.count < 2)
-          LOGGER.debug("not enough handlers to relay message")
           return
         end
 
-        LOGGER.debug("relaying to #{@handlers.count - 1} connections")
         @handlers.each do |id, handler|
           if (id == exclude_handler.id)
             next

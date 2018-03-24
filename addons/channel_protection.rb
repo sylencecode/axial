@@ -59,14 +59,11 @@ module Axial
             sleep 1
             begin
               @server_interface.channel_list.all_channels.each do |channel|
-                LOGGER.debug("checking #{channel.name} for complaints")
                 if (!channel.synced?)
-                  LOGGER.debug("#{channel.name} is not synced, not complaining")
                   return
                 end
 
                 if (!channel.opped?)
-                  LOGGER.debug("complaining about not being opped on #{channel.name}")
                   complain(channel, :deopped)
                 end
               end
@@ -87,7 +84,6 @@ module Axial
         bot = IRCTypes::Nick.from_uhost(@server_interface, complaint.uhost)
 
         if (bot.nil?)
-          LOGGER.debug("can't help #{complaint.uhost} - can't build a nick object")
           return
         end
 
@@ -95,19 +91,15 @@ module Axial
           channel = @server_interface.channel_list.get_silent(complaint.channel_name)
 
           if (channel.nil?)
-            LOGGER.debug("can't help #{bot.name} - not on #{complaint.channel_name}")
             return
           elsif (!channel.synced?)
-            LOGGER.debug("can't help #{bot.name} - #{channel.name} is not synced yet")
             return
           elsif (!channel.opped?)
-            LOGGER.debug("can't help #{bot.name} - not an op #{channel.name}")
             return
           end
 
           channel_nick = channel.nick_list.get_silent(bot.name)
           if (channel_nick.nil?)
-            LOGGER.debug("can't help #{bot.name} - cannot find nickname in #{channel.name}")
             return
           end
 
