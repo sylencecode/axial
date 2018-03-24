@@ -1,14 +1,30 @@
-
-ip = '74.208.183.199'
-
-fragments = ip.split('.')
-
-long_ip = 0
-
-block = 4
-fragments.each do |fragment|
-  block -= 1
-  long_ip += fragment.to_i * (256 ** block)
+#!/usr/bin/env ruby
+require 'socket'
+require 'timeout'
+tcp = TCPServer.new(54321)
+socket = nil
+begin
+  Timeout.timeout(10) do
+    socket = tcp.accept
+  end
+rescue Timeout::Error
+  puts "connection attempt timed out"
 end
 
-puts "\x01DCC CHAT #{long_ip} 6667\x01"
+tcp.close
+if (socket.nil?)
+  puts "no socket"
+else
+  socket.puts("Enter your password.")
+  auth = false
+  while (foo = socket.gets)
+    if (!@auth)
+      socket.puts("ok you're authed")
+      auth = true
+    else
+      socket.puts("gotcha")
+    end
+  end
+end
+
+system("netstat -puntl")

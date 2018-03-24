@@ -193,7 +193,13 @@ module Axial
             ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
         ]
 
-        @tcp_listener = TCPServer.new(@port)
+        begin
+          @tcp_listener = TCPServer.new(@port)
+        rescue Errno::EADDRINUSE => ex
+          LOGGER.error("axnet master can't bind to port #{@port}, it is already in use.")
+          sleep 10
+          retry
+        end
         while (@running)
           begin
             LOGGER.debug("listener accepting more connections on port #{@port}")
