@@ -56,19 +56,21 @@ module Axial
         @complaining = true
         @complaint_thread = Thread.new do
           while (@complaining)
-            sleep 15
+            sleep 1
             begin
               @server_interface.channel_list.all_channels.each do |channel|
+                LOGGER.debug("checking #{channel.name} for complaints")
                 if (!channel.synced?)
+                  LOGGER.debug("#{channel.name} is not synced, not complaining")
                   return
                 end
 
                 if (!channel.opped?)
+                  LOGGER.debug("complaining about not being opped on #{channel.name}")
                   complain(channel, :deopped)
                 end
               end
             rescue Exception => ex
-              channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
@@ -79,6 +81,7 @@ module Axial
       end
 
       def handle_axnet_complaint(handler, serialized_yaml)
+        LOGGER.debug("received complaint from #{handler.remote_cn}: #{complaint.inspect}")
         @bot.axnet_interface.relay_to_axnet(handler, serialized_yaml)
         complaint = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
         bot = IRCTypes::Nick.from_uhost(@server_interface, complaint.uhost)
@@ -114,16 +117,23 @@ module Axial
       end
 
       def send_complaint(complaint)
-        serialized_yaml = YAML.dump(serialized_yaml.gsub(/\n/, "\0"))
+        LOGGER.debug("sending complaint: #{complaint.inspect}")
+        serialized_yaml = YAML.dump(complaint).gsub(/\n/, "\0")
         @bot.axnet_interface.transmit_to_axnet('COMPLAINT ' + serialized_yaml)
       end
 
       def complain(channel, complaint_type)
         # :deopped, :banned, :invite, :keyword, :limit
-        complaint         = Axnet::Complaint.new
-        complaint.uhost   = @bot.server_interface.myself.uhost
-        complaint.channel = channel
-        complaint.type    = complaint_type
+        complaint                 = Axnet::Complaint.new
+        complaint.uhost           = @bot.server_interface.myself.uhost
+        complaint.type            = complaint_type
+
+        if (channel.is_a?(IRCTypes::Channel))
+          complaint.channel_name  = channel.name
+        else
+          complaint.channel_name  = channel
+        end
+        send_complaint(complaint)
       end
 
       def handle_nick_change(old_nick, new_nick)

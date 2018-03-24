@@ -43,6 +43,11 @@ module Axial
         @transmitter_method = method.to_sym
       end
 
+      def register_relay(object, method)
+        @relay_object = object
+        @relay_method = method.to_sym
+      end
+
       def relay_to_axnet(handler, text)
         if (@relay_object.nil? || @relay_method.nil?)
           return
