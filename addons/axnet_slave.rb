@@ -115,7 +115,7 @@ module Axial
       end
 
       def start_slave_thread()
-        LOGGER.warn("starting axial slave thread")
+        LOGGER.debug("starting axial slave thread")
         @running = true
         @slave_thread = Thread.new do
           while (@running)

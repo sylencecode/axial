@@ -44,13 +44,10 @@ module Axial
 
       def ping_axnet()
         @bot.axnet_interface.transmit_to_axnet('PING')
-        @handlers.each do |id, handler|
-          LOGGER.warn(handler.remote_cn + " - " + handler.socket.inspect)
-        end
       end
 
       def receive_pong(handler, text)
-        LOGGER.warn("PONG from #{handler.id} (#{handler.remote_cn})")
+        LOGGER.debug("PONG from #{handler.id} (#{handler.remote_cn})")
       end
       
       def handle_axnet_command(channel, nick, command)
@@ -130,7 +127,7 @@ module Axial
       end
 
       def broadcast(payload)
-        LOGGER.warn("broadcasting to #{@handlers.count} connections")
+        LOGGER.debug("broadcasting to #{@handlers.count} connections")
         @handlers.each do |id, handler|
           handler.send(payload)
         end
@@ -185,33 +182,32 @@ module Axial
         @tcp_listener = TCPServer.new(@port)
         while (@running)
           begin
-            LOGGER.warn("listener accepting more connections on port #{@port}")
+            LOGGER.debug("listener accepting more connections on port #{@port}")
             @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
             client_socket = @ssl_listener.accept
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
             Thread.new(handler) do |handler|
               begin
-                LOGGER.warn("entering handler loop for #{handler.id} (#{handler.remote_cn})")
                 handler.loop
                 @handler_monitor.synchronize do
-                  LOGGER.warn("deleting handler #{handler.id} (#{handler.remote_cn})")
+                  LOGGER.debug("deleting handler #{handler.id} (#{handler.remote_cn})")
                   @handlers.delete(handler.id)
-                  LOGGER.warn("clean close for #{handler.id} (#{handler.remote_cn}: #{@handlers.keys.inspect}")
+                  LOGGER.debug("(#{handler.remote_cn} disconnected (#{handler.id})")
                 end
               rescue Exception => ex
-                LOGGER.warn("error close for #{handler.id} (#{handler.remote_cn}: #{@handlers.keys.inspect}")
+                LOGGER.warn("error close for #{handler.remote_cn} (#{handler.id}")
                 ex.backtrace.each do |i|
                   LOGGER.error(i)
                 end
                 @handler_monitor.synchronize do
-                  LOGGER.warn("deleting handler #{handler.remote_cn}")
+                  LOGGER.debug("deleting handler #{handler.remote_cn}")
                   @handlers.delete(handler.id)
                 end
               end
             end
             @handler_monitor.synchronize do
               @handlers[handler.id] = handler
-              LOGGER.warn("added handler #{handler.id} (#{handler.remote_cn}: #{@handlers.keys.inspect}")
+              LOGGER.debug("added handler #{handler.id} (#{handler.remote_cn})")
             end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -228,7 +224,7 @@ module Axial
       end
 
       def start_master_thread()
-        LOGGER.warn("starting axial master thread")
+        LOGGER.debug("starting axial master thread")
         @running = true
         @master_thread = Thread.new do
           while (@running)

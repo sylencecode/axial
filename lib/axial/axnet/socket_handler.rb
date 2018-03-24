@@ -69,13 +69,12 @@ module Axial
       def loop()
         ssl_handshake
         @transmit_consumer.start
-        LOGGER.warn("established axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
+        LOGGER.info("established axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
         while (text = @socket.gets)
           text.strip!
-          LOGGER.warn("command from #{@remote_cn}: #{text}")
           @bot.bind_handler.dispatch_axnet_binds(self, text)
         end
-        LOGGER.warn("closed axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
+        LOGGER.info("closed axnet connection #{@id} (#{@remote_cn} @ #{@remote_address}) - #{@socket.inspect}")
       rescue Exception => ex
         LOGGER.error("#{self.class} loop error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
