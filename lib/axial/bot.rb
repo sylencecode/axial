@@ -56,10 +56,6 @@ module Axial
       load_axnet
       load_addons
       notify_startup
-      Signal.trap('HUP') do
-        reload_axnet
-        reload_addons
-      end
     end
 
     def notify_startup()

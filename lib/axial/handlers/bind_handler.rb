@@ -465,6 +465,90 @@ module Axial
           LOGGER.error(i)
         end
       end
+
+      def dispatch_dcc_binds(user, socket, text)
+        @binds.select{|bind| bind[:type] == :dcc}.each do |bind|
+          if (bind[:object].throttle_secs > 0)
+            if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
+              next
+            end
+          end
+          if (bind[:command].is_a?(String))
+            match = '^(' + Regexp.escape(bind[:command]) + ')'
+            base_match = match + '$'
+            args_match = match + '\s+(.*)'
+            # this is done to ensure that a command is typed in its entirety, even if it had no arguments
+            args_regexp = Regexp.new(args_match, true)
+            base_regexp = Regexp.new(base_match, true)
+            if (text =~ args_regexp)
+              bind[:object].last = Time.now
+              command, args = Regexp.last_match.captures
+              command_object = IRCTypes::Command.new(command, args)
+              Thread.new do
+                begin
+                  if (bind[:object].respond_to?(bind[:method]))
+                    bind[:object].public_send(bind[:method], user, socket, command_object)
+                  else
+                    LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+                  end
+                rescue Exception => ex
+                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                  ex.backtrace.each do |i|
+                    LOGGER.error(i)
+                  end
+                end
+              end
+              break
+            elsif (text =~ base_regexp)
+              bind[:object].last = Time.now
+              command = Regexp.last_match[1]
+              args = ""
+              command_object = IRCTypes::Command.new(command, args)
+              Thread.new do
+                begin
+                  if (bind[:object].respond_to?(bind[:method]))
+                    bind[:object].public_send(bind[:method], user, socket, command_object)
+                  else
+                    LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+                  end
+                rescue Exception => ex
+                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                  ex.backtrace.each do |i|
+                    LOGGER.error(i)
+                  end
+                end
+              end
+              break
+            end
+          elsif (bind[:command].is_a?(Regexp))
+            if (text =~ bind[:command])
+              bind[:object].last = Time.now
+              Thread.new do
+                begin
+                  if (bind[:object].respond_to?(bind[:method]))
+                    bind[:object].public_send(bind[:method], user, socket, text)
+                  else
+                    LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+                  end
+                rescue Exception => ex
+                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                  ex.backtrace.each do |i|
+                    LOGGER.error(i)
+                  end
+                end
+              end
+              break
+            end
+          else
+            LOGGER.error("#{self.class}: unsure how to handle bind #{bind.command} to #{bind.method}, it isn't a string or regexp.")
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
     end
   end
 end

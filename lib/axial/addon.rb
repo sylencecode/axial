@@ -69,6 +69,11 @@ module Axial
       @listeners.push(type: :join, method: method)
     end
 
+    def on_dcc(command, method)
+      LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :dcc, command: command, method: method)
+    end
+
     def on_self_join(method)
       LOGGER.debug("Channel self-join will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :self_join, method: method)
