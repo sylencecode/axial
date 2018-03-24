@@ -21,13 +21,25 @@ module Axial
         @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup  :start_slave_thread
-        on_reload   :start_slave_thread
+        on_startup                        :start_slave_thread
+        on_reload                         :start_slave_thread
         on_axnet    'PING',               :pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
+        on_channel '?connstatus',         :display_conn_status
 
         @bot.axnet_interface.register_transmitter(self, :send)
+      end
+
+      def display_conn_status(channel, nick, command)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.director?)
+          return
+        end
+        LOGGER.info("status for #{@handler.id} (#{@handler.remote_cn})")
+        LOGGER.info(@handler.inspect)
+        LOGGER.info(@handler.socket.inspect)
+        LOGGER.info(@handler.thread.inspect)
       end
 
       def send(text)

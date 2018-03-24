@@ -29,9 +29,23 @@ module Axial
         on_channel      '?axnet',   :handle_axnet_command
         on_axnet      'USERLIST',   :send_user_list
         on_axnet          'PONG',   :receive_pong
+        on_channel '?connstatus',   :display_conn_status
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
         @bot.axnet_interface.register_relay(self, :relay)
+      end
+
+      def display_conn_status(channel, nick, command)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.director?)
+          return
+        end
+        @handlers.each do |handler|
+          LOGGER.info("status for #{handler.id} (#{handler.remote_cn})")
+          LOGGER.info(handler.inspect)
+          LOGGER.info(handler.socket.inspect)
+          LOGGER.info(handler.thread.inspect)
+        end
       end
 
       def handle_channel_broadcast(nick, channel, command)
