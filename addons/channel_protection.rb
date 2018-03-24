@@ -178,10 +178,6 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
-        if (!channel.opped?)
-          return
-        end
-
         response_mode = IRCTypes::Mode.new
         if (mode.ops.any?)
           if (nick == @server_interface.myself)
@@ -194,7 +190,7 @@ module Axial
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
                 paranoid = false
-                if (paranoid && (possible_user.nil? || !possible_user.op?))
+                if (paranoid && (possible_user.nil? || !possible_user.op?) && channel.opped?)
                   response_mode.deop(subject_nick.name)
                 end
               end
@@ -213,7 +209,7 @@ module Axial
               else
                 subject_nick = channel.nick_list.get(deop)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                if (!possible_user.nil? && possible_user.op?)
+                if (!possible_user.nil? && possible_user.op? && channel.opped?)
                   response_mode.op(subject_nick.name)
                 end
               end
@@ -221,7 +217,7 @@ module Axial
           end
         end
 
-        if (response_mode.to_string_array.any?)
+        if (response_mode.to_string_array.any? && channel.opped?)
           channel.set_mode(response_mode)
         end
       end
