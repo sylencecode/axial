@@ -201,14 +201,12 @@ module Axial
                   LOGGER.error(i)
                 end
                 @handler_monitor.synchronize do
-                  LOGGER.debug("deleting handler #{handler.remote_cn}")
                   @handlers.delete(handler.id)
                 end
               end
             end
             @handler_monitor.synchronize do
               @handlers[handler.id] = handler
-              LOGGER.debug("added handler #{handler.id} (#{handler.remote_cn})")
             end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
