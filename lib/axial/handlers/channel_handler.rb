@@ -197,6 +197,7 @@ module Axial
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
+        @bot.bind_handler.dispatch_self_join_binds(channel)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

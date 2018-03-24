@@ -33,6 +33,7 @@ module Axial
         on_mode @ban_modes,         :handle_ban_unban
         on_nick_change              :handle_nick_change
         on_axnet   'COMPLAINT',     :handle_axnet_complaint
+        on_self_join                :send_axnet_op_complaint
         # on kick...
         # on banned response
         # on invite only, invite
@@ -105,6 +106,12 @@ module Axial
 
           LOGGER.info("trying to op #{channel_nick.name}")
           channel.op(channel_nick)
+        end
+      end
+
+      def send_axnet_op_complaint(channel)
+        if (!channel.opped?)
+          complain(channel, :deopped)
         end
       end
 

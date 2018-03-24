@@ -69,6 +69,11 @@ module Axial
       @listeners.push(type: :join, method: method)
     end
 
+    def on_self_join(method)
+      LOGGER.debug("Channel self-join will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :self_join, method: method)
+    end
+
     def on_channel(command, method)
       if (command.is_a?(Regexp))
         LOGGER.debug("Channel text '#{command.source}' will invoke method '#{self.class}.#{method}'")

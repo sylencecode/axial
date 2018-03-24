@@ -203,6 +203,30 @@ module Axial
         end
       end
 
+      def dispatch_self_join_binds(channel)
+        @binds.select{|bind| bind[:type] == :join}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def dispatch_axnet_binds(socket_handler, text)
         @binds.select{|bind| bind[:type] == :axnet}.each do |bind|
           if (bind[:command].is_a?(String))
