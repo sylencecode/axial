@@ -85,6 +85,14 @@ module Axial
         end
       end
 
+      def get_silent(nick_name)
+        nick = nil
+        if (@nick_list.has_key?(nick_name.downcase))
+          nick = @nick_list[nick_name.downcase]
+        end
+        return nick
+      end
+
       def delete(nick_or_name)
         key = nil
         if (nick_or_name.is_a?(IRCTypes::Nick))
