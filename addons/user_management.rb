@@ -2,8 +2,6 @@ require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/mask'
 require 'axial/models/ban'
-require 'axial/axnet/user'
-require 'axial/axnet/ban'
 
 module Axial
   module Addons

@@ -1,5 +1,4 @@
 require 'axial/irc_types/nick'
-require 'axial/axnet/complaint'
 require 'axial/consumers/raw_consumer'
 require 'axial/addon'
 
