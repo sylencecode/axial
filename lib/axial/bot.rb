@@ -49,10 +49,10 @@ module Axial
       load_properties
       load_server_settings
       load_consumers
+      load_axnet
       load_interfaces
       load_handlers
       load_dispatchers
-      load_axnet
       load_addons
       notify_startup
     end
