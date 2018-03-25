@@ -114,24 +114,24 @@ module Axial
               if (!subject_nick.opped?)
                 response_mode.op(subject_nick.name)
               end
-            elsif (!possible_user.op?)
-              if (subject_nick.opped?)
-                response_mode.deop(subject_nick.name)
-              end
+            # elsif (!possible_user.op?)
+            #   if (subject_nick.opped?)
+            #     response_mode.deop(subject_nick.name)
+            #   end
             elsif (possible_user.friend?)
               if (!subject_nick.voiced?)
                 response_mode.voice(subject_nick.name)
               end
-            elsif (!possible_user.friend?)
-              if (subject_nick.voiced?)
-                response_mode.devoice(subject_nick.name)
-              end
-            else
-              if (subject_nick.opped?)
-                response_mode.deop(subject_nick.name)
-              elsif (subject_nick.voiced?)
-                response_mode.devoice(subject_nick.name)
-              end
+            # elsif (!possible_user.friend?)
+            #   if (subject_nick.voiced?)
+            #     response_mode.devoice(subject_nick.name)
+            #   end
+            # else
+            #   if (subject_nick.opped?)
+            #     response_mode.deop(subject_nick.name)
+            #   elsif (subject_nick.voiced?)
+            #     response_mode.devoice(subject_nick.name)
+            #   end
             end
           end
         end
