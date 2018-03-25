@@ -308,12 +308,12 @@ module Axial
               else
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                if (possible_user.nil? || !possible_user.op?)
-                    response_mode.deop(subject_nick.name)
-                  if (!user.director?)
-                    response_mode.deop(nick.name)
-                  end
-                end
+                # if (possible_user.nil? || !possible_user.op?)
+                #     response_mode.deop(subject_nick.name)
+                #   if (!user.director?)
+                #     response_mode.deop(nick.name)
+                #   end
+                # end
               end
             end
           end
