@@ -205,7 +205,7 @@ module Axial
           random_sleep = SecureRandom.random_number(100) / 100.to_f
           sleep(random_sleep)
 
-          if (!nick.opped?)
+          if (!channel_nick.opped?)
             channel.op(channel_nick)
           end
         end
