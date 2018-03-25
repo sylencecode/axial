@@ -49,7 +49,7 @@ module Axial
       end
 
       def send(text)
-        @bot.axnet_interface.transmit_to_axnet(text)
+        @handler.send(text)
       end
 
       def send_ping()
