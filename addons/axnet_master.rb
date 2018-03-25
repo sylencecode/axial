@@ -23,8 +23,8 @@ module Axial
         @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup                  :start_master_thread
-        on_reload                   :start_master_thread
+        on_startup                  :start_master_threads
+        on_reload                   :start_master_threads
 
         on_axnet       'BANLIST',   :send_ban_list
         on_axnet      'USERLIST',   :send_user_list
@@ -179,7 +179,7 @@ module Axial
         end
       end
 
-      def stop_master_thread()
+      def stop_master_threads()
         @running = false
         close_connections
         if (!@tcp_listener.nil?)
@@ -256,7 +256,7 @@ module Axial
         end
       end
 
-      def start_master_thread()
+      def start_master_threads()
         LOGGER.debug("starting axial master thread")
         @running = true
         @master_thread = Thread.new do
@@ -275,6 +275,7 @@ module Axial
           while (@running)
             begin
               send_ping
+              sleep 10
             rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
@@ -289,7 +290,7 @@ module Axial
       def before_reload()
         super
         LOGGER.info("#{self.class}: shutting down axnet master listener")
-        stop_master_thread
+        stop_master_threads
       end
     end
   end

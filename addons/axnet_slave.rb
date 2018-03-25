@@ -22,8 +22,8 @@ module Axial
         @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup                        :start_slave_thread
-        on_reload                         :start_slave_thread
+        on_startup                        :start_slave_threads
+        on_reload                         :start_slave_threads
         on_axnet    'PING',               :send_pong
         on_axnet    'PONG',               :receive_pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
@@ -174,6 +174,7 @@ module Axial
             begin
               if (@handler.nil?)
                 send_ping
+                sleep 10
               end
             rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
