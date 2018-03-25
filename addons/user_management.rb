@@ -113,6 +113,8 @@ module Axial
               sender.message("'#{ban.mask}' isn't in the database?")
             end
           end
+
+          update_ban_list
         rescue Exception => ex
           sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
