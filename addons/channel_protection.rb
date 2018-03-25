@@ -1,6 +1,7 @@
 require 'axial/irc_types/nick'
 require 'axial/consumers/raw_consumer'
 require 'axial/addon'
+require 'axial/axnet/complaint'
 
 module Axial
   module Addons
