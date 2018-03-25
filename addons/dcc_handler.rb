@@ -49,7 +49,7 @@ module Axial
         if (socket.nil?)
           puts "no socket"
         else
-          socket.puts("Hello #{user.pretty_name}. Please enter your password.")
+          socket.puts("Hello #{user.pretty_name}.")
           auth = false
           while (text = socket.gets)
             text.strip!
