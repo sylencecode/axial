@@ -1,7 +1,7 @@
 module Axial
   module IRCTypes
     class Nick
-      attr_accessor :name, :ident, :host, :user_model, :voiced, :opped
+      attr_accessor :name, :ident, :host, :user_model
       def initialize(server_interface)
         @server_interface = server_interface
         @name = ''
@@ -10,6 +10,22 @@ module Axial
         @user_model = nil
         @voiced = false
         @opped = false
+      end
+
+      def opped=(value)
+        @opped = value
+      end
+
+      def voiced=(value)
+        @voiced = value
+      end
+
+      def opped?()
+        return @opped
+      end
+
+      def voiced?()
+        return @voiced
       end
 
       def uhost()

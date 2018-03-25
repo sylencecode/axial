@@ -283,6 +283,14 @@ module Axial
         end
       end
 
+      def emoty?()
+        return to_string_array.empty?
+      end
+
+      def any?()
+        return to_string_array.any?
+      end
+
       def to_string_array()
         sets = []
         unsets = []

@@ -19,9 +19,9 @@ module Axial
         on_channel '?getmasks',   :get_masks
         on_channel  '?setrole',   :set_role
         on_channel      '?ban',   :handle_channel_ban
-        on_dcc          '?ban',   :handle_dcc_ban
+        on_dcc           'ban',   :handle_dcc_ban
         on_channel    '?unban',   :handle_channel_unban
-        on_dcc        '?unban',   :handle_dcc_unban
+        on_dcc         'unban',   :handle_dcc_unban
 
         on_channel_sync           :handle_channel_sync
         on_startup                :update_user_list

@@ -67,6 +67,10 @@ module Axial
       end
 
       def check_channel_bans(channel)
+        if (!channel.opped?)
+          return
+        end
+
         response_mode = IRCTypes::Mode.new
         kicks = []
         @bot.ban_list.all_bans.each do |ban|
@@ -79,11 +83,36 @@ module Axial
             end
           end
         end
-        if (response_mode.to_string_array.any?)
+        if (response_mode.any?)
           channel.set_mode(response_mode)
         end
         kicks.each do |kick|
           channel.kick(kick[:nick], kick[:reason])
+        end
+      end
+
+      def check_channel_users(channel)
+        if (!channel.opped?)
+          return
+        end
+
+        random_sleep = SecureRandom.random_number(100) / 100.to_f
+        sleep(random_sleep)
+
+        response_mode = IRCTypes::Mode.new
+        channel.nick_list.all_nicks.each do |subject_nick|
+          possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+          if (!possible_user.nil?)
+            if (possible_user.op? && !nick.opped?)
+              response_mode.op(subject_nick.name)
+            elsif (possible_user.friend? && !nick.voiced?)
+              response_mode.voice(subject_nick.name)
+            end
+          end
+        end
+
+        if (response_mode.any?)
+          channel.set_mode(response_mode)
         end
       end
         
@@ -148,8 +177,12 @@ module Axial
             return
           end
 
-          LOGGER.info("trying to op #{channel_nick.name}")
-          channel.op(channel_nick)
+          random_sleep = SecureRandom.random_number(100) / 100.to_f
+          sleep(random_sleep)
+
+          if (!nick.opped?)
+            channel.op(channel_nick)
+          end
         end
       end
 
@@ -186,6 +219,7 @@ module Axial
         if (!channel.opped?)
           return
         end
+        user = @bot.user_list.get_from_nick_object(nick)
         response_mode = IRCTypes::Mode.new
         if (mode.bans.any?)
           if (nick == @server_interface.myself)
@@ -198,8 +232,10 @@ module Axial
               possible_users = @bot.user_list.get_users_from_mask(mask)
               cantban = possible_users.collect{|user| user.name}
               if (cantban.count > 0)
-                channel.message("#{nick.name}: #{in_mask} would ban protected users: #{cantban.join(', ')}")
                 if (possible_users.any?)
+                  if (!user.director?)
+                    response_mode.deop(nick.name)
+                  end
                   response_mode.unban(mask)
                 end
               else
@@ -218,7 +254,7 @@ module Axial
           end
         end
 
-        if (response_mode.to_string_array.any?)
+        if (response_mode.any?)
           channel.set_mode(response_mode)
         end
       end
@@ -253,17 +289,21 @@ module Axial
                 channel.opped = false
                 complain(channel, :deopped)
               else
+                # re-op users unless deopped by a manager
                 subject_nick = channel.nick_list.get(deop)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
                 if (!possible_user.nil? && possible_user.op? && channel.opped?)
                   response_mode.op(subject_nick.name)
+                  if (!user.nil && !user.director?)
+                    response_mode.deop(nick.name)
+                  end
                 end
               end
             end
           end
         end
 
-        if (response_mode.to_string_array.any? && channel.opped?)
+        if (response_mode.any? && channel.opped?)
           channel.set_mode(response_mode)
         end
       end
@@ -283,7 +323,7 @@ module Axial
           end
         end
 
-        if (response_mode.to_string_array.any?)
+        if (response_mode.any?)
           channel.set_mode(response_mode)
         end
       end
@@ -297,7 +337,7 @@ module Axial
           end
         end
 
-        if (response_mode.to_string_array.any?)
+        if (response_mode.any?)
           channel.set_mode(response_mode)
         end
       end
@@ -307,15 +347,21 @@ module Axial
           return
         end
 
-        # check for users
+        random_sleep = SecureRandom.random_number(100) / 100.to_f
+        sleep(random_sleep)
+
         user = @bot.user_list.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (user.op?)
-            channel.op(nick)
-            LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            if (!nick.opped?)
+              channel.op(nick)
+              LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            end
           elsif (user.friend?)
-            channel.voice(nick)
-            LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            if (!user.voiced?)
+              channel.voice(nick)
+              LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
+            end
           end
           return
         end
