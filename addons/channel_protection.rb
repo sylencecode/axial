@@ -102,11 +102,36 @@ module Axial
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-          if (!possible_user.nil?)
-            if (possible_user.op? && !nick.opped?)
-              response_mode.op(subject_nick.name)
-            elsif (possible_user.friend? && !nick.voiced?)
-              response_mode.voice(subject_nick.name)
+          # if no user account, check for voice and op
+          if (possible_user.nil?)
+            if (subject_nick.opped?)
+              response_mode.deop(subject_nick.name)
+            elsif (subject_nick.voiced?)
+              response_mode.devoice(subject_nick.name)
+            end
+          else
+            if (possible_user.op?)
+              if (!subject_nick.opped?)
+                response_mode.op(subject_nick.name)
+              end
+            elsif (!possible_user.op?)
+              if (subject_nick.opped?)
+                response_mode.deop(subject_nick.name)
+              end
+            elsif (possible_user.friend?)
+              if (!subject_nick.voiced?)
+                response_mode.voice(subject_nick.name)
+              end
+            elsif (!possible_user.friend?)
+              if (subject_nick.voiced?)
+                response_mode.devoice(subject_nick.name)
+              end
+            else
+              if (subject_nick.opped?)
+                response_mode.deop(subject_nick.name)
+              elsif (subject_nick.voiced?)
+                response_mode.devoice(subject_nick.name)
+              end
             end
           end
         end
