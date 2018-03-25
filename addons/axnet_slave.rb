@@ -45,7 +45,7 @@ module Axial
       end
 
       def receive_pong(handler, text)
-        LOGGER.debug("PONG from #{handler.id} (#{handler.remote_cn})")
+        LOGGER.debug("PONG from #{handler.remote_cn}")
       end
 
       def send(text)
@@ -174,7 +174,7 @@ module Axial
         @ping_thread = Thread.new do
           while (@running)
             begin
-              if (@handler.nil?)
+              if (!@handler.nil?)
                 send_ping
                 sleep 10
               end
@@ -183,7 +183,7 @@ module Axial
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
-              sleep 5
+              sleep 10
             end
           end
         end
