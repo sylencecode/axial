@@ -236,9 +236,8 @@ module Axial
               else
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                paranoid = false
-                if (paranoid && (possible_user.nil? || !possible_user.op?) && channel.opped?)
-                  response_mode.deop(subject_nick.name)
+                if ((possible_user.nil? || !possible_user.op?) && channel.opped?)
+                  channel.deop(subject_nick)
                 end
               end
             end

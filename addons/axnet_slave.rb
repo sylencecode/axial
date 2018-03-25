@@ -13,6 +13,7 @@ module Axial
         @version = '1.0.0'
 
         @slave_thread     = nil
+        @ping_thread      = nil
         @running          = false
         @port             = 34567
         @handler          = nil
@@ -23,7 +24,8 @@ module Axial
 
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
-        on_axnet    'PING',               :pong
+        on_axnet    'PING',               :send_pong
+        on_axnet    'PONG',               :receive_pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet    'RELOAD_AXNET',       :reload_axnet
@@ -42,11 +44,19 @@ module Axial
         LOGGER.info(@handler.thread.inspect)
       end
 
-      def send(text)
-        @handler.send(text)
+      def receive_pong(handler, text)
+        LOGGER.debug("PONG from #{handler.id} (#{handler.remote_cn})")
       end
 
-      def pong(handler, command)
+      def send(text)
+        @bot.axnet_interface.transmit_to_axnet(text)
+      end
+
+      def send_ping()
+        @bot.axnet_interface.transmit_to_axnet('PING')
+      end
+
+      def send_pong(handler, command)
         @bot.axnet_interface.transmit_to_axnet('PONG')
       end
 
@@ -82,7 +92,7 @@ module Axial
         end
       end
 
-      def stop_slave_thread()
+      def stop_slave_threads()
         LOGGER.debug("slave thread exiting")
         @running = false
         @handler.close
@@ -90,6 +100,10 @@ module Axial
           @slave_thread.kill
         end
         @slave_thread = nil
+        if (!@ping_thread.nil?)
+          @ping_thread.kill
+        end
+        @ping_thread = nil
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -116,6 +130,7 @@ module Axial
             LOGGER.info("retrieving userlist from axnet...")
             @handler.clear_queue
             @handler.send('USERLIST')
+            @handler.send('BANLIST')
             @handler.loop
           rescue Errno::ECONNREFUSED
             LOGGER.info("could not connect to #{@master_address}:#{@port} - connection refused")
@@ -138,8 +153,8 @@ module Axial
         retry
       end
 
-      def start_slave_thread()
-        LOGGER.debug("starting axial slave thread")
+      def start_slave_threads()
+        LOGGER.debug("starting axial slave threads")
         @running = true
         @slave_thread = Thread.new do
           while (@running)
@@ -154,12 +169,27 @@ module Axial
             end
           end
         end
+        @ping_thread = Thread.new do
+          while (@running)
+            begin
+              if (@handler.nil?)
+                send_ping
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+              sleep 5
+            end
+          end
+        end
       end
 
       def before_reload()
         super
         LOGGER.warn("#{self.class}: shutting down axnet slave connector")
-        stop_slave_thread
+        stop_slave_threads
       end
     end
   end

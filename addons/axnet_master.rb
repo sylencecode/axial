@@ -29,6 +29,7 @@ module Axial
         on_axnet       'BANLIST',   :send_ban_list
         on_axnet      'USERLIST',   :send_user_list
         on_axnet          'PONG',   :receive_pong
+        on_axnet          'PING',   :send_pong
 
         on_dcc       'broadcast',   :handle_broadcast
         on_dcc           'axnet',   :handle_axnet_command
@@ -36,6 +37,10 @@ module Axial
 
         @bot.axnet_interface.register_transmitter(self, :broadcast)
         @bot.axnet_interface.register_relay(self, :relay)
+      end
+
+      def send_pong(handler, command)
+        handler.send('PONG')
       end
 
       def display_conn_status(dcc, command)
@@ -57,7 +62,7 @@ module Axial
         dcc.message("try axnet reload, axnet list, or axnet ping")
       end
 
-      def ping_axnet()
+      def send_ping()
         @bot.axnet_interface.transmit_to_axnet('PING')
       end
 
@@ -78,7 +83,7 @@ module Axial
             when /^reload$/i, /^stop\s+/i
               reload_axnet(dcc)
             when /^ping$/i
-              ping_axnet
+              send_ping
             else
               send_help(dcc)
           end
@@ -184,6 +189,10 @@ module Axial
           @master_thread.kill
         end
         @master_thread = nil
+        if (!@ping_thread.nil?)
+          @ping_thread.kill
+        end
+        @ping_thread = nil
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -259,6 +268,19 @@ module Axial
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
+            end
+          end
+        end
+        @ping_thread = Thread.new do
+          while (@running)
+            begin
+              send_ping
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+              sleep 5
             end
           end
         end
