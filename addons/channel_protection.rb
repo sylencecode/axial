@@ -104,11 +104,11 @@ module Axial
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
           # if no user account, check for voice and op
           if (possible_user.nil?)
-            if (subject_nick.opped?)
-              response_mode.deop(subject_nick.name)
-            elsif (subject_nick.voiced?)
-              response_mode.devoice(subject_nick.name)
-            end
+            # if (subject_nick.opped?)
+            #   response_mode.deop(subject_nick.name)
+            # elsif (subject_nick.voiced?)
+            #   response_mode.devoice(subject_nick.name)
+            # end
           else
             if (possible_user.op?)
               if (!subject_nick.opped?)
