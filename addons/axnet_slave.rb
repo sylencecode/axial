@@ -49,7 +49,9 @@ module Axial
       end
 
       def send(text)
-        @handler.send(text)
+        if (!@handler.nil?)
+          @handler.send(text)
+        end
       end
 
       def send_ping()
