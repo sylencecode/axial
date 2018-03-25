@@ -260,7 +260,17 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
+        if (!channel.opped?)
+          return
+        end
+
+        random_sleep = SecureRandom.random_number(100) / 100.to_f
+        sleep(random_sleep)
+
+        user = @bot.user_list.get_from_nick_object(nick)
+
         response_mode = IRCTypes::Mode.new
+
         if (mode.ops.any?)
           if (nick == @server_interface.myself)
             LOGGER.debug("I opped #{mode.ops.inspect}")
@@ -269,11 +279,15 @@ module Axial
               if (op == @server_interface.myself.name)
                 channel.opped = true
                 check_channel_bans(channel)
+                check_channel_users(channel)
               else
                 subject_nick = channel.nick_list.get(op)
                 possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                if ((possible_user.nil? || !possible_user.op?) && channel.opped?)
-                  channel.deop(subject_nick)
+                if (possible_user.nil? || !possible_user.op?)
+                    response_mode.deop(subject_nick.name)
+                  if (!user.director?)
+                    response_mode.deop(nick.name)
+                  end
                 end
               end
             end

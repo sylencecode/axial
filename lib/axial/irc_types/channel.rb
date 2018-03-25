@@ -34,12 +34,36 @@ module Axial
       end
 
       def op(nick)
+        if (!opped?)
+          return
+        end
         mode = IRCTypes::Mode.new
         mode.op(nick.name)
         set_mode(mode)
       end
 
+      def deop(nick)
+        if (!opped?)
+          return
+        end
+        mode = IRCTypes::Mode.new
+        mode.deop(nick.name)
+        set_mode(mode)
+      end
+
+      def devoice(nick)
+        if (!opped?)
+          return
+        end
+        mode = IRCTypes::Mode.new
+        mode.devoice(nick.name)
+        set_mode(mode)
+      end
+
       def voice(nick)
+        if (!opped?)
+          return
+        end
         mode = IRCTypes::Mode.new
         mode.voice(nick.name)
         set_mode(mode)
@@ -56,7 +80,7 @@ module Axial
         if (opped?)
           @server_interface.set_channel_mode(@name, mode)
         else
-          LOGGER.info("Tried to set channel mode #{mode.to_string_array.inspect} on #{@name}, but I am not an op.")
+          LOGGER.warn("Tried to set channel mode #{mode.to_string_array.inspect} on #{@name}, but I am not an op.")
         end
       end
 
