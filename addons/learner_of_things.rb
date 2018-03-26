@@ -26,8 +26,9 @@ module Axial
           return
         end
         if (command.args.strip =~ /(.*)=(.*)/)
-          thing = Regexp.last_match[1].strip
-          explanation = Regexp.last_match[2].strip
+          thing_array = command.args.split('=')
+          thing = thing_array.shift.strip
+          explanation = thing_array.join('=').strip
           if (thing.empty? || explanation.empty?)
             channel.message("#{nick.name}: try ?learn <thing> = <explanation> instead of whatever you just did.")
             return
