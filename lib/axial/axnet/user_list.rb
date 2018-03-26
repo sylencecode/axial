@@ -40,11 +40,8 @@ module Axial
           raise(UserObjectError, "Attempted to query a user record for an object type other than Axial::IRCTypes::Nick.")
         end
 
-        user = @user_list.select{|tmp_user| tmp_user.name.casecmp(nick.name.downcase).zero?}.first
-        if (!user.nil? && user.match_mask?(nick.uhost))
-          return user
-        end
-        return nil
+        user = get_user_from_mask(nick.uhost)
+        return user
       end
 
       def get_user_from_mask(in_mask)

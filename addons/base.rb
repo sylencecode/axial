@@ -11,9 +11,23 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?help',   :send_help
-        on_channel '?about',  :send_help
-        on_channel '?reload', :reload_addons
+        on_channel   '?help',   :send_help
+        on_channel  '?about',   :send_help
+        on_channel '?reload',   :handle_channel_reload
+        on_dcc      'reload',   :handle_dcc_reload
+      end
+
+      def handle_dcc_reload(dcc, command)
+        reload_addons(dcc, dcc.user, command)
+      end
+
+      def handle_channel_reload(channel, nick, command)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.director?)
+          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+        else
+          reload_addons(channel, user, command)
+        end
       end
 
       def send_help(channel, nick, command)
@@ -34,26 +48,21 @@ module Axial
         end
       end
 
-      def reload_addons(channel, nick, command)
-        user_model = Models::User.get_from_nick_object(nick)
-        if (user_model.nil? || !user_model.manager?)
-          LOGGER.warn("#{nick.uhost} tried to reload addons!")
-          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-          return
-        elsif (@bot.addons.count == 0)
-          channel.message("#{nick.name}: No addons loaded...")
-          return
+      def reload_addons(sender, user, command)
+        if (@bot.addons.count == 0)
+          sender.message("no addons loaded.")
+        else
+          LOGGER.info("#{user.pretty_name} reloaded addons.")
+          addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
+          addon_names = addon_list.collect{|addon| addon[:name]}
+          sender.message("unloading addons: #{addon_names.join(', ')}")
+          @bot.reload_addons
+          addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
+          addon_names = addon_list.collect{|addon| addon[:name]}
+          sender.message("loaded addons: #{addon_names.join(', ')}")
         end
-
-        LOGGER.info("#{nick.uhost} reloaded addons.")
-        addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
-        addon_names = addon_list.collect{|addon| addon[:name]}
-        channel.message("unloading addons: #{addon_names.join(', ')}")
-        @bot.reload_addons
-        addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
-        addon_names = addon_list.collect{|addon| addon[:name]}
-        channel.message("loaded addons: #{addon_names.join(', ')}")
       rescue Exception => ex
+        sender.message("addon reload error: #{ex.class}: #{ex.message}")
         LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)

@@ -14,7 +14,7 @@ module Axial
         @version = '1.0.0'
         @valid_roles = %w(director manager op friend)
 
-        on_channel  '?addmask',   :add_mask
+        on_channel  '?addmask',   :handle_channel_add_mask
         on_channel  '?adduser',   :add_user
         on_channel '?getmasks',   :get_masks
         on_channel  '?setrole',   :set_role
@@ -22,6 +22,7 @@ module Axial
         on_dcc           'ban',   :handle_dcc_ban
         on_channel    '?unban',   :handle_channel_unban
         on_dcc         'unban',   :handle_dcc_unban
+        on_dcc       'addmask',   :handle_dcc_add_mask
 
         on_channel_sync           :handle_channel_sync
         on_startup                :update_user_list
@@ -32,12 +33,26 @@ module Axial
         ban_mask(dcc, dcc.user, command)
       end
 
+      def handle_dcc_add_mask(dcc, command)
+        add_mask(dcc, dcc.user, command)
+      end
+
+      def handle_channel_add_mask(channel, nick, command)
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (user.nil? || !user.manager?)
+          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+        else
+          add_mask(channel, user, command)
+        end
+      end
+
       def handle_channel_ban(channel, nick, command)
         user = @bot.user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
-          return
+          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+        else
+          ban_mask(channel, user, command)
         end
-        ban_mask(channel, user, command)
       end
 
       def handle_dcc_unban(dcc, command)
@@ -47,9 +62,10 @@ module Axial
       def handle_channel_unban(channel, nick, command)
         user = @bot.user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
-          return
+          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+        else
+          unban_mask(channel, user, command)
         end
-        unban_mask(channel, user, command)
       end
 
       def ban_mask(sender, user, command)
@@ -59,7 +75,7 @@ module Axial
         elsif (command.args.strip =~ /(\S+)/)
           mask = Regexp.last_match[1]
         else
-          sender.message("try ?ban <mask> <reason>")
+          sender.message("try #{command.command} <mask> <reason>")
           return
         end
 
@@ -89,7 +105,7 @@ module Axial
         if (command.args.strip =~ /(\S+)/)
           mask = Regexp.last_match[1]
         else
-          sender.message("try ?unban <mask>")
+          sender.message("try #{command.command} <mask>")
           return
         end
 
@@ -194,40 +210,34 @@ module Axial
         # needs to check if any other nicks have a mask and delete them
       end
 
-      def add_mask(channel, nick, command)
+      def add_mask(sender, nick, command)
         begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.manager?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-            return
-          end
-
           if (command.args.strip =~ /(\S+)\s+(\S+)/)
             subject_nickname = Regexp.last_match[1]
             subject_mask = Regexp.last_match[2]
           else
-            channel.message("#{nick.name}: try ?addmask <nick> <mask>")
+            sender.message("try #{command.command} <nick> <mask>")
             return
           end
 
           subject_model = Models::User.get_from_nickname(subject_nickname)
           if (subject_model.nil?)
-            channel.message("#{nick.name}: user '#{subject_nickname}' not found.")
+            sender.message("user '#{subject_nickname}' not found.")
             return
           end
 
           subject_mask = Axial::MaskUtils.ensure_wildcard(subject_mask)
           subject_models = Models::Mask.get_users_from_mask(subject_mask)
           if (subject_models.count > 0)
-            channel.message("#{nick.name}: Mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
+            sender.message("mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
             return
           end
 
           mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
           update_user_list
-          channel.message("#{nick.name}: Mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
+          sender.message("mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
         rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
           ex.backtrace.each do |i|
             LOGGER.error(i)

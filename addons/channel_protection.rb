@@ -72,6 +72,7 @@ module Axial
         if (!channel.opped?)
           return
         end
+        LOGGER.debug("received banlist update, checking channel bans")
 
         response_mode = IRCTypes::Mode.new
         kicks = []
@@ -85,6 +86,7 @@ module Axial
             end
           end
         end
+
         if (response_mode.any?)
           channel.set_mode(response_mode)
         end
@@ -114,6 +116,7 @@ module Axial
           else
             if (possible_user.op?)
               if (!subject_nick.opped?)
+                puts "opping #{subject_nick.name}, #{response_mode.to_string_array.inspect}"
                 response_mode.op(subject_nick.name)
               end
             # elsif (!possible_user.op?)
@@ -122,6 +125,7 @@ module Axial
             #   end
             elsif (possible_user.friend?)
               if (!subject_nick.voiced?)
+                puts "voicing #{subject_nick.name}, #{response_mode.to_string_array.inspect}"
                 response_mode.voice(subject_nick.name)
               end
             # elsif (!possible_user.friend?)
@@ -139,6 +143,7 @@ module Axial
         end
 
         if (response_mode.any?)
+          puts response_mode.to_string_array.inspect
           channel.set_mode(response_mode)
         end
       end
