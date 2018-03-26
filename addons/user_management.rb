@@ -150,8 +150,8 @@ module Axial
           user = Axnet::User.from_model(user_model)
           new_user_list.add(user)
         end
-        @bot.axnet_interface.update_user_list(new_user_list)
-        @bot.axnet_interface.broadcast_user_list
+        @bot.axnet.update_user_list(new_user_list)
+        @bot.axnet.broadcast_user_list
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -165,8 +165,8 @@ module Axial
           ban = Axnet::Ban.new(ban_model.mask, ban_model.user.pretty_name, ban_model.reason, ban_model.set_at)
           new_ban_list.add(ban)
         end
-        @bot.axnet_interface.update_ban_list(new_ban_list)
-        @bot.axnet_interface.broadcast_ban_list
+        @bot.axnet.update_ban_list(new_ban_list)
+        @bot.axnet.broadcast_ban_list
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

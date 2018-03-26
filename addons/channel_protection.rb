@@ -182,7 +182,7 @@ module Axial
 
       def handle_axnet_complaint(handler, command)
         serialized_yaml = command.args
-        @bot.axnet_interface.relay_to_axnet(handler, 'COMPLAINT ' + serialized_yaml)
+        @bot.axnet.relay_to_axnet(handler, 'COMPLAINT ' + serialized_yaml)
         complaint = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
         bot = IRCTypes::Nick.from_uhost(@server_interface, complaint.uhost)
 
@@ -223,7 +223,7 @@ module Axial
 
       def send_complaint(complaint)
         serialized_yaml = YAML.dump(complaint).gsub(/\n/, "\0")
-        @bot.axnet_interface.transmit_to_axnet('COMPLAINT ' + serialized_yaml)
+        @bot.axnet.transmit_to_axnet('COMPLAINT ' + serialized_yaml)
       end
 
       def complain(channel, complaint_type)

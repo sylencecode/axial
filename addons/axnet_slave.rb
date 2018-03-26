@@ -31,7 +31,7 @@ module Axial
         on_axnet    'RELOAD_AXNET',       :reload_axnet
         on_channel  '?connstatus',        :display_conn_status
 
-        @bot.axnet_interface.register_transmitter(self, :send)
+        @bot.axnet.register_transmitter(self, :send)
       end
 
       def display_conn_status(channel, nick, command)
@@ -55,11 +55,11 @@ module Axial
       end
 
       def send_ping()
-        @bot.axnet_interface.transmit_to_axnet('PING')
+        @bot.axnet.transmit_to_axnet('PING')
       end
 
       def send_pong(handler, command)
-        @bot.axnet_interface.transmit_to_axnet('PONG')
+        @bot.axnet.transmit_to_axnet('PONG')
       end
 
       def reload_axnet(handler, command)
@@ -73,7 +73,7 @@ module Axial
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
-        @bot.axnet_interface.update_user_list(new_user_list)
+        @bot.axnet.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -85,7 +85,7 @@ module Axial
       def update_ban_list(handler, command)
         ban_list_yaml = command.args.gsub(/\0/, "\n")
         new_ban_list = YAML.load(ban_list_yaml)
-        @bot.axnet_interface.update_ban_list(new_ban_list)
+        @bot.axnet.update_ban_list(new_ban_list)
         LOGGER.info("successfully downloaded new banlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

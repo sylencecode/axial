@@ -20,7 +20,7 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet_interface, :ban_list, :user_list
+                  :axnet, :ban_list, :user_list
 
     attr_accessor :real_nick
     @class_instance = nil
@@ -81,15 +81,15 @@ module Axial
 
     def load_axnet()
       Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
-      @axnet_interface              = Interfaces::AxnetInterface.new(self)
+      @axnet              = Interfaces::AxnetInterface.new(self)
       @user_list                    = Axnet::UserList.new
       @ban_list                     = Axnet::BanList.new
-      @axnet_interface.register_queue_callback
-      @axnet_interface.start
+      @axnet.register_queue_callback
+      @axnet.start
     end
 
     def reload_axnet()
-      @axnet_interface.stop
+      @axnet.stop
       class_name = "Axial::Interfaces::AxnetInterface"
       LOGGER.debug("removing class definition for #{class_name}")
       if (Object.constants.include?(:Axial))
@@ -102,9 +102,9 @@ module Axial
         end
       end
       Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
-      old_axnet_interface = @axnet_interface
-      @axnet_interface = Interfaces::AxnetInterface.copy(self, old_axnet_interface)
-      @axnet_interface.start
+      old_axnet = @axnet
+      @axnet = Interfaces::AxnetInterface.copy(self, old_axnet)
+      @axnet.start
     end
 
     def load_dispatchers()

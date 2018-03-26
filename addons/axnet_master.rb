@@ -35,8 +35,8 @@ module Axial
         on_dcc           'axnet',   :handle_axnet_command
         on_dcc      'connstatus',   :display_conn_status
 
-        @bot.axnet_interface.register_transmitter(self, :broadcast)
-        @bot.axnet_interface.register_relay(self, :relay)
+        @bot.axnet.register_transmitter(self, :broadcast)
+        @bot.axnet.register_relay(self, :relay)
       end
 
       def send_pong(handler, command)
@@ -55,7 +55,7 @@ module Axial
       end
 
       def handle_broadcast(dcc, command)
-        @bot.axnet_interface.transmit_to_axnet(command.args)
+        @bot.axnet.transmit_to_axnet(command.args)
       end
 
       def send_help(dcc)
@@ -63,7 +63,7 @@ module Axial
       end
 
       def send_ping()
-        @bot.axnet_interface.transmit_to_axnet('PING')
+        @bot.axnet.transmit_to_axnet('PING')
       end
 
       def receive_pong(handler, text)
@@ -111,7 +111,7 @@ module Axial
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
         @bot.reload_axnet
-        @bot.axnet_interface.transmit_to_axnet('RELOAD_AXNET')
+        @bot.axnet.transmit_to_axnet('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_addons
       end
