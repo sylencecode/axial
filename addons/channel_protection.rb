@@ -51,7 +51,9 @@ module Axial
       end
 
       def handle_user_list_update()
-        # check for any newly promoted users who arent opped/voiced
+        @bot.server_interface.channel_list.all_channels.each do |channel|
+          check_channel_users(channel)
+        end
       end
 
       def handle_ban_list_update()
