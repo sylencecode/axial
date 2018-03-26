@@ -412,7 +412,7 @@ module Axial
               LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
           elsif (user.friend?)
-            if (!user.voiced?)
+            if (!nick.voiced?)
               channel.voice(nick)
               LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
