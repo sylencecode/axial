@@ -4,5 +4,6 @@ module Axial
     AXIAL_NAME    = 'axial'.freeze
     AXIAL_VERSION = '1.0.0'.freeze
     AXIAL_AUTHOR  = 'sylence <sylence@sylence.org>'.freeze
+    AXIAL_LOGO    = '[a|x]'.freeze
   end
 end

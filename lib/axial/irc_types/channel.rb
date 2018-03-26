@@ -33,6 +33,24 @@ module Axial
         return @voiced
       end
 
+      def ban(mask)
+        if (!opped?)
+          return
+        end
+        mode = IRCTypes::Mode.new
+        mode.ban(mask)
+        set_mode(mode)
+      end
+
+      def unban(mask)
+        if (!opped?)
+          return
+        end
+        mode = IRCTypes::Mode.new
+        mode.unban(mask)
+        set_mode(mode)
+      end
+
       def op(nick)
         if (!opped?)
           return
@@ -92,7 +110,7 @@ module Axial
         if (reason.nil? || reason.empty?)
           reason = 'kicked'
         end
-        @server_interface.kick(@name, nick.name, reason)
+        @server_interface.kick(@name, nick.name, "#{Constants::AXIAL_LOGO} #{reason}")
       end
 
       # placeholder methods for possible eventual method blocking until the channel has been synced

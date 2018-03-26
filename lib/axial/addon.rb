@@ -59,7 +59,7 @@ module Axial
       @listeners.push(type: :mode, method: method, modes: modes)
     end
 
-    def on_irc_banlist_end(method)
+    def on_irc_ban_list_end(method)
       LOGGER.debug("IRC banlist end (368) will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :irc_ban_list_end, method: method)
     end

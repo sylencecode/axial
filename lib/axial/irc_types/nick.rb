@@ -44,6 +44,15 @@ module Axial
         return (self.uhost == other_nick.uhost)
       end
 
+      def match_mask?(in_mask)
+        mask_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
+        if (mask_regexp.match(uhost))
+          return true
+        else
+          return false
+        end
+      end
+
       def self.from_uhost(server_interface, uhost)
         if (uhost =~ /^(\S+)!(\S+)@(\S+)$/)
           name, ident, host = Regexp.last_match.captures

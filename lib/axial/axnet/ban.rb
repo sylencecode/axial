@@ -16,10 +16,6 @@ module Axial
           @user_name = 'someone'
         end
 
-        def long_reason()
-          return "[a|x] banned #{@set_at.strftime("%m/%d/%Y")} by #{@user_name}: #{@reason}"
-        end
-
         if (reason.nil?)
           @reason = 'banned.'
         else
@@ -33,9 +29,13 @@ module Axial
         end
       end
 
+      def long_reason()
+        return "banned #{@set_at.strftime("%m/%d/%Y")} by #{@user_name}: #{@reason}"
+      end
+
       def match_mask?(in_mask)
-        re_mask = Axial::MaskUtils.get_mask_regexp(@mask)
-        if (re_mask.match(in_mask))
+        match_regexp = Axial::MaskUtils.get_mask_regexp(@mask)
+        if (match_regexp.match(in_mask))
           return true
         else
           return false

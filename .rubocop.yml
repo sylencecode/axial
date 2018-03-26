@@ -16,3 +16,15 @@ Style/DefWithParentheses:
   Enabled: false
 Lint/RescueException:
   Enabled: false
+Style/ConditionalAssignment:
+  Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Style/SymbolArray:
+  Enabled: false
+Layout/ExtraSpacing:
+  Enabled: false
+Layout/SpaceBeforeFirstArg:
+  Enabled: false

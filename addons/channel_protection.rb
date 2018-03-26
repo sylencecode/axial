@@ -36,7 +36,7 @@ module Axial
         on_self_join                :get_irc_ban_list
         on_user_list                :handle_user_list_update
         on_ban_list                 :handle_ban_list_update
-        on_irc_banlist_end          :handle_irc_banlist_end
+        on_irc_ban_list_end         :handle_irc_ban_list_end
         # on kick...
         # on banned response
         # on invite only, invite
@@ -60,7 +60,7 @@ module Axial
         end
       end
 
-      def handle_irc_banlist_end(channel)
+      def handle_irc_ban_list_end(channel)
         # TODO: timer to remove hour-old bans
         # (Time.now - Time.at(1521931658))
         LOGGER.debug("end of banlist reached channel protection")
@@ -102,7 +102,7 @@ module Axial
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-          # if no user account, check for voice and op
+          # TODO: check for bot masks
           if (possible_user.nil?)
             # if (subject_nick.opped?)
             #   response_mode.deop(subject_nick.name)
@@ -254,18 +254,31 @@ module Axial
           else
             mode.bans.each do |in_mask|
               mask = in_mask.strip
-              possible_users = @bot.user_list.get_users_from_mask(mask)
-              cantban = possible_users.collect{|user| user.name}
-              if (cantban.count > 0)
-                if (possible_users.any?)
-                  if (!user.director?)
-                    response_mode.deop(nick.name)
-                  end
-                  response_mode.unban(mask)
+              if (@server_interface.myself.match_mask?(mask))
+                channel.unban(mask)
+                if (!user.director?)
+                  channel.deop(nick)
                 end
-              else
-                # kick
+                next
               end
+
+              possible_users = @bot.user_list.get_users_from_mask(mask)
+              if (possible_users.any?)
+                response_mode.unban(mask)
+                if (!user.director?)
+                  channel.deop(nick.name)
+                end
+                next
+              end
+
+              # TODO: check for bot masks
+              # channel.nick_list.all_nicks.each do |nick|
+              #   if (nick == @server_interface.myself)
+              #     next
+              #   elsif (nick.match_mask?(mask))
+              #     channel.kick(nick, "banned by #{nick.name}")
+              #   end
+              # end
             end
           end
         end

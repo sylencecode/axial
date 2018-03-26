@@ -50,8 +50,8 @@ module Axial
       def match_mask?(in_mask)
         match = false
         masks.each do |mask|
-          re_mask = Axial::MaskUtils.get_mask_regexp(mask.mask)
-          if (re_mask.match(in_mask))
+          mask_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
+          if (mask_regexp.match(in_mask))
             match = true
             break
           end
