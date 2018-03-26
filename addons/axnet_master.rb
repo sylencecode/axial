@@ -275,13 +275,13 @@ module Axial
           while (@running)
             begin
               send_ping
-              sleep 10
+              sleep 60
             rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
-              sleep 5
+              sleep 60
             end
           end
         end

@@ -176,14 +176,14 @@ module Axial
             begin
               if (!@handler.nil?)
                 send_ping
-                sleep 10
+                sleep 60
               end
             rescue Exception => ex
               LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.error(i)
               end
-              sleep 10
+              sleep 60
             end
           end
         end
