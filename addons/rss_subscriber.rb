@@ -22,92 +22,77 @@ module Axial
         on_channel '?feed', :handle_rss_command
         on_channel '?news', :handle_rss_command
         on_channel '?rss',  :handle_rss_command
-        on_startup  :start_ingest_thread
-        on_reload   :start_ingest_thread
+        on_startup  :start_ingest_timer
+        on_reload   :start_ingest_timer
 
-        @ingest_thread = nil
-        @ingesting = false
-        #TODO: move to rss database?
-        @channel_names = [ '#lulz' ]
+        @timer        = nil
       end
 
-      def stop_ingest_thread()
-        LOGGER.debug("stopping ingest thread")
-        @ingesting = false
-        if (!@ingest_thread.nil?)
-          @ingest_thread.kill
-        end
-        @ingest_thread = nil
+      def stop_ingest_timer()
+        LOGGER.debug("stopping ingest timer")
+        @bot.timer.delete(@timer)
       end
 
-      def start_ingest_thread()
-        LOGGER.debug("starting ingest thread")
-        @ingesting = true
+      def start_ingest_timer()
+        LOGGER.debug("starting ingest timer")
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
-        @ingest_thread = Thread.new do
-          sleep 15
-          while (@ingesting)
-            begin
-              Models::RSSFeed.where(enabled: true).each do |feed|
-                ingested = 0
-                begin
-                  rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
-                rescue Feedjira::NoParserAvailable
-                  LOGGER.warn("RSS consumer: feed '#{feed.pretty_name}' did not present valid XML to feedjira. skipping.")
-                  next
-                end
-                recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
-                recent_entries.each do |entry|
-                  published = entry.published
-                  if (published > Time.now) # some idiots post articles dated for a future time
-                    next
-                  end
+        @timer = @bot.timer.every_5_seconds(self, :ingest)
+      end
 
-                  title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
-                  summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
-                  article_url = entry.url
-
-                  link = URIUtils.shorten(article_url)
-
-                  text =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
-                  text += title
-
-                  if (!summary.empty?)
-                    text += " #{Colors.gray}|#{Colors.reset} "
-                    if (summary.length > 299)
-                      text += summary[0..296] + "..."
-                    else
-                      text += summary
-                    end
-                  end
-
-                  text += " #{Colors.gray}|#{Colors.reset} "
-                  text += link.to_s
-
-                  @channel_names.each do |channel_name|
-                    channel = @server_interface.channel_list.get_silent(channel_name)
-                    if (!channel.nil?)
-                      channel.message(text)
-                    end
-                  end
-                  ingested = ingested + 1
-                end
-
-                if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
-                  LOGGER.debug("Resetting last_ingest time of #{feed.pretty_name} from #{feed.last_ingest} to #{Time.now}")
-                  feed.update(ingest_count: feed.ingest_count + ingested)
-                  feed.update(last_ingest: Time.now)
-                end
-              end
-            rescue Exception => ex
-              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-              ex.backtrace.each do |i|
-                LOGGER.error(i)
-              end
-            ensure
-              sleep 60
-            end
+      def ingest()
+        LOGGER.debug("RSS: running feed check")
+        Models::RSSFeed.where(enabled: true).each do |feed|
+          ingested = 0
+          begin
+            rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
+          rescue Feedjira::NoParserAvailable
+            LOGGER.warn("RSS consumer: feed '#{feed.pretty_name}' did not present valid XML to feedjira. skipping.")
+            next
           end
+          recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
+          recent_entries.each do |entry|
+            published = entry.published
+            if (published > Time.now) # some idiots post articles dated for a future time
+              next
+            end
+
+            title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
+            summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
+            article_url = entry.url
+
+            link = URIUtils.shorten(article_url)
+
+            text =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
+            text += title
+
+            if (!summary.empty?)
+              text += " #{Colors.gray}|#{Colors.reset} "
+              if (summary.length > 299)
+                text += summary[0..296] + "..."
+              else
+                text += summary
+              end
+            end
+
+            text += " #{Colors.gray}|#{Colors.reset} "
+            text += link.to_s
+
+            @bot.server_interface.channel_list.all_channels.each do |channel|
+              channel.message(text)
+            end
+            ingested = ingested + 1
+          end
+
+          if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
+            LOGGER.debug("Resetting last_ingest time of #{feed.pretty_name} from #{feed.last_ingest} to #{Time.now}")
+            feed.update(ingest_count: feed.ingest_count + ingested)
+            feed.update(last_ingest: Time.now)
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -218,9 +203,9 @@ module Axial
       end
 
       def stop_ingest(channel, nick)
-        if (@ingest_thread.alive? || @ingest_thread.stop?)
+        if (!@timer.nil? && @bot.timer.include?(@timer))
           channel.message("#{nick.name}: ok, stopping feed ingest.")
-          stop_ingest_thread
+          stop_ingest_timer
           LOGGER.info("RSS: #{nick.uhost} stopped ingest")
         else
           channel.message("#{nick.name}: not currently ingesting feeds.")
@@ -229,12 +214,12 @@ module Axial
       end
 
       def start_ingest(channel, nick)
-        if (@ingest_thread.alive?)
+        if (!@timer.nil? && @bot.timer.include?(@timer))
           channel.message("#{nick.name}: already ingesting feeds.")
           return
         else
           channel.message("#{nick.name}: ok, starting feed ingest.")
-          start_ingest_thread
+          start_ingest_timer
           LOGGER.info("RSS: #{nick.uhost} started ingest")
         end
       end
@@ -288,8 +273,8 @@ module Axial
 
       def before_reload()
         super
-        LOGGER.info("#{self.class}: stopping RSS thread")
-        stop_ingest_thread
+        LOGGER.info("#{self.class}: stopping RSS ingest before addons are reloaded")
+        stop_ingest_timer
       end
     end
   end

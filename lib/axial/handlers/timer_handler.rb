@@ -10,6 +10,10 @@ module Axial
         @timers = []
       end
 
+      def include?(timer)
+        return @timers.select { |tmp_timer| tmp_timer.id == timer.id }.any?
+      end
+
       def delete(dead_timer)
         remove(dead_timer)
       end
@@ -19,7 +23,7 @@ module Axial
       end
 
       def remove(dead_timer)
-        @timers.select {|timer| timer.id == dead_timer.id}.each do |timer|
+        @timers.select { |timer| timer.id == dead_timer.id }.each do |timer|
           if (!timer.thread.nil?)
             timer.thread.kill
           end
