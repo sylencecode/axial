@@ -102,8 +102,9 @@ module Axial
 
       def add_feed(channel, nick, user_model, args)
         if (args.strip =~ /(.*)=(.*)/)
-          feed_name = Regexp.last_match[1].strip
-          feed_url = Regexp.last_match[2].strip
+          feed_array = args.split('=')
+          feed_name = feed_array.shift.strip
+          feed_url = feed_array.join('=').strip
           if (feed_name.empty? || feed_url.empty?)
             channel.message("#{nick.name}: try ?rss add <name> = <url> instead of whatever you just did.")
             return
