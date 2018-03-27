@@ -13,11 +13,11 @@ module Axial
         @version = '1.0.0'
 
         on_channel '?seen', :seen
-        on_join    :update_seen_join
-        on_part    :update_seen_part
-        on_quit    :update_seen_quit
-        throttle   2
-        #on_kick    :update_seen_kick
+        on_join             :update_seen_join
+        on_part             :update_seen_part
+        on_quit             :update_seen_quit
+        on_kick             :update_seen_kick
+        throttle            2
       end
 
       def seen(channel, nick, command)
@@ -42,7 +42,21 @@ module Axial
           LOGGER.error(i)
         end
       end
-        
+
+      def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
+        user = Models::Mask.get_user_from_mask(kicked_nick.uhost)
+        if (!user.nil?)
+          user.seen.update(last: Time.now, status: "being kicked from #{channel.name} by #{kicker_nick.name} (#{reason})")
+          LOGGER.debug("updated seen for #{user.pretty_name} (kicked from #{channel.name} by #{kicker_nick.name}: #{reason})")
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def update_seen_join(channel, nick)
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
