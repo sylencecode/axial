@@ -24,7 +24,16 @@ module Axial
                 # remove it or reset the time on it if repeating
                 # remove any other expired
                 if (Time.now - timer.interval >= timer.last)
-                  timer.execute
+                  Thread.new do
+                    begin
+                      timer.execute
+                    rescue Exception => ex
+                      LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                      ex.backtrace.each do |i|
+                        LOGGER.error(i)
+                      end
+                    end
+                  end
                   if (!timer.repeat?)
                     timer.expired = true
                   end
@@ -32,9 +41,9 @@ module Axial
               end
               @timers.delete_if { |timer| timer.expired? }
             rescue Exception => ex
-              puts "#{ex.class}: #{ex.message}"
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
-                puts i
+                LOGGER.error(i)
               end
             end
           end

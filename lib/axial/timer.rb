@@ -12,33 +12,25 @@ module Axial
         raise(TimerError, "invalid duration")
       end
 
-      @id              = SecureRandom.uuid
-      @interval = interval
-      @repeat   = repeat
-      @callback_object = nil
-      @callback_method = nil
-      @type            = nil
-      @args            = nil
-      @block           = nil
-
-
+      @id                 = SecureRandom.uuid
+      @interval           = interval
+      @repeat             = repeat
+      @callback_object    = nil
+      @callback_method    = nil
+      @type               = nil
+      @args               = nil
+      @block              = nil
       @last = Time.now
 
       if (block_given?)
-        @type  = :block
-        @block = block
-        @args  = *args
+        @type             = :block
+        @block            = block
+        @args             = *args
       else
-        @type            = :callback
-        @callback_object = args.shift
-        @callback_method = args.shift
-        @args            = *args
-      end
-
-      if (@repeat)
-        puts "executing every #{interval} seconds, first run at #{Time.now + interval}"
-      else
-        puts "executing in #{interval} seconds, runs at #{Time.now + interval}"
+        @type             = :callback
+        @callback_object  = args.shift
+        @callback_method  = args.shift
+        @args             = *args
       end
     end
 
