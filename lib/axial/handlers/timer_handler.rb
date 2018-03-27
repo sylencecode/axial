@@ -1,3 +1,5 @@
+require 'axial/timer'
+
 module Axial
   module Handlers
     class TimerHandler
@@ -8,7 +10,20 @@ module Axial
         @timers = []
       end
 
+      def delete(dead_timer)
+        remove(dead_timer)
+      end
+
+      def kill(dead_timer)
+        remove(dead_timer)
+      end
+
       def remove(dead_timer)
+        @timers.select {|timer| timer.id == dead_timer.id}.each do |timer|
+          if (!timer.thread.nil?)
+            timer.thread.kill
+          end
+        end
         @timers.delete_if { |timer| timer.id == dead_timer.id }
       end
 
@@ -24,7 +39,7 @@ module Axial
                 # remove it or reset the time on it if repeating
                 # remove any other expired
                 if (Time.now - timer.interval >= timer.last)
-                  Thread.new do
+                  timer.thread = Thread.new do
                     begin
                       timer.execute
                     rescue Exception => ex

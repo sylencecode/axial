@@ -5,7 +5,8 @@ module Axial
   end
 
   class Timer
-    attr_reader :id, :last, :type, :interval
+    attr_reader     :id, :last, :type, :interval
+    attr_accessor   :thread
 
     def initialize(repeat, interval, *args, &block)
       if (interval <= 0)
@@ -21,6 +22,7 @@ module Axial
       @args               = nil
       @block              = nil
       @last = Time.now
+      @thread             = nil
 
       if (block_given?)
         @type             = :block

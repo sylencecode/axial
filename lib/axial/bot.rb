@@ -6,6 +6,7 @@ gem 'git'
 require 'git'
 require 'yaml'
 require 'axial/log'
+require 'axial/handlers/timer_handler'
 require 'axial/handlers/channel_handler'
 require 'axial/handlers/connection_handler'
 require 'axial/handlers/message_handler'
@@ -20,7 +21,7 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet, :ban_list, :user_list
+                  :axnet, :ban_list, :user_list, :timer
 
     attr_accessor :real_nick
     @class_instance = nil
@@ -77,6 +78,9 @@ module Axial
       @server_handler             = Handlers::ServerHandler.new(self)
       @channel_handler            = Handlers::ChannelHandler.new(self)
       @bind_handler               = Handlers::BindHandler.new(self)
+      @timer                      = Handlers::TimerHandler.new
+
+      @timer.start
     end
 
     def load_axnet()
@@ -109,14 +113,6 @@ module Axial
 
     def load_dispatchers()
       @server_message_dispatcher  = Dispatchers::ServerMessageDispatcher.new(self)
-    end
-
-    def self.instance()
-      if (@class_instance.nil?)
-        raise(RuntimeError, "Please create an instance of Bot using Bot.create(conf/<filename>.yml)")
-      else
-        return @class_instance
-      end
     end
 
     def run()
