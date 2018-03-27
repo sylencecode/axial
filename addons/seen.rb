@@ -77,7 +77,7 @@ module Axial
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (reason.nil? || reason.empty?)
-            status = "leaving #{channel.name}")
+            status = "leaving #{channel.name}"
           else
             status = "leaving #{channel.name} (#{reason})"
           end
