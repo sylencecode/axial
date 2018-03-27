@@ -60,6 +60,44 @@ module Axial
         end
       end
 
+      def dispatch_self_kick_binds(channel, kicker_nick, reason)
+        @binds.select{|bind| bind[:type] == :self_kick}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel, kicker_nick, reason)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      end
+
+      def dispatch_kick_binds(channel, kicker_nick, kicked_nick, reason)
+        @binds.select{|bind| bind[:type] == :kick}.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel, kicker_nick, kicked_nick, reason)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      end
+
       def dispatch_part_binds(channel, nick, reason)
         @binds.select{|bind| bind[:type] == :part}.each do |bind|
           Thread.new do

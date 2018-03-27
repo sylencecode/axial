@@ -20,6 +20,9 @@ module Axial
           when Channel::NICK_CHANGE
             uhost, new_nick = Regexp.last_match.captures
             @bot.channel_handler.dispatch_nick_change(uhost, new_nick)
+          when Channel::KICK, Channel::KICK_NO_REASON
+            uhost, channel_name, kicked_nick_name, reason = Regexp.last_match.captures
+            @bot.channel_handler.dispatch_kick(uhost, channel_name, kicked_nick_name, reason)
           when Channel::NOT_OPERATOR
             LOGGER.warn("I tried to do something to #{Regexp.last_match[1]} but I'm not opped.")
           when Channel::WHO_LIST_END

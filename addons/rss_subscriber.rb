@@ -19,13 +19,13 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?feed', :handle_rss_command
-        on_channel '?news', :handle_rss_command
-        on_channel '?rss',  :handle_rss_command
+        @timer   = nil
+
+        on_channel  '?feed', :handle_rss_command
+        on_channel  '?news', :handle_rss_command
+        on_channel  '?rss',  :handle_rss_command
         on_startup  :start_ingest_timer
         on_reload   :start_ingest_timer
-
-        @timer        = nil
       end
 
       def stop_ingest_timer()
@@ -36,7 +36,7 @@ module Axial
       def start_ingest_timer()
         LOGGER.debug("starting ingest timer")
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
-        @timer = @bot.timer.every_5_seconds(self, :ingest)
+        @timer = @bot.timer.every_minute(self, :ingest)
       end
 
       def ingest()

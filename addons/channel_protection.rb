@@ -37,6 +37,7 @@ module Axial
         on_user_list                :handle_user_list_update
         on_ban_list                 :handle_ban_list_update
         on_irc_ban_list_end         :handle_irc_ban_list_end
+        on_self_kick                :rejoin
         # on kick...
         # on banned response
         # on invite only, invite
@@ -44,6 +45,12 @@ module Axial
         # on keyword, send keyword
         # if not joined to channels in autojoin list, etc..
         #on_mode :all, :handle_all
+      end
+
+      def rejoin(channel, kicker_nick, reason)
+        # TODO: get the password out of the database or out of the bot props yaml if one is set
+        wait_a_sec
+        @server_interface.join(channel.name)
       end
 
       def get_irc_ban_list(channel)
@@ -100,8 +107,7 @@ module Axial
           return
         end
 
-        random_sleep = SecureRandom.random_number(100) / 100.to_f
-        sleep(random_sleep)
+        wait_a_sec
 
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
@@ -206,8 +212,7 @@ module Axial
             return
           end
 
-          random_sleep = SecureRandom.random_number(100) / 100.to_f
-          sleep(random_sleep)
+          wait_a_sec
 
           if (!channel_nick.opped?)
             channel.op(channel_nick)
@@ -306,8 +311,7 @@ module Axial
           return
         end
 
-        random_sleep = SecureRandom.random_number(100) / 100.to_f
-        sleep(random_sleep)
+        wait_a_sec
 
         user = @bot.user_list.get_from_nick_object(nick)
 
@@ -403,8 +407,7 @@ module Axial
           return
         end
 
-        random_sleep = SecureRandom.random_number(100) / 100.to_f
-        sleep(random_sleep)
+        wait_a_sec
 
         user = @bot.user_list.get_user_from_mask(nick.uhost)
         if (!user.nil?)

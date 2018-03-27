@@ -9,6 +9,8 @@ module Axial
         QUIT_NO_REASON    = /^:{0,1}(\S+) QUIT (\S+)/
         PART              = /^:{0,1}(\S+) PART (\S+)\s+:{0,1}(.*)/
         PART_NO_REASON    = /^:{0,1}(\S+) PART (\S+)/
+        KICK              = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)\s+:{0,1}(.*)/
+        KICK_NO_REASON    = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)/
         WHO_LIST_END      = /^:{0,1}\S+ 315 \S+ (\S+)/
         WHO_LIST_ENTRY    = /^:{0,1}\S+ 352 \S+ (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)/
         NAMES_LIST_ENTRY  = /^:{0,1}\S+ 353 (.*)/

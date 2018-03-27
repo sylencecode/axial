@@ -13,20 +13,21 @@ module Axial
         @author       = 'sylence <sylence@sylence.org>'
         @version      = '1.0.0'
 
-        @local_ip     = Resolv.getaddress(Socket.gethostname)
         @port         = 54321
 
         on_privmsg    'chatto',     :send_dcc_chat_offer
       end
 
       def send_dcc_chat_offer(nick, command)
+        local_ip    = Resolv.getaddress(Socket.gethostname)
+
         user = @bot.user_list.get_from_nick_object(nick)
         if (user.nil? || !user.director?)
           return
         end
 
         LOGGER.debug("dcc chat offer to #{nick.name} (user: #{user.pretty_name})")
-        fragments = @local_ip.split('.')
+        fragments = local_ip.split('.')
         long_ip = 0
         block = 4
         fragments.each do |fragment|

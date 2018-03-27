@@ -59,9 +59,24 @@ module Axial
       @listeners.push(type: :mode, method: method, modes: modes)
     end
 
+    def wait_a_sec()
+      random_sleep = SecureRandom.random_number(300) / 100.to_f
+      sleep(random_sleep)
+    end
+
     def on_irc_ban_list_end(method)
       LOGGER.debug("IRC banlist end (368) will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :irc_ban_list_end, method: method)
+    end
+
+    def on_kick(method)
+      LOGGER.debug("Channel kick will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :kick, method: method)
+    end
+
+    def on_self_kick(method)
+      LOGGER.debug("Getting kicked myself will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :self_kick, method: method)
     end
 
     def on_part(method)

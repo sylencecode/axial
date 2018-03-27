@@ -117,7 +117,6 @@ module Axial
         else
           LOGGER.debug("#{nick.name} quit IRC (#{reason})")
         end
-        @bot.bind_handler.dispatch_quit_binds(nick, reason)
         @server_interface.channel_list.all_channels.each do |channel|
           if (!channel.synced?)
             LOGGER.debug("rejected quit on #{channel.name} because it is not synced yet.")
@@ -125,11 +124,41 @@ module Axial
           end
           channel.nick_list.delete_silent(nick)
         end
+        @bot.bind_handler.dispatch_quit_binds(nick, reason)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+      end
+
+      def dispatch_kick(uhost, channel_name, kicked_nick_name, reason)
+        nick_name = uhost.split('!').first
+        channel = @server_interface.channel_list.get(channel_name)
+        kicker_nick = channel.nick_list.get(nick_name)
+        kicked_nick = channel.nick_list.get(kicked_nick_name)
+
+        if (kicked_nick == @server_interface.myself)
+          handle_self_kick(channel, kicker_nick, reason)
+        else
+          if (uhost == @server_interface.myself.uhost)
+            handle_kick(channel, @server_interface.myself, kicked_nick, reason)
+          else
+            handle_kick(channel, kicker_nick, kicked_nick, reason)
+          end
+        end
+      end
+
+      def handle_self_kick(channel, kicker_nick, reason)
+        LOGGER.warn("kicked from #{channel.name} by #{kicker_nick.name}: #{reason}")
+        @server_interface.channel_list.clear
+        @bot.bind_handler.dispatch_self_kick_binds(channel, kicker_nick, reason)
+      end
+
+      def handle_kick(channel, kicker_nick, kicked_nick, reason)
+        LOGGER.debug("#{kicker_nick.name} kicked #{kicked_nick.name} from #{channel.name}: #{reason}")
+        channel.nick_list.delete(kicked_nick)
+        @bot.bind_handler.dispatch_kick_binds(channel, kicker_nick, kicked_nick, reason)
       end
 
       def dispatch_part(uhost, channel_name, reason)
@@ -158,8 +187,8 @@ module Axial
         else
           LOGGER.debug("#{nick.name} left #{channel.name} (#{reason})")
         end
-        @bot.bind_handler.dispatch_part_binds(channel, nick, reason)
         channel.nick_list.delete(nick)
+        @bot.bind_handler.dispatch_part_binds(channel, nick, reason)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
