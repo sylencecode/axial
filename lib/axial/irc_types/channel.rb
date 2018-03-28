@@ -7,7 +7,7 @@ end
 module Axial
   module IRCTypes
     class Channel
-      attr_reader :name, :monitor
+      attr_reader :name, :monitor, :joined_at
       attr_accessor :password, :nick_list, :opped, :voiced
 
       def initialize(server_interface, channel_name)
@@ -19,6 +19,7 @@ module Axial
         @synced = false
         @opped = false
         @voiced = false
+        @joined_at = Time.now
       end
 
       def set_topic(topic)

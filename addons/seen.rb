@@ -33,10 +33,11 @@ module Axial
         if (who.nil?)
           channel.message("#{nick.name}: #{who_name} isn't here.")
         elsif (who.last_spoke.nil?)
-          channel.message("#{nick.name}: #{who_name} hasn't said anything since I joined.")
+          joined_at = Axial::TimeSpan.new(channel.joined_at, Time.now)
+          channel.message("#{nick.name}: #{who_name} hasn't said anything since I joined #{channel.name} #{joined_at.approximate_to_s} ago.")
         else
           last_spoke = Axial::TimeSpan.new(who.last_spoke, Time.now)
-          channel.message("#{nick.name}: #{who_name} said something #{last_spoke.approximate_to_s} ago..")
+          channel.message("#{nick.name}: #{who_name} said something #{last_spoke.approximate_to_s} ago.")
         end
       end
 
