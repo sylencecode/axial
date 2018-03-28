@@ -30,7 +30,9 @@ module Axial
       end
 
       def socket_send(payload)
-        @socket.puts(payload)
+        @monitor.synchronize do
+          @socket.puts(payload)
+        end
       rescue Exception => ex
         LOGGER.error("#{self.class} socket error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

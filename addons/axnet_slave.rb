@@ -24,6 +24,8 @@ module Axial
 
         on_startup                        :start_slave_threads
         on_reload                         :start_slave_threads
+        on_axnet_connect                  :axnet_login
+        on_axnet_disconnect               :axnet_disconnect
         on_axnet    'PING',               :send_pong
         on_axnet    'PONG',               :receive_pong
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
@@ -32,6 +34,10 @@ module Axial
         on_channel  '?connstatus',        :display_conn_status
 
         @bot.axnet.register_transmitter(self, :send)
+      end
+
+      def axnet_disconnect(handler)
+        LOGGER.warn("axnet: lost connection to #{handler.remote_cn}")
       end
 
       def display_conn_status(channel, nick, command)
@@ -52,6 +58,11 @@ module Axial
         if (!@handler.nil?)
           @handler.send(text)
         end
+      end
+
+      def axnet_login(handler)
+        @handler.send('USERLIST')
+        @handler.send('BANLIST')
       end
 
       def send_ping()
@@ -130,11 +141,10 @@ module Axial
             server_socket = ssl_socket.connect
             @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
             LOGGER.info("retrieving userlist from axnet...")
-            @bot.bind_handler.dispatch_axnet_on_connect_binds
+            @bot.bind_handler.dispatch_axnet_connect_binds(@handler)
             @handler.clear_queue
-            @handler.send('USERLIST')
-            @handler.send('BANLIST')
             @handler.loop
+            @bot.bind_handler.dispatch_axnet_disconnect_binds(@handler)
           rescue Errno::ECONNREFUSED
             LOGGER.info("could not connect to #{@master_address}:#{@port} - connection refused")
             sleep 15

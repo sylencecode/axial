@@ -223,8 +223,12 @@ module Axial
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
             Thread.new(handler) do |handler|
               begin
+                @handler_monitor.synchronize do
+                  @bot.bind_handler.dispatch_axnet_connect_binds(handler)
+                end
                 handler.loop
                 @handler_monitor.synchronize do
+                  @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
                   LOGGER.debug("deleting handler #{handler.id} (#{handler.remote_cn})")
                   @handlers.delete(handler.id)
                   LOGGER.debug("(#{handler.remote_cn} disconnected (#{handler.id})")
@@ -235,6 +239,7 @@ module Axial
                   LOGGER.error(i)
                 end
                 @handler_monitor.synchronize do
+                  @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
                   @handlers.delete(handler.id)
                 end
               end

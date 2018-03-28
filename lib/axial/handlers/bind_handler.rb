@@ -10,12 +10,12 @@ module Axial
         @binds = @bot.binds
       end
 
-      def dispatch_axnet_connect_binds()
+      def dispatch_axnet_connect_binds(handler)
         @binds.select{|bind| bind[:type] == :axnet_connect}.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                bind[:object].public_send(bind[:method], handler)
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -34,12 +34,12 @@ module Axial
         end
       end
 
-      def dispatch_axnet_disconnect_binds()
+      def dispatch_axnet_disconnect_binds(handler)
         @binds.select{|bind| bind[:type] == :axnet_disconnect}.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                bind[:object].public_send(bind[:method], handler)
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
