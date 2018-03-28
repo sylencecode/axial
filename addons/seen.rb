@@ -76,7 +76,7 @@ module Axial
       def update_seen_part(channel, nick, reason)
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
-          if (reason.nil? || reason.empty?)
+          if (reason.empty?)
             status = "leaving #{channel.name}"
           else
             status = "leaving #{channel.name} (#{reason})"
@@ -95,7 +95,7 @@ module Axial
       def update_seen_quit(nick, reason)
         user = Models::Mask.get_user_from_mask(nick.uhost)
         if (!user.nil?)
-          if (reason.nil? || reason.empty?)
+          if (reason.empty?)
             status = "quitting IRC"
           else
             status = "quitting IRC (#{reason})"

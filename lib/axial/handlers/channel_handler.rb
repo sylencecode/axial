@@ -85,6 +85,12 @@ module Axial
 
       def dispatch_quit(uhost, reason)
         nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
+        if (reason.nil?)
+          reason = ''
+        else
+          reason = reason.strip
+        end
+
         if (nick == @server_interface.myself)
           handle_self_quit(reason)
         else
@@ -98,7 +104,7 @@ module Axial
       end
 
       def handle_self_quit(reason)
-        if (reason.nil? || reason.empty?)
+        if (reason.empty?)
           LOGGER.debug("I quit IRC.")
         else
           LOGGER.debug("I quit IRC. (#{reason})")
@@ -112,18 +118,20 @@ module Axial
       end
 
       def handle_quit(nick, reason)
-        if (reason.nil? || reason.empty?)
+        if (reason.empty?)
           LOGGER.debug("#{nick.name} quit IRC")
         else
           LOGGER.debug("#{nick.name} quit IRC (#{reason})")
         end
+
         @server_interface.channel_list.all_channels.each do |channel|
           if (!channel.synced?)
             LOGGER.debug("rejected quit on #{channel.name} because it is not synced yet.")
-            return
+          else
+            channel.nick_list.delete_silent(nick)
           end
-          channel.nick_list.delete_silent(nick)
         end
+
         @bot.bind_handler.dispatch_quit_binds(nick, reason)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -164,6 +172,13 @@ module Axial
       def dispatch_part(uhost, channel_name, reason)
         channel = @server_interface.channel_list.get(channel_name)
         nick_name = uhost.split('!').first
+
+        if (reason.nil?)
+          reason = ''
+        else
+          reason = reason.strip
+        end
+
         if (uhost == @server_interface.myself.uhost)
           handle_self_part(channel_name, reason)
         else
@@ -182,7 +197,7 @@ module Axial
           LOGGER.debug("rejected channel join because #{channel.name} is not synced yet.")
           return
         end
-        if (reason.nil? || reason.empty?)
+        if (reason.empty?)
           LOGGER.debug("#{nick.name} left #{channel.name}")
         else
           LOGGER.debug("#{nick.name} left #{channel.name} (#{reason})")
@@ -197,7 +212,7 @@ module Axial
       end
 
       def handle_self_part(channel, reason)
-        if (reason.nil? || reason.empty?)
+        if (reason.empty?)
           LOGGER.debug("I left #{channel.name}")
         else
           LOGGER.debug("I left #{channel.name} (#{reason})")

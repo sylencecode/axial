@@ -5,9 +5,8 @@ module Axial
         JOIN              = /^:{0,1}(\S+) JOIN :{0,1}(\S+)/
         MODE              = /^:{0,1}(\S+) MODE (#\S+)\s+(.*)/
         NICK_CHANGE       = /^:{0,1}(\S+) NICK :{0,1}(\S+)/
-        QUIT              = /^:{0,1}(\S+) QUIT (\S+)\s+:{0,1}(.*)/
-        QUIT_NO_REASON    = /^:{0,1}(\S+) QUIT (\S+)/
-        PART              = /^:{0,1}(\S+) PART (\S+)\s+:{0,1}(.*)/
+        QUIT              = /^:{0,1}(\S+) QUIT :{0,1}(.*)/
+        PART              = /^:{0,1}(\S+) PART (\S+) :{0,1}(.*)/
         PART_NO_REASON    = /^:{0,1}(\S+) PART (\S+)/
         KICK              = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)\s+:{0,1}(.*)/
         KICK_NO_REASON    = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)/
