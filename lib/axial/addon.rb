@@ -33,6 +33,16 @@ module Axial
       @listeners.push(type: :startup, method: method)
     end
 
+    def on_axnet_connect(method)
+      LOGGER.debug("new axnet connections will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :axnet_connect, method: method)
+    end
+
+    def on_axnet_disconnect(method)
+      LOGGER.debug("axnet disconnects will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :axnet_disconnect, method: method)
+    end
+
     def on_ban_list(method)
       LOGGER.debug("Banlist update invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :ban_list, method: method)

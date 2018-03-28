@@ -130,6 +130,7 @@ module Axial
             server_socket = ssl_socket.connect
             @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
             LOGGER.info("retrieving userlist from axnet...")
+            @bot.bind_handler.dispatch_axnet_on_connect_binds
             @handler.clear_queue
             @handler.send('USERLIST')
             @handler.send('BANLIST')
