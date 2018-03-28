@@ -12,18 +12,38 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?seen', :seen
-        on_join             :update_seen_join
-        on_part             :update_seen_part
-        on_quit             :update_seen_quit
-        on_kick             :update_seen_kick
-        throttle            2
+        on_channel      '?seen',  :seen
+        on_channel '?lastspoke',  :last_spoke
+        on_channel      '?last',  :last_spoke
+        on_join                   :update_seen_join
+        on_part                   :update_seen_part
+        on_quit                   :update_seen_quit
+        on_kick                   :update_seen_kick
+        throttle                  2
+      end
+
+      def last_spoke(channel, nick, command)
+        who_name = command.args.strip
+        if (who_name.empty?)
+          channel.message("#{nick.name}: try #{command.command} <nick> instead of whatever you just did.")
+          return
+        end
+
+        who = channel.nick_list.get_silent(who_name)
+        if (who.nil?)
+          channel.message("#{nick.name}: #{who_name} isn't here.")
+        elsif (who.last_spoke.nil?)
+          channel.message("#{nick.name}: #{who_name} hasn't said anything since I joined.")
+        else
+          last_spoke = Axial::TimeSpan.new(who.last_spoke, Time.now)
+          channel.message("#{nick.name}: #{who_name} said something #{last_spoke.approximate_to_s} ago..")
+        end
       end
 
       def seen(channel, nick, command)
         who = command.args.strip
         if (who.empty?)
-          channel.message("#{nick.name}: try ?seen <nick> instead of whatever you just did.")
+          channel.message("#{nick.name}: try #{command.command} <nick> instead of whatever you just did.")
           return
         end
         subject_model = Models::User[name: who.downcase]

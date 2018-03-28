@@ -446,6 +446,7 @@ module Axial
           when /^\x01ACTION/i
             handle_channel_action(channel, nick, text)
           else
+            nick.last_spoke = Time.now
             LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
             @bot.bind_handler.dispatch_channel_binds(channel, nick, text)
         end

@@ -76,19 +76,31 @@ module Axial
         return @nick_list.has_key?(key)
       end
 
-      def get(nick_name)
-        if (@nick_list.has_key?(nick_name.downcase))
-          nick = @nick_list[nick_name.downcase]
+      def get(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          key = nick_or_name.name.downcase
+        elsif (nick_or_name.is_a?(String))
+          key = nick_or_name.downcase
+        end
+
+        if (@nick_list.has_key?(key))
+          nick = @nick_list[key]
           return nick
         else
           raise(NickListError, "nick '#{nick_name}' does not exist")
         end
       end
 
-      def get_silent(nick_name)
+      def get_silent(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          key = nick_or_name.name.downcase
+        elsif (nick_or_name.is_a?(String))
+          key = nick_or_name.downcase
+        end
+
         nick = nil
-        if (@nick_list.has_key?(nick_name.downcase))
-          nick = @nick_list[nick_name.downcase]
+        if (@nick_list.has_key?(key))
+          nick = @nick_list[key]
         end
         return nick
       end
