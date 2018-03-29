@@ -10,7 +10,7 @@ module Axial
         @user_model         = nil
         @voiced             = false
         @opped              = false
-        @last_spoke         = nil
+        @last_spoke         = {}
       end
 
       def opped=(value)

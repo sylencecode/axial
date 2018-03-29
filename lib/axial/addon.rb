@@ -119,6 +119,11 @@ module Axial
       @listeners.push(type: :self_join, method: method)
     end
 
+    def on_channel_any(method)
+      LOGGER.debug("All channel messages will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :channel_any, method: method)
+    end
+
     def on_channel(command, method)
       if (command.is_a?(Regexp))
         LOGGER.debug("Channel comand expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
