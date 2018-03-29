@@ -121,11 +121,20 @@ module Axial
 
     def on_channel(command, method)
       if (command.is_a?(Regexp))
-        LOGGER.debug("Channel text '#{command.source}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("Channel comand expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
       else
         LOGGER.debug("Channel command '#{command}' will invoke method '#{self.class}.#{method}'")
       end
       @listeners.push(type: :channel, command: command, method: method)
+    end
+
+    def on_channel_glob(text, method)
+      if (text.is_a?(Regexp))
+        LOGGER.debug("Channel global expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
+      else
+        LOGGER.debug("Channel global text '#{text}' will invoke method '#{self.class}.#{method}'")
+      end
+      @listeners.push(type: :channel_glob, text: text, method: method)
     end
 
     def on_axnet(command, method)

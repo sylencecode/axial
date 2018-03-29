@@ -141,7 +141,9 @@ module Axial
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
           addon_object.listeners.each do |listener|
             if (listener[:type] == :mode)
-              @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym, modes: listener[:modes])
+              @binds.push(type: listener[:type], object: addon_object, method: listener[:method].to_sym, modes: listener[:modes])
+            elsif (listener[:type] == :channel_glob)
+              @binds.push(type: listener[:type], object: addon_object, text: listener[:text], method: listener[:method].to_sym)
             else
               @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
             end

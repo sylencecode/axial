@@ -462,6 +462,7 @@ module Axial
       end
 
       def dispatch_channel_binds(channel, nick, text)
+        # TODO: break into smaller methods
         @binds.select{|bind| bind[:type] == :channel}.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
@@ -531,7 +532,53 @@ module Axial
               break
             end
           else
-            LOGGER.error("#{self.class}: unsure how to handle bind #{bind.inspect}, it isn't a string or regexp.")
+            LOGGER.error("#{self.class}: unsure how to handle bind #{bind[:text]} - it isn't a string or regexp.")
+          end
+        end
+
+        # wasn't a command, check against the channel globs
+        @binds.select{|bind| bind[:type] == :channel_glob}.each do |bind|
+          if (bind[:object].throttle_secs > 0)
+            if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
+              next
+            end
+          end
+          if (bind[:text].is_a?(String))
+            if (text.include?(bind[:text]))
+              bind[:object].last = Time.now
+              Thread.new do
+                begin
+                  bind[:object].public_send(bind[:method], channel, nick, text)
+                rescue Exception => ex
+                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                  ex.backtrace.each do |i|
+                    LOGGER.error(i)
+                  end
+                end
+              end
+              break
+            end
+          elsif (bind[:text].is_a?(Regexp))
+            if (text =~ bind[:text])
+              bind[:object].last = Time.now
+              Thread.new do
+                begin
+                  if (bind[:object].respond_to?(bind[:method]))
+                    bind[:object].public_send(bind[:method], channel, nick, text)
+                  else
+                    LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+                  end
+                rescue Exception => ex
+                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                  ex.backtrace.each do |i|
+                    LOGGER.error(i)
+                  end
+                end
+              end
+              break
+            end
+          else
+            LOGGER.error("#{self.class}: unsure how to handle bind #{bind[:text]} - it isn't a string or regexp.")
           end
         end
       rescue Exception => ex
