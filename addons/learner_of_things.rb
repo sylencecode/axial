@@ -14,13 +14,14 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?explain',      :explain
-        on_channel '?learn',        :learn
-        on_channel '?forget',       :forget
-        on_channel '?random',       :random
+        on_channel     '?explain',  :explain
+        on_channel       '?learn',  :learn
+        on_channel      '?forget',  :forget
+        on_channel      '?random',  :random
         on_channel '?randomthing',  :random
-        on_channel '?thing',        :random
+        on_channel       '?thing',  :random
         on_join                     :explain_on_join
+        throttle                    2
       end
 
       def learn(channel, nick, command)
