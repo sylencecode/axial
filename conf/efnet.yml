@@ -17,7 +17,6 @@ addons:
   - DCCHandler
   - GoogleSearch
   - LearnerOfThings
-  - MAGA
   - RSSSubscriber
   - Seen
   - Translation
