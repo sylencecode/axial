@@ -9,7 +9,7 @@ module Axial
         type            = nil
         @channel_name   = ''
         @uhost          = ''
-        @id             = SecureRandom.uuid
+        @uuid           = SecureRandom.uuid
       end
     end
   end

@@ -1,16 +1,21 @@
+require 'securerandom'
+
 module Axial
   module IRCTypes
     class Nick
       attr_accessor :name, :ident, :host, :user_model, :last_spoke
+      attr_reader   :uuid
+
       def initialize(server_interface)
-        @server_interface   = server_interface
-        @name               = ''
-        @ident              = ''
-        @host               = ''
-        @user_model         = nil
-        @voiced             = false
-        @opped              = false
-        @last_spoke         = {}
+        @server_interface     = server_interface
+        @name                 = ''
+        @ident                = ''
+        @host                 = ''
+        @user_model           = nil
+        @voiced               = false
+        @opped                = false
+        @last_spoke           = {}
+        @uuid                 = SecureRandom.uuid
       end
 
       def opped=(value)

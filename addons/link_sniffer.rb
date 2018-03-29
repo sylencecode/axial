@@ -4,12 +4,12 @@ require 'axial/uri_utils'
 
 module Axial
   module Addons
-    class YouTubeSniffer < Axial::Addon
+    class LinkSniffer < Axial::Addon
 
       def initialize(bot)
         super
 
-        @name    = 'youtube video sniffer'
+        @name    = 'link sniffer'
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 

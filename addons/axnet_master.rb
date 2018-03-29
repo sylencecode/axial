@@ -47,8 +47,8 @@ module Axial
         if (@handlers.count == 0)
           dcc.message("no bots connected.")
         end
-        @handlers.each do |id, handler|
-          dcc.message("status for #{id} (#{handler.remote_cn})")
+        @handlers.each do |uuid, handler|
+          dcc.message("status for #{uuid} (#{handler.remote_cn})")
           dcc.message(handler.socket.inspect)
           dcc.message(handler.thread.inspect)
         end
@@ -67,7 +67,7 @@ module Axial
       end
 
       def receive_pong(handler, text)
-        LOGGER.debug("PONG from #{handler.id} (#{handler.remote_cn})")
+        LOGGER.debug("PONG from #{handler.uuid} (#{handler.remote_cn})")
       end
       
       def handle_axnet_command(dcc, command)
@@ -141,7 +141,7 @@ module Axial
       end
 
       def close_connections()
-        @handlers.each do |id, handler|
+        @handlers.each do |uuid, handler|
           handler.close
         end
         @handlers = {}
@@ -154,7 +154,7 @@ module Axial
 
       def broadcast(payload)
         LOGGER.debug("broadcasting to #{@handlers.count} connections")
-        @handlers.each do |id, handler|
+        @handlers.each do |uuid, handler|
           handler.send(payload)
         end
       rescue Exception => ex
@@ -170,8 +170,8 @@ module Axial
         end
 
         LOGGER.debug("relaying to #{@handlers.count - 1} connections")
-        @handlers.each do |id, handler|
-          if (id == exclude_handler.id)
+        @handlers.each do |uuid, handler|
+          if (uuid == exclude_handler.uuid)
             next
           else
             handler.send(text)
@@ -229,23 +229,23 @@ module Axial
                 handler.loop
                 @handler_monitor.synchronize do
                   @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
-                  LOGGER.debug("deleting handler #{handler.id} (#{handler.remote_cn})")
-                  @handlers.delete(handler.id)
-                  LOGGER.debug("(#{handler.remote_cn} disconnected (#{handler.id})")
+                  LOGGER.debug("deleting handler #{handler.uuid} (#{handler.remote_cn})")
+                  @handlers.delete(handler.uuid)
+                  LOGGER.debug("(#{handler.remote_cn} disconnected (#{handler.uuid})")
                 end
               rescue Exception => ex
-                LOGGER.warn("error close for #{handler.remote_cn} (#{handler.id}")
+                LOGGER.warn("error close for #{handler.remote_cn} (#{handler.uuid}")
                 ex.backtrace.each do |i|
                   LOGGER.error(i)
                 end
                 @handler_monitor.synchronize do
                   @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
-                  @handlers.delete(handler.id)
+                  @handlers.delete(handler.uuid)
                 end
               end
             end
             @handler_monitor.synchronize do
-              @handlers[handler.id] = handler
+              @handlers[handler.uuid] = handler
             end
           rescue Exception => ex
             LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

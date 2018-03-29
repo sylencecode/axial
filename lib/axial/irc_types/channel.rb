@@ -7,19 +7,20 @@ end
 module Axial
   module IRCTypes
     class Channel
-      attr_reader :name, :monitor, :joined_at
-      attr_accessor :password, :nick_list, :opped, :voiced
+      attr_reader :name, :monitor, :joined_at, :uuid
+      attr_accessor :password, :nick_list, :opped, :voiced, :mode, :topic
 
       def initialize(server_interface, channel_name)
-        @server_interface = server_interface
-        @name = channel_name
-        @topic = ""
-        @mode = IRCTypes::Mode.new
-        @nick_list = IRCTypes::NickList.new(@server_interface)
-        @synced = false
-        @opped = false
-        @voiced = false
-        @joined_at = Time.now
+        @server_interface     = server_interface
+        @name                 = channel_name
+        @topic                = ''
+        @mode                 = IRCTypes::Mode.new
+        @nick_list            = IRCTypes::NickList.new(@server_interface)
+        @synced               = false
+        @opped                = false
+        @voiced               = false
+        @joined_at            = Time.now
+        @uuid                 = SecureRandom.uuid
       end
 
       def set_topic(topic)

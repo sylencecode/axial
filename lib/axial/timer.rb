@@ -5,7 +5,7 @@ module Axial
   end
 
   class Timer
-    attr_reader     :id, :last, :type, :interval
+    attr_reader     :uuid, :last, :type, :interval
     attr_accessor   :thread
 
     def initialize(repeat, interval, *args, &block)
@@ -13,7 +13,7 @@ module Axial
         raise(TimerError, "invalid duration")
       end
 
-      @id                 = SecureRandom.uuid
+      @uuid               = SecureRandom.uuid
       @interval           = interval
       @repeat             = repeat
       @callback_object    = nil
