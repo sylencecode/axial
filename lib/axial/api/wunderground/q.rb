@@ -36,7 +36,7 @@ module Axial
                 if (result.has_key?('l'))
                   redirect = result['l'].gsub(/^\/q\//, '')
                   new_uri = URI::parse(@rest_api + "/" + redirect + ".json")
-                  response = RestClient::Request.execute(method: :get, url: new_uri.to_s, verify_ssl: false)
+                  new_response = RestClient::Request.execute(method: :get, url: new_uri.to_s, verify_ssl: false)
                   new_json = JSON.parse(new_response)
                 end
               end
