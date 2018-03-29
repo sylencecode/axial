@@ -2,6 +2,7 @@ require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/thing'
 require 'axial/timespan'
+require 'securerandom'
 
 module Axial
   module Addons
@@ -13,10 +14,13 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.0.0'
 
-        on_channel '?explain', :explain
-        on_channel '?learn',   :learn
-        on_channel '?forget',  :forget
-        on_join                :explain_on_join
+        on_channel '?explain',      :explain
+        on_channel '?learn',        :learn
+        on_channel '?forget',       :forget
+        on_channel '?random',       :random
+        on_channel '?randomthing',  :random
+        on_channel '?thing',        :random
+        on_join                     :explain_on_join
       end
 
       def learn(channel, nick, command)
@@ -83,6 +87,23 @@ module Axial
           ex.backtrace.each do |i|
             LOGGER.error(i)
           end
+        end
+      end
+
+      def random(channel, nick, command)
+#        index = SecureRandom.random_number(DB_CONNECTION[:things].count) + 1
+#        puts index
+        thing_model = Models::Thing.order(Sequel.lit('RANDOM()')).first
+        LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
+        learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
+        msg  = "#{Colors.gray}[#{Colors.blue}random thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
+        channel.message(msg)
+      rescue StandardError => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
