@@ -1,56 +1,55 @@
 require 'logger'
-LOGGER = Logger.new(STDOUT)
-LOGGER.level = Logger::DEBUG
-LOGGER.formatter = proc do |severity, time, unused, message|
-  puts "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}"
-end
+
 
 module Axial
-  module Handlers
-    module Logging
-      def log(msg)
-        puts "\e[01;34m[       log      ]\e[00m #{msg}"
+  class Logger
+    def initialize(dest)
+      @monitor = Monitor.new
+      @logger = ::Logger.new(dest)
+      @logger.formatter = proc do |severity, time, unused, message|
+        puts "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}"
       end
-  
-      def log_privmsg(nick, msg)
-        puts "\e[01;31m[    priv msg    ]\e[00m <#{nick}> #{msg}"
+    end
+
+    def level=(level)
+      @logger.level = level
+    end
+
+    def level()
+      return @logger.level
+    end
+
+    def debug(text)
+      @monitor.synchronize do
+        @logger.debug(text)
       end
-  
-      def log_channel_message(nick, channel, msg)
-        puts "\e[01;36m[    chan msg    ]\e[00m #{channel} <#{nick}> #{msg.inspect}"
+    end
+
+    def info(text)
+      @monitor.synchronize do
+        @logger.info(text)
       end
-  
-      def log_notice(nick, msg)
-        puts "\e[01;35m[  priv notice   ]\e[00m <#{nick}> #{msg}"
+    end
+
+    def warn(text)
+      @monitor.synchronize do
+        @logger.warn(text)
       end
-  
-      def log_channel_notice(nick, channel, msg)
-        puts "\e[01;35m[  chan notice   ]\e[00m #{channel} <#{nick}> #{msg}"
+    end
+
+    def error(text)
+      @monitor.synchronize do
+        @logger.error(text)
       end
-  
-      def log_server_notice(msg)
-        puts "\e[01;35m[  server notice ]\e[00m #{msg}"
-      end
-  
-      def log_server(msg)
-        puts "\e[01;30m[   raw server   ]\e[00m #{msg}"
-      end
-  
-      def log_outbound(msg)
-        puts "\e[01;32m[  to server --> ]\e[00m #{msg}"
-      end
-  
-      def log_server_error(raw_server_msg)
-        puts "\e[01;31m[   unhandled    ]\e[00m #{raw_server_msg}"
-      end
-  
-      def log_unhandled(raw_server_msg)
-        puts "\e[01;31m[   unhandled    ]\e[00m #{raw_server_msg}"
-      end
-  
-      def log_quit (nick, reason)
-        puts "\e[01;30m[      quit      ]\e[00m #{nick} - #{reason}"
+    end
+
+    def fatal(text)
+      @monitor.synchronize do
+        @logger.fatal(text)
       end
     end
   end
 end
+
+LOGGER = Axial::Logger.new(STDOUT)
+LOGGER.level = ::Logger::DEBUG

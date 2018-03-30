@@ -4,7 +4,6 @@ end
 module Axial
   # parent class for new addons
   class Addon
-    include Axial::Handlers::Logging
     attr_reader     :listeners, :name, :version, :author, :throttle_secs
     attr_accessor   :last
 
