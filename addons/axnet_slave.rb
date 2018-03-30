@@ -10,7 +10,7 @@ module Axial
 
         @name    = 'axnet slave'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         @slave_thread     = nil
         @announce_timer   = nil

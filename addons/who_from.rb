@@ -10,7 +10,7 @@ module Axial
 
         @name    = 'who from?'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel '?whofrom', :who_from
         on_channel '?who',     :who_from

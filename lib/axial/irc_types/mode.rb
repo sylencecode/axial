@@ -283,6 +283,109 @@ module Axial
         end
       end
 
+      def merge_string(raw_mode)
+        if (raw_mode =~ /(\S+)(.*)/)
+          modes_string, values_string = Regexp.last_match.captures
+        else
+          return self
+        end
+
+        unsets = []
+        sets = []
+
+        values = values_string.strip.split(/\s+/)
+        modes = modes_string.scan(/\S/)
+
+        action = :set
+
+        while (modes.length > 0)
+          letter = modes[0]
+          who = ''
+          case letter
+            when '-'
+              action = :unset
+              modes.shift
+              next
+            when '+'
+              action = :set
+              modes.shift
+              next
+            when 'l'
+              if (action == :set)
+                who = values.shift
+              end
+              modes.shift
+            when 'b', 'k', 'o', 'v'
+              # grab value
+              modes.shift
+              who = values.shift
+            when 'a', 'd', 'e', 'f', 'h', 'I', 'J', 'L', 'O', 'p', 'q', 'R'
+              # discard value
+              modes.shift
+              values.shift
+              next
+            else
+              modes.shift
+          end
+
+          if (action == :set)
+            if (unsets.select{ |i| i[:mode] == letter && i[:value] == who }.any?)
+              unsets.delete_if{ |i| i[:mode] == letter && i[:value] == who }
+            else
+              if (sets.select{ |i| i[:mode] == letter && i[:value] == who }.empty?)
+                sets.push(mode: letter, value: who)
+              end
+            end
+          else
+            if (sets.select{ |i| i[:mode] == letter && i[:value] == who }.any?)
+              sets.delete_if{ |i| i[:mode] == letter && i[:value] == who }
+            else
+              if (unsets.select{ |i| i[:mode] == letter && i[:value] == who }.empty?)
+                unsets.push(mode: letter, value: who)
+              end
+            end
+          end
+        end
+
+        sets.each do |set|
+          case set[:mode]
+            when 'i'
+              @invite_only = :set
+            when 'k'
+              @keyword = { type: :set, value: set[:value] }
+            when 'l'
+              @limit = { type: :set, value: set[:value] }
+            when 'm'
+              @moderated = :set
+            when 'n'
+              @no_outside_messages = :set
+            when 's'
+              @secret = :set
+            when 't'
+              @topic_ops_only = :set
+          end
+        end
+
+        unsets.each do |unset|
+          case unset[:mode]
+            when 'i'
+              @invite_only = :unknown
+            when 'k'
+              @keyword = { type: :unknown, value: '' }
+            when 'l'
+              @limit = { type: :unknown, value: '' }
+            when 'm'
+              @moderated = :unknown
+            when 'n'
+              @no_outside_messages = :unknown
+            when 's'
+              @secret = :unknown
+            when 't'
+              @topic_ops_only = :unknown
+          end
+        end
+      end
+
       def emoty?()
         return to_string_array.empty?
       end

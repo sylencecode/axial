@@ -11,7 +11,7 @@ module Axial
 
         @name    = 'user management'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
         @valid_roles = %w(director manager op friend)
 
         on_channel  '?addmask',   :handle_channel_add_mask

@@ -3,13 +3,13 @@ module Axial
     module Patterns
       module Channel
         JOIN              = /^:{0,1}(\S+) JOIN :{0,1}(\S+)/
-        MODE              = /^:{0,1}(\S+) MODE (#\S+)\s+(.*)/
+        MODE              = /^:{0,1}(\S+) MODE (#\S+) (.*)/
         NICK_CHANGE       = /^:{0,1}(\S+) NICK :{0,1}(\S+)/
         QUIT              = /^:{0,1}(\S+) QUIT :{0,1}(.*)/
         PART              = /^:{0,1}(\S+) PART (\S+) :{0,1}(.*)/
         PART_NO_REASON    = /^:{0,1}(\S+) PART (\S+)/
-        KICK              = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)\s+:{0,1}(.*)/
-        KICK_NO_REASON    = /^:{0,1}(\S+) KICK (\S+)\s+(\S+)/
+        KICK              = /^:{0,1}(\S+) KICK (\S+) (\S+) :{0,1}(.*)/
+        KICK_NO_REASON    = /^:{0,1}(\S+) KICK (\S+) (\S+)/
         WHO_LIST_END      = /^:{0,1}\S+ 315 \S+ (\S+)/
         WHO_LIST_ENTRY    = /^:{0,1}\S+ 352 \S+ (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)/
         NAMES_LIST_ENTRY  = /^:{0,1}\S+ 353 (.*)/
@@ -17,6 +17,8 @@ module Axial
         BAN_LIST_ENTRY    = /^:{0,1}\S+ 367 \S+ (\S+) (\S+) (\S+) (\S+)/
         BAN_LIST_END      = /^:{0,1}\S+ 368 \S+ (\S+)/
         NOT_OPERATOR      = /^:{0,1}\S+ 482 (\S+)/
+        INITIAL_MODE      = /^:{0,1}\S+ 324 \S+ (\S+) (\S+)/
+        CREATED           = /^:{0,1}\S+ 329 \S+ (\S+) (\S+)/
       end
 
       module Server
@@ -31,7 +33,7 @@ module Axial
       end
 
       module Messages
-        PRIVMSG           = /^:{0,1}(\S+) PRIVMSG (\S+)\s+:{0,1}(.*)/
+        PRIVMSG           = /^:{0,1}(\S+) PRIVMSG (\S+) :{0,1}(.*)/
 
         NOTICE_NOPREFIX   = /^NOTICE \S+ :{0,1}(.*)/
         NOTICE            = /^:{0,1}(\S+) NOTICE (\S+) :{0,1}(.*)/

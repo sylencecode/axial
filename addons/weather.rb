@@ -11,7 +11,7 @@ module Axial
 
         @name    = 'weather underground'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel '?weather', :handle_weather
         on_channel '?w', :handle_weather

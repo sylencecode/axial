@@ -10,7 +10,7 @@ module Axial
 
         @name    = 'axnet master'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         @master_thread    = nil
         @handlers         = {}

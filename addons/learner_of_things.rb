@@ -12,7 +12,7 @@ module Axial
 
         @name    = 'learner of things'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel     '?explain',  :explain
         on_channel       '?learn',  :learn

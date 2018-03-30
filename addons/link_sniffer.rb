@@ -11,7 +11,7 @@ module Axial
 
         @name    = 'link sniffer'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel /https{0,1}:\/\/youtu\.be\/\S+/,          :handle_youtube
         on_channel /https{0,1}:\/\/www\.youtube\.com\/\S+/,  :handle_youtube

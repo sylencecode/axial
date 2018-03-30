@@ -10,7 +10,7 @@ module Axial
 
         @name    = 'last seen'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel      '?seen',  :seen
         on_channel '?lastspoke',  :seen

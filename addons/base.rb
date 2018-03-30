@@ -9,7 +9,7 @@ module Axial
 
         @name    = 'base'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel   '?help',   :send_help
         on_channel  '?about',   :send_help

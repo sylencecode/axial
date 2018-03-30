@@ -35,6 +35,14 @@ module Axial
         return match
       end
 
+      def bot?()
+        if (@role.casecmp('bot').zero?)
+          return true
+        else
+          return false
+        end
+      end
+
       def director?()
         if (@role.casecmp('director').zero?)
           return true

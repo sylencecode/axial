@@ -11,7 +11,7 @@ module Axial
 
         @name    = 'wikipedia search'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         on_channel '?wiki',      :handle_wikipedia
         on_channel '?wikipedia', :handle_wikipedia

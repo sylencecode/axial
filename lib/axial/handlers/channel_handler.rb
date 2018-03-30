@@ -3,6 +3,7 @@ require 'axial/handlers/patterns'
 require 'axial/colors'
 require 'axial/irc_types/channel'
 require 'axial/irc_types/mode'
+require 'axial/irc_types/channel_ban'
 
 class ChannelHandlerException < StandardError
 end
@@ -50,14 +51,14 @@ module Axial
         end
       end
 
-      def handle_ban_list_entry(channel, mask, who_set, set_at)
-        puts "ban: #{channel} | #{mask} | #{who_set} | #{set_at}"
-#        channel = @server_interface.channel_list.get(channel_name)
-#        channel.irc_ban_list_monitor.synchronize do
-#          irc_ban_list = IRCTypes::BanList.new
-#          channel.irc_ban_list.clear
-#          channel.irc_ban_list.add
-#        end
+      def handle_ban_list_entry(channel_name, mask, set_by, set_at)
+        channel = @server_interface.channel_list.get(channel_name)
+        if (channel.ban_list.synced?)
+          channel.ban_list.synced = false
+          channel.ban_list.clear
+        end
+        ban = IRCTypes::ChannelBan.new(mask, set_by, set_at)
+        channel.ban_list.add(ban)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -67,7 +68,11 @@ module Axial
 
       def handle_ban_list_end(channel_name)
         channel = @server_interface.channel_list.get(channel_name)
+        channel.ban_list.synced = true
         @bot.bind_handler.dispatch_irc_ban_list_end_binds(channel)
+        channel.ban_list.all_bans.each do |ban|
+          puts("#{ban.inspect}")
+        end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -273,6 +278,7 @@ module Axial
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
+        @server_interface.set_channel_mode(channel_name, '')
         @bot.bind_handler.dispatch_self_join_binds(channel)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -284,7 +290,7 @@ module Axial
       def dispatch_mode(uhost, channel_name, mode)
         channel = @server_interface.channel_list.get(channel_name)
         if (uhost == @bot.server.real_address)
-          handle_server_mode(channel, mode)
+          handle_mode(@bot.server, channel, mode)
         else
           if (uhost == @server_interface.myself.uhost)
             nick = @server_interface.myself
@@ -292,7 +298,6 @@ module Axial
             nick_name = uhost.split('!').first
             nick = channel.nick_list.get(nick_name)
           end
-          channel = @server_interface.channel_list.get(channel_name)
           handle_mode(nick, channel, mode)
         end
       rescue Exception => ex
@@ -302,68 +307,9 @@ module Axial
         end
       end
 
-      # dispatch binds with a server object? and check for object type on callback?
-      def handle_server_mode(channel, mode)
-        LOGGER.debug("server sets #{channel.name} mode: #{mode}")
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def dispatch_nick_change(uhost, new_nick_name)
-        if (uhost == @server_interface.myself.uhost)
-          handle_self_nick(new_nick_name)
-        else
-          handle_nick_change(uhost, new_nick_name)
-        end
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def handle_self_nick(new_nick)
-        LOGGER.debug("I changed nicks: #{new_nick}")
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def handle_nick_change(uhost, new_nick_name)
-        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
-        if (!nick.nil?)
-          old_nick_name = nick.name
-        end
-
-        if (nick.nil?)
-          LOGGER.error("#{self.class} error: uhost '#{uhost}' changed nick to '#{new_nick_name}' but no previous record exists!")
-        else
-          @server_interface.channel_list.all_channels.each do |channel|
-            if (!channel.synced?)
-              LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
-            else
-              channel.nick_list.rename(old_nick_name, new_nick_name)
-            end
-          end
-
-          nick.name = new_nick_name
-
-          LOGGER.debug("#{old_nick_name} changed nick to #{new_nick_name}")
-          @bot.bind_handler.dispatch_nick_change_binds(nick, old_nick_name)
-        end
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
       def handle_mode(nick, channel, raw_mode_string)
+        channel.mode.merge_string(raw_mode_string)
+
         mode = IRCTypes::Mode.new
         mode_string = raw_mode_string.strip
         mode.parse_string(mode_string)
@@ -419,10 +365,37 @@ module Axial
               channel.voiced = false
             else
               if (channel.synced?)
-               subject_nick = channel.nick_list.get(nick_name)
-               subject_nick.set_voiced(channel, false)
+                subject_nick = channel.nick_list.get(nick_name)
+                subject_nick.set_voiced(channel, false)
               end
             end
+          end
+        end
+
+        if (mode.unbans.any?)
+          if (channel.ban_list.synced?)
+            mode.unbans.each do |mask|
+              channel.ban_list.remove(mask)
+            end
+          else
+            LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
+          end
+          channel.ban_list.all_bans.each do |ban|
+            puts("#{ban.inspect}")
+          end
+        end
+
+        if (mode.bans.any?)
+          if (channel.ban_list.synced?)
+            mode.bans.each do |mask|
+              ban = IRCTypes::ChannelBan.new(mask, nick.uhost, Time.now)
+              channel.ban_list.add(ban)
+            end
+          else
+            LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
+          end
+          channel.ban_list.all_bans.each do |ban|
+            puts("#{ban.inspect}")
           end
         end
 
@@ -433,6 +406,68 @@ module Axial
           LOGGER.error(i)
         end
       end
+
+      def dispatch_initial_mode(channel_name, initial_mode)
+        channel = @server_interface.channel_list.get(channel_name)
+        mode_string = initial_mode.strip
+        channel.mode.merge_string(mode_string)
+      end
+
+      def dispatch_created(channel_name, created_at)
+        LOGGER.debug("channel #{channel_name} created at " + Time.at(created_at).inspect)
+      end
+
+      def dispatch_nick_change(uhost, new_nick_name)
+        if (uhost == @server_interface.myself.uhost)
+          handle_self_nick(new_nick_name)
+        else
+          handle_nick_change(uhost, new_nick_name)
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def handle_self_nick(new_nick)
+        LOGGER.debug("I changed nicks: #{new_nick}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def handle_nick_change(uhost, new_nick_name)
+        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
+        if (!nick.nil?)
+          old_nick_name = nick.name
+        end
+
+        if (nick.nil?)
+          LOGGER.error("#{self.class} error: uhost '#{uhost}' changed nick to '#{new_nick_name}' but no previous record exists!")
+        else
+          @server_interface.channel_list.all_channels.each do |channel|
+            if (!channel.synced?)
+              LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
+            else
+              channel.nick_list.rename(old_nick_name, new_nick_name)
+            end
+          end
+
+          nick.name = new_nick_name
+
+          LOGGER.debug("#{old_nick_name} changed nick to #{new_nick_name}")
+          @bot.bind_handler.dispatch_nick_change_binds(nick, old_nick_name)
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
 
       def handle_channel_action(channel, nick, unstripped_text)
         text = unstripped_text.strip

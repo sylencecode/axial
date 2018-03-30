@@ -32,7 +32,11 @@ module Axial
             @bot.connection_handler.send_raw("MODE #{channel_name} #{mode_string}")
           end
         else
-          @bot.connection_handler.send_raw("MODE #{channel_name} #{mode}")
+          if (mode.empty?)
+            @bot.connection_handler.send_raw("MODE #{channel_name}")
+          else
+            @bot.connection_handler.send_raw("MODE #{channel_name} #{mode}")
+          end
         end
       end
 

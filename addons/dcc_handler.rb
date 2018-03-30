@@ -11,7 +11,7 @@ module Axial
 
         @name         = 'dcc handler'
         @author       = 'sylence <sylence@sylence.org>'
-        @version      = '1.0.0'
+        @version      = '1.1.0'
 
         @port         = 54321
 

@@ -1,4 +1,5 @@
 require 'axial/irc_types/nick_list'
+require 'axial/irc_types/channel_ban_list'
 require 'axial/irc_types/mode'
 
 class ChannelError < StandardError
@@ -7,7 +8,7 @@ end
 module Axial
   module IRCTypes
     class Channel
-      attr_reader :name, :monitor, :joined_at, :uuid
+      attr_reader :name, :monitor, :joined_at, :uuid, :ban_list
       attr_accessor :password, :nick_list, :opped, :voiced, :mode, :topic
 
       def initialize(server_interface, channel_name)
@@ -21,6 +22,8 @@ module Axial
         @voiced               = false
         @joined_at            = Time.now
         @uuid                 = SecureRandom.uuid
+        # lock this for an update
+        @ban_list             = IRCTypes::ChannelBanList.new(self)
       end
 
       def set_topic(topic)
@@ -87,10 +90,6 @@ module Axial
         mode = IRCTypes::Mode.new
         mode.voice(nick.name)
         set_mode(mode)
-      end
-
-      def get_irc_ban_list()
-        @server_interface.set_channel_mode(@name, '+b')
       end
 
       def set_mode(mode)

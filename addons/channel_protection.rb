@@ -10,13 +10,12 @@ module Axial
 
         @name    = 'channel protection'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         # :bans, :unbans, :invite_only, :keyword, :limit, :moderated, :no_outside_messages, :ops, :deops, :secret, :topic_ops_only, :voices, :devoices
         @enforce_modes              = [ :topic_ops_only, :no_outside_messages ]
         @prevent_modes              = [ :invite_only, :limit, :keyword, :moderated ]
         @op_deop_modes              = [ :ops, :deops ]
-        @ban_modes                  = [ :bans, :unbans ]
         @complaint_thread           = nil
 
         throttle                    2
@@ -24,8 +23,14 @@ module Axial
         # axnet hooks
         on_startup                  :start_complaint_thread
         on_reload                   :start_complaint_thread
-        on_axnet   'COMPLAINT',     :handle_axnet_complaint
+        on_axnet       'COMPLAINT', :handle_axnet_complaint
         on_self_join                :send_axnet_op_complaint
+        # on banned response
+        # on invite only, invite
+        # on limit, increase or remove
+        # on keyword, send keyword
+        # if not joined to channels in autojoin list, etc..
+        #on_mode :all, :handle_all
 
         # general mode/user management
         on_join                     :auto_op_voice
@@ -33,11 +38,9 @@ module Axial
         on_mode @prevent_modes,     :handle_prevent_modes
         on_mode @enforce_modes,     :handle_enforce_modes
         on_mode @op_deop_modes,     :handle_op_deop
-        on_mode @ban_modes,         :handle_ban_unban
-        on_self_join                :get_irc_ban_list
+        on_mode :bans,              :protect_banned_users
         on_user_list                :check_for_new_users
         on_ban_list                 :check_for_new_bans
-        on_irc_ban_list_end         :remove_old_irc_bans
         on_self_kick                :rejoin
         # create a timer for checking channel bans every minute, use banlist response to check timestamps
 
@@ -46,43 +49,12 @@ module Axial
         # commands
         on_privmsg      'exec',     :handle_privmsg_exec
         on_channel    '?topic',     :handle_topic
-        # on_channel   '?status',     :display_status
-        # on banned response
-        # on invite only, invite
-        # on limit, increase or remove
-        # on keyword, send keyword
-        # if not joined to channels in autojoin list, etc..
-        #on_mode :all, :handle_all
       end
-
-      # def display_status(channel, nick, command)
-      #   channel.message("status for #{nick.name}")
-      #   @server_interface.channel_list.all_channels.each do |channel|
-      #     if (channel.opped?)
-      #       channel.message("i am opped on #{channel.name}")
-      #     elsif (channel.voiced?)
-      #       channel.message("i am voiced on #{channel.name}")
-      #     else
-      #       channel.message("i have no status on #{channel.name}")
-      #     end
-      #     if (nick.opped_on?(channel))
-      #       channel.message("opped on #{channel.name}")
-      #     elsif (nick.voiced_on?(channel))
-      #       channel.message("voiced on #{channel.name}")
-      #     else
-      #       channel.message("no status on #{channel.name}")
-      #     end
-      #   end
-      # end
 
       def rejoin(channel, kicker_nick, reason)
         # TODO: get the password out of the database or out of the bot props yaml if one is set
         wait_a_sec
         @server_interface.join(channel.name)
-      end
-
-      def get_irc_ban_list(channel)
-        channel.get_irc_ban_list
       end
 
       def check_for_new_users()
@@ -100,14 +72,12 @@ module Axial
       def remove_old_irc_bans(channel)
         # TODO: timer to remove hour-old bans
         # (Time.now - Time.at(1521931658))
-        LOGGER.debug("end of banlist reached channel protection")
       end
 
       def check_channel_bans(channel)
         if (!channel.opped?)
           return
         end
-        LOGGER.debug("received banlist update, checking channel bans")
 
         response_mode = IRCTypes::Mode.new
         kicks = []
@@ -140,37 +110,22 @@ module Axial
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-          # TODO: check for bot masks
-          if (possible_user.nil?)
-            # if (subject_nick.opped_on?(channel))
-            #   response_mode.deop(subject_nick.name)
-            # elsif (subject_nick.voiced_on?(channel))
-            #   response_mode.devoice(subject_nick.name)
-            # end
-          else
-            if (possible_user.op?)
-              if (!subject_nick.opped_on?(channel))
-                response_mode.op(subject_nick.name)
-              end
-            # elsif (!possible_user.op?)
-            #   if (subject_nick.opped_on?(channel)
-            #     response_mode.deop(subject_nick.name)
-            #   end
-            elsif (possible_user.friend?)
-              if (!subject_nick.voiced_on?(channel))
-                response_mode.voice(subject_nick.name)
-              end
-            # elsif (!possible_user.friend?)
-            #   if (subject_nick.voiced_on?(channel))
-            #     response_mode.devoice(subject_nick.name)
-            #   end
-            # else
-            #   if (subject_nick.opped_on?(channel))
-            #     response_mode.deop(subject_nick.name)
-            #   elsif (subject_nick.voiced_on?(channel))
-            #     response_mode.devoice(subject_nick.name)
-            #   end
+          # TODO: check for bot masks before enabling deop/devoice
+          if (possible_user.bot?)
+            next
+          elsif (possible_user.op?)
+            if (!subject_nick.opped_on?(channel))
+              response_mode.op(subject_nick.name)
             end
+          elsif (possible_user.friend?)
+            if (!subject_nick.voiced_on?(channel))
+              response_mode.voice(subject_nick.name)
+            end
+          # else
+          # if (subject_nick.opped_on?(channel))
+          #   response_mode.deop(subject_nick.name)
+          # elsif (subject_nick.voiced_on?(channel))
+          #   response_mode.devoice(subject_nick.name)
           end
         end
 
@@ -180,7 +135,7 @@ module Axial
       end
         
       def stop_complaint_thread()
-        LOGGER.debug("stopping ingest thread")
+        LOGGER.debug("stopping complaint thread")
         @complaining = false
         if (!@complaint_thread.nil?)
           @complaint_thread.kill
@@ -273,55 +228,24 @@ module Axial
         send_complaint(complaint)
       end
 
-      def handle_ban_unban(channel, nick, mode)
-        if (!channel.opped?)
+      def protect_banned_users(channel, nick, mode)
+        if (!channel.opped? || nick == @server_interface.myself)
           return
         end
+
         user = @bot.user_list.get_from_nick_object(nick)
         response_mode = IRCTypes::Mode.new
-        if (mode.bans.any?)
-          if (nick == @server_interface.myself)
-            # kick, do something, etc
-            # need channel.ban_list
-            # set an unban timer?
-          else
-            mode.bans.each do |in_mask|
-              mask = in_mask.strip
-              if (@server_interface.myself.match_mask?(mask))
-                channel.unban(mask)
-                if (!user.director?)
-                  channel.deop(nick)
-                end
-                next
-              end
 
-              possible_users = @bot.user_list.get_users_from_mask(mask)
-              if (possible_users.any?)
-                response_mode.unban(mask)
-                if (!user.director?)
-                  channel.deop(nick.name)
-                end
-                next
+        mode.bans.each do |in_mask|
+          mask = in_mask.strip
+          possible_users = @bot.user_list.get_users_from_mask(mask)
+          if (@server_interface.myself.match_mask?(mask) || possible_users.any?)
+            if (!bot_or_director?(user))
+              channel.unban(mask)
+              if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
+                channel.deop(nick.name)
               end
-
-              # TODO: check for bot masks
-              # channel.nick_list.all_nicks.each do |nick|
-              #   if (nick == @server_interface.myself)
-              #     next
-              #   elsif (nick.match_mask?(mask))
-              #     channel.kick(nick, "banned by #{nick.name}")
-              #   end
-              # end
             end
-          end
-        end
-
-        if (mode.unbans.any?)
-          if (nick == @server_interface.myself)
-            # kick, do something, etc
-            # need channel.ban_list
-          else
-            # check sticky ban list
           end
         end
 
@@ -331,55 +255,24 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
-        if (!channel.opped?)
+        if (!channel.opped? || nick == @server_interface.myself)
           return
         end
 
-        wait_a_sec
-
-        user = @bot.user_list.get_from_nick_object(nick)
-
-        response_mode = IRCTypes::Mode.new
-
         if (mode.ops.any?)
-          if (nick == @server_interface.myself)
-            LOGGER.debug("I opped #{mode.ops.inspect}")
-          else
-            mode.ops.each do |op|
-              if (op == @server_interface.myself.name)
-                channel.opped = true
-                check_channel_bans(channel)
-                check_channel_users(channel)
-              else
-                subject_nick = channel.nick_list.get(op)
-                possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                # if (possible_user.nil? || !possible_user.op?)
-                #     response_mode.deop(subject_nick.name)
-                #   if (!user.director?)
-                #     response_mode.deop(nick.name)
-                #   end
-                # end
-              end
-            end
-          end
-        end
-
-        if (mode.deops.any?)
-          if (nick == @server_interface.myself)
-            LOGGER.debug("I deopped #{mode.deops.inspect}")
-          else
-            mode.deops.each do |deop|
-              if (deop == @server_interface.myself.name)
-                channel.opped = false
-                complain(channel, :deopped)
-              else
-                # re-op users unless deopped by a manager
-                subject_nick = channel.nick_list.get(deop)
-                possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-                if (!possible_user.nil? && possible_user.op? && channel.opped?)
-                  response_mode.op(subject_nick.name)
-                  if (!user.nil && !user.director?)
-                    response_mode.deop(nick.name)
+          response_mode = IRCTypes::Mode.new
+          mode.ops.each do |op|
+            if (op == @server_interface.myself.name)
+              channel.opped = true
+              check_channel_bans(channel)
+              check_channel_users(channel)
+            else
+              subject_nick = channel.nick_list.get(op)
+              possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+              if (possible_user.nil? || !possible_user.op?)
+                if (!bot_or_director?(user))
+                  if (!subject_nick.opped_on?(channel))
+                    response_mode.deop(subject_nick.name)
                   end
                 end
               end
@@ -387,12 +280,49 @@ module Axial
           end
         end
 
-        if (response_mode.any? && channel.opped?)
+        if (mode.deops.any?)
+          mode.deops.each do |deop|
+            if (deop == @server_interface.myself.name)
+              channel.opped = false
+              complain(channel, :deopped)
+            else
+              # re-op users and penalize offender unless deopped by a director or bot
+              subject_nick = channel.nick_list.get(deop)
+              possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+              if (!possible_user.nil? && possible_user.op?)
+                if (!bot_or_director?(user))
+                  if (!subject_nick.opped_on?(channel))
+                    response_mode.op(subject_nick.name)
+                  end
+                  if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
+                    # immediate
+                    channel.deop(nick.name)
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        if (response_mode.any?)
           channel.set_mode(response_mode)
         end
       end
 
+      def bot_or_director?(user)
+        return (!user.nil? && (user.bot? || user.director?))
+      end
+
       def handle_prevent_modes(channel, nick, mode)
+        if (!channel.opped? || nick == @server_interface.myself)
+          return
+        end
+
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (bot_or_director?(user))
+          return
+        end
+
         response_mode = IRCTypes::Mode.new
         mode.channel_modes.each do |channel_mode|
           mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
@@ -413,6 +343,15 @@ module Axial
       end
 
       def handle_enforce_modes(channel, nick, mode)
+        if (!channel.opped? || nick == @server_interface.myself)
+          return
+        end
+
+        user = @bot.user_list.get_from_nick_object(nick)
+        if (bot_or_director?(user))
+          return
+        end
+
         response_mode = IRCTypes::Mode.new
         mode.channel_modes.each do |channel_mode|
           mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
@@ -427,7 +366,7 @@ module Axial
       end
 
       def auto_op_voice(channel, nick)
-        if (!channel.opped?)
+        if (!channel.opped? || nick == @server_interface.myself)
           return
         end
 
@@ -455,7 +394,10 @@ module Axial
       end
 
       def auto_ban(channel, nick)
-        wait_a_sec
+        if (!channel.opped? || nick == @server_interface.myself)
+          return
+        end
+
         user = @bot.user_list.get_user_from_mask(nick.uhost)
         if (user.nil?)
           @bot.ban_list.all_bans.each do |ban|

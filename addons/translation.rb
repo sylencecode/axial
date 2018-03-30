@@ -9,7 +9,7 @@ module Axial
 
         @name    = 'translation by yandex'
         @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.0.0'
+        @version = '1.1.0'
 
         @language_map = {
           'ab' => 'Abkhazian',
