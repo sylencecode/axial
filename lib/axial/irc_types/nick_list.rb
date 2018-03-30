@@ -66,6 +66,17 @@ module Axial
         return @nick_list.values
       end
 
+      def get_from_uhost(uhost)
+        nick = nil
+        @nick_list.each do |key, possible_nick|
+          if (possible_nick.uhost == uhost)
+            nick = possible_nick
+            break
+          end
+        end
+        return nick
+      end
+
       def include?(nick_or_name)
         key = nil
         if (nick_or_name.is_a?(IRCTypes::Nick))

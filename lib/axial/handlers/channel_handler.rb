@@ -237,7 +237,17 @@ module Axial
           handle_self_join(channel_name)
         else
           channel = @server_interface.channel_list.get(channel_name)
-          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+          nick = nil
+          @server_interface.channel_list.all_channels.each do |tmp_channel|
+            nick = tmp_channel.nick_list.get_from_uhost(uhost)
+            if (!nick.nil?)
+              break
+            end
+          end
+          if (nick.nil?)
+            nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+          else
+          end
           handle_join(channel, nick)
         end
       rescue Exception => ex
@@ -295,6 +305,7 @@ module Axial
         end
       end
 
+      # dispatch binds with a server object? and check for object type on callback?
       def handle_server_mode(channel, mode)
         LOGGER.debug("server sets #{channel.name} mode: #{mode}")
       rescue Exception => ex
