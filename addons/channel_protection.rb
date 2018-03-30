@@ -111,7 +111,9 @@ module Axial
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
           # TODO: check for bot masks before enabling deop/devoice
-          if (possible_user.bot?)
+          if (possible_user.nil?)
+            next
+          elsif (possible_user.bot?)
             next
           elsif (possible_user.op?)
             if (!subject_nick.opped_on?(channel))
