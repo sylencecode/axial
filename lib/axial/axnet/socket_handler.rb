@@ -51,7 +51,7 @@ module Axial
           raise(AxnetError, "No subject info found in certificate: #{x509_cert.inspect}")
         end
 
-        x509_fragments = x509_array.select{|subject_fragment| subject_fragment[0] == 'CN'}.flatten
+        x509_fragments = x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
         if (x509_fragments.empty?)
           raise(AxnetError, "No CN found in #{x509_array.inspect}")
         end

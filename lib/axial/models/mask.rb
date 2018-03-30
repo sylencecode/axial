@@ -49,7 +49,7 @@ module Axial
         in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
-          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{|user| user.pretty_name}.join(', ')}")
+          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name }.join(', ')}")
         end
         return possible_users.first
       end

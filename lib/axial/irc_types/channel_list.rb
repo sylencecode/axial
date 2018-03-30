@@ -11,6 +11,17 @@ module Axial
         @channel_list = {}
       end
 
+      def get_any_nick_from_uhost(uhost)
+        nick = nil
+        @channel_list.values.each do |channel|
+          nick = channel.nick_list.get_from_uhost(uhost)
+          if (!nick.nil?)
+            break
+          end
+        end
+        return nick
+      end
+
       def create(channel_name)
         if (@channel_list.has_key?(channel_name.downcase))
           raise(ChannelListError, "attempted to create a duplicate of channel '#{channel_name}'")

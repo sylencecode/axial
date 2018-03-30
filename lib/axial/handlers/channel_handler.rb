@@ -21,7 +21,10 @@ module Axial
         end
 
         channel = @server_interface.channel_list.get(channel_name)
-        nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
+        if (nick.nil?)
+          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+        end
 
         if (mode.include?('@'))
           if (nick == @server_interface.myself)
@@ -237,16 +240,9 @@ module Axial
           handle_self_join(channel_name)
         else
           channel = @server_interface.channel_list.get(channel_name)
-          nick = nil
-          @server_interface.channel_list.all_channels.each do |tmp_channel|
-            nick = tmp_channel.nick_list.get_from_uhost(uhost)
-            if (!nick.nil?)
-              break
-            end
-          end
+          nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
           if (nick.nil?)
             nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-          else
           end
           handle_join(channel, nick)
         end
@@ -319,8 +315,7 @@ module Axial
         if (uhost == @server_interface.myself.uhost)
           handle_self_nick(new_nick_name)
         else
-          old_nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-          handle_nick_change(old_nick, new_nick_name)
+          handle_nick_change(uhost, new_nick_name)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -338,23 +333,28 @@ module Axial
         end
       end
 
-      def handle_nick_change(old_nick, new_nick_name)
-        new_nick = nil
-        @server_interface.channel_list.all_channels.each do |channel|
-          if (!channel.synced?)
-            LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
-            return
-          end
-          if (channel.nick_list.include?(old_nick))
-            if (new_nick.nil?)
-              new_nick = channel.nick_list.rename(old_nick, new_nick_name)
+      def handle_nick_change(uhost, new_nick_name)
+        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
+        if (!nick.nil?)
+          old_nick_name = nick.name
+        end
+
+        if (nick.nil?)
+          LOGGER.error("#{self.class} error: uhost '#{uhost}' changed nick to '#{new_nick_name}' but no previous record exists!")
+        else
+          @server_interface.channel_list.all_channels.each do |channel|
+            if (!channel.synced?)
+              LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
             else
-              channel.nick_list.rename(old_nick, new_nick_name)
+              channel.nick_list.rename(old_nick_name, new_nick_name)
             end
           end
+
+          nick.name = new_nick_name
+
+          LOGGER.debug("#{old_nick_name} changed nick to #{new_nick_name}")
+          @bot.bind_handler.dispatch_nick_change_binds(nick, old_nick_name)
         end
-        LOGGER.debug("#{old_nick.name} changed nick to #{new_nick.name}")
-        @bot.bind_handler.dispatch_nick_change_binds(old_nick, new_nick)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

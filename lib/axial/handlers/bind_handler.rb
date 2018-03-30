@@ -11,7 +11,7 @@ module Axial
       end
 
       def dispatch_axnet_connect_binds(handler)
-        @binds.select{|bind| bind[:type] == :axnet_connect}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :axnet_connect }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -35,7 +35,7 @@ module Axial
       end
 
       def dispatch_axnet_disconnect_binds(handler)
-        @binds.select{|bind| bind[:type] == :axnet_disconnect}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :axnet_disconnect }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -59,7 +59,7 @@ module Axial
       end
 
       def dispatch_mode_binds(channel, nick, mode)
-        @binds.select{|bind| bind[:type] == :mode}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :mode }.each do |bind|
           Thread.new do
             begin
               if (bind[:modes].include?(:all) || (bind[:modes] & mode.channel_modes).any?)
@@ -85,7 +85,7 @@ module Axial
       end
 
       def dispatch_quit_binds(nick, reason)
-        @binds.select{|bind| bind[:type] == :quit}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :quit }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -109,7 +109,7 @@ module Axial
       end
 
       def dispatch_self_kick_binds(channel, kicker_nick, reason)
-        @binds.select{|bind| bind[:type] == :self_kick}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :self_kick }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -128,7 +128,7 @@ module Axial
       end
 
       def dispatch_kick_binds(channel, kicker_nick, kicked_nick, reason)
-        @binds.select{|bind| bind[:type] == :kick}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :kick }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -147,7 +147,7 @@ module Axial
       end
 
       def dispatch_part_binds(channel, nick, reason)
-        @binds.select{|bind| bind[:type] == :part}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :part }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -171,7 +171,7 @@ module Axial
       end
 
       def dispatch_startup_binds()
-        @binds.select{|bind| bind[:type] == :startup}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :startup }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -195,7 +195,7 @@ module Axial
       end
 
       def dispatch_user_list_binds()
-        @binds.select{|bind| bind[:type] == :user_list}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :user_list }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -219,7 +219,7 @@ module Axial
       end
 
       def dispatch_ban_list_binds()
-        @binds.select{|bind| bind[:type] == :ban_list}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :ban_list }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -243,7 +243,7 @@ module Axial
       end
 
       def dispatch_reload_binds()
-        @binds.select{|bind| bind[:type] == :reload}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :reload }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -267,7 +267,7 @@ module Axial
       end
 
       def dispatch_nick_change_binds(old_nick, new_nick)
-        @binds.select{|bind| bind[:type] == :nick_change}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :nick_change }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -291,7 +291,7 @@ module Axial
       end
 
       def dispatch_irc_ban_list_end_binds(channel)
-        @binds.select{|bind| bind[:type] == :irc_ban_list_end}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :irc_ban_list_end }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -315,7 +315,7 @@ module Axial
       end
 
       def dispatch_channel_sync_binds(channel)
-        @binds.select{|bind| bind[:type] == :channel_sync}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :channel_sync }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -339,7 +339,7 @@ module Axial
       end
 
       def dispatch_join_binds(channel, nick)
-        @binds.select{|bind| bind[:type] == :join}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :join }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -363,7 +363,7 @@ module Axial
       end
 
       def dispatch_self_join_binds(channel)
-        @binds.select{|bind| bind[:type] == :self_join}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :self_join }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
@@ -387,7 +387,7 @@ module Axial
       end
 
       def dispatch_axnet_binds(socket_handler, text)
-        @binds.select{|bind| bind[:type] == :axnet}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :axnet }.each do |bind|
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
@@ -464,7 +464,7 @@ module Axial
       def dispatch_channel_binds(channel, nick, text)
         # TODO: break into smaller methods
         # any/all channel text
-        @binds.select{|bind| bind[:type] == :channel_any}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :channel_any }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
@@ -483,7 +483,7 @@ module Axial
         end
 
         # parse bound commands/regexps
-        @binds.select{|bind| bind[:type] == :channel}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :channel }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
@@ -557,7 +557,7 @@ module Axial
         end
 
         # wasn't a command, check against the channel globs
-        @binds.select{|bind| bind[:type] == :channel_glob}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :channel_glob }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
@@ -609,7 +609,7 @@ module Axial
       end
 
       def dispatch_privmsg_binds(nick, text)
-        @binds.select{|bind| bind[:type] == :privmsg}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :privmsg }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
@@ -693,7 +693,7 @@ module Axial
       end
 
       def dispatch_dcc_binds(user, socket, text)
-        @binds.select{|bind| bind[:type] == :dcc}.each do |bind|
+        @binds.select{ |bind| bind[:type] == :dcc }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next

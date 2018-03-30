@@ -37,10 +37,10 @@ module Axial
             if (addon[:name] == 'base')
               next
             end
-            channel_listeners = addon[:object].listeners.select{|listener| listener[:type] == :channel && listener[:command].is_a?(String)}
+            channel_listeners = addon[:object].listeners.select{ |listener| listener[:type] == :channel && listener[:command].is_a?(String) }
             listener_string = ""
             if (channel_listeners.count > 0)
-              commands = channel_listeners.collect{|foo| foo[:command]}
+              commands = channel_listeners.collect{ |bind| bind[:command] }
               listener_string = " (" + commands.join(', ') + ")"
             end
             channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{listener_string}")
@@ -53,12 +53,12 @@ module Axial
           sender.message("no addons loaded.")
         else
           LOGGER.info("#{user.pretty_name} reloaded addons.")
-          addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
-          addon_names = addon_list.collect{|addon| addon[:name]}
+          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect{ |addon| addon[:name] }
           sender.message("unloading addons: #{addon_names.join(', ')}")
           @bot.reload_addons
-          addon_list = @bot.addons.select{|addon| addon[:name] != 'base'}
-          addon_names = addon_list.collect{|addon| addon[:name]}
+          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect{ |addon| addon[:name] }
           sender.message("loaded addons: #{addon_names.join(', ')}")
         end
       rescue Exception => ex

@@ -214,18 +214,18 @@ module Axial
           end
 
           if (action == :set)
-            if (unsets.select{|i| i[:mode] == letter && i[:value] == who}.any?)
-              unsets.delete_if{|i| i[:mode] == letter && i[:value] == who}
+            if (unsets.select{ |i| i[:mode] == letter && i[:value] == who }.any?)
+              unsets.delete_if{ |i| i[:mode] == letter && i[:value] == who }
             else
-              if (sets.select{|i| i[:mode] == letter && i[:value] == who}.empty?)
+              if (sets.select{ |i| i[:mode] == letter && i[:value] == who }.empty?)
                 sets.push(mode: letter, value: who)
               end
             end
           else
-            if (sets.select{|i| i[:mode] == letter && i[:value] == who}.any?)
-              sets.delete_if{|i| i[:mode] == letter && i[:value] == who}
+            if (sets.select{ |i| i[:mode] == letter && i[:value] == who }.any?)
+              sets.delete_if{ |i| i[:mode] == letter && i[:value] == who }
             else
-              if (unsets.select{|i| i[:mode] == letter && i[:value] == who}.empty?)
+              if (unsets.select{ |i| i[:mode] == letter && i[:value] == who }.empty?)
                 unsets.push(mode: letter, value: who)
               end
             end

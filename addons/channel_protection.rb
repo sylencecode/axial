@@ -1,5 +1,4 @@
 require 'axial/irc_types/nick'
-require 'axial/consumers/raw_consumer'
 require 'axial/addon'
 require 'axial/axnet/complaint'
 
@@ -21,24 +20,32 @@ module Axial
         @complaint_thread           = nil
 
         throttle                    2
+
+        # axnet hooks
         on_startup                  :start_complaint_thread
         on_reload                   :start_complaint_thread
-        on_join                     :handle_join
-        on_privmsg      'exec',     :handle_privmsg_exec
-        on_channel    '?topic',     :handle_topic
+        on_axnet   'COMPLAINT',     :handle_axnet_complaint
+        on_self_join                :send_axnet_op_complaint
+
+        # general mode/user management
+        on_join                     :auto_op_voice
+        on_join                     :auto_ban
         on_mode @prevent_modes,     :handle_prevent_modes
         on_mode @enforce_modes,     :handle_enforce_modes
         on_mode @op_deop_modes,     :handle_op_deop
         on_mode @ban_modes,         :handle_ban_unban
-        on_nick_change              :handle_nick_change
-        on_axnet   'COMPLAINT',     :handle_axnet_complaint
-        on_self_join                :send_axnet_op_complaint
         on_self_join                :get_irc_ban_list
-        on_user_list                :handle_user_list_update
-        on_ban_list                 :handle_ban_list_update
-        on_irc_ban_list_end         :handle_irc_ban_list_end
+        on_user_list                :check_for_new_users
+        on_ban_list                 :check_for_new_bans
+        on_irc_ban_list_end         :remove_old_irc_bans
         on_self_kick                :rejoin
-        # on kick...
+        # create a timer for checking channel bans every minute, use banlist response to check timestamps
+
+        # on kick...protect the people
+
+        # commands
+        on_privmsg      'exec',     :handle_privmsg_exec
+        on_channel    '?topic',     :handle_topic
         # on banned response
         # on invite only, invite
         # on limit, increase or remove
@@ -57,19 +64,19 @@ module Axial
         channel.get_irc_ban_list
       end
 
-      def handle_user_list_update()
+      def check_for_new_users()
         @bot.server_interface.channel_list.all_channels.each do |channel|
           check_channel_users(channel)
         end
       end
 
-      def handle_ban_list_update()
+      def check_for_new_bans()
         @bot.server_interface.channel_list.all_channels.each do |channel|
           check_channel_bans(channel)
         end
       end
 
-      def handle_irc_ban_list_end(channel)
+      def remove_old_irc_bans(channel)
         # TODO: timer to remove hour-old bans
         # (Time.now - Time.at(1521931658))
         LOGGER.debug("end of banlist reached channel protection")
@@ -245,10 +252,6 @@ module Axial
         send_complaint(complaint)
       end
 
-      def handle_nick_change(old_nick, new_nick)
-        LOGGER.debug("#{self.class} received a nick change from #{old_nick.name} to #{new_nick.name}")
-      end
-
       def handle_ban_unban(channel, nick, mode)
         if (!channel.opped?)
           return
@@ -402,13 +405,12 @@ module Axial
         end
       end
 
-      def handle_join(channel, nick)
+      def auto_op_voice(channel, nick)
         if (!channel.opped?)
           return
         end
 
         wait_a_sec
-
         user = @bot.user_list.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (user.op?)
@@ -422,16 +424,26 @@ module Axial
               LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
           end
-          return
         end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
 
-        # if not a user, check for bans
-        @bot.ban_list.all_bans.each do |ban|
-          if (ban.match_mask?(nick.uhost))
-            response_mode = IRCTypes::Mode.new
-            response_mode.ban(ban.mask)
-            channel.set_mode(response_mode)
-            channel.kick(nick, ban.long_reason)
+      def auto_ban(channel, nick)
+        wait_a_sec
+        user = @bot.user_list.get_user_from_mask(nick.uhost)
+        if (user.nil?)
+          @bot.ban_list.all_bans.each do |ban|
+            if (ban.match_mask?(nick.uhost))
+              response_mode = IRCTypes::Mode.new
+              response_mode.ban(ban.mask)
+              channel.set_mode(response_mode)
+              channel.kick(nick, ban.long_reason)
+            end
           end
         end
       rescue Exception => ex

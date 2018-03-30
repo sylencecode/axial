@@ -49,7 +49,7 @@ module Axial
             LOGGER.warn("RSS consumer: feed '#{feed.pretty_name}' did not present valid XML to feedjira. skipping.")
             next
           end
-          recent_entries = rss_content.entries.select {|tmp_entry| tmp_entry.published > feed.last_ingest}
+          recent_entries = rss_content.entries.select { |tmp_entry| tmp_entry.published > feed.last_ingest }
           recent_entries.each do |entry|
             published = entry.published
             if (published > Time.now) # some idiots post articles dated for a future time

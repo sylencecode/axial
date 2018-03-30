@@ -11,20 +11,9 @@ module Axial
         @nick_list = {}
       end
 
-      def rename(old_nick_or_name, new_nick_or_name)
-        old_key = nil
-        if (old_nick_or_name.is_a?(IRCTypes::Nick))
-          old_key = old_nick_or_name.name.downcase
-        elsif (old_nick_or_name.is_a?(String))
-          old_key = old_nick_or_name.downcase
-        end
-
-        new_key = nil
-        if (new_nick_or_name.is_a?(IRCTypes::Nick))
-          new_key = new_nick_or_name.name.downcase
-        elsif (new_nick_or_name.is_a?(String))
-          new_key = new_nick_or_name.downcase
-        end
+      def rename(old_nick_name, new_nick_name)
+        old_key = old_nick_name.downcase
+        new_key = new_nick_name.downcase
 
         if (old_key.nil? || !@nick_list.has_key?(old_key))
           raise(NickListError, "attempted to rename non-existent nick '#{old_key}'")
@@ -35,14 +24,6 @@ module Axial
         end
 
         @nick_list[new_key] = @nick_list.delete(old_key)
-
-        if (new_nick_or_name.is_a?(IRCTypes::Nick))
-          @nick_list[new_key].name = new_nick_or_name.name
-        elsif (new_nick_or_name.is_a?(String))
-          @nick_list[new_key].name = new_nick_or_name
-        end
-
-        return @nick_list[new_key]
       end
 
       def add(nick)

@@ -99,7 +99,7 @@ module Axial
       def list_axnet_connections(dcc)
         bots = []
         @handler_monitor.synchronize do
-          bots = @handlers.values.collect{|handler| handler.remote_cn}
+          bots = @handlers.values.collect{ |handler| handler.remote_cn }
         end
         if (bots.empty?)
           dcc.message("no axnet nodes connected.")

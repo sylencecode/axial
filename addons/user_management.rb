@@ -90,7 +90,7 @@ module Axial
         begin
           bans = @bot.ban_list.get_bans_from_mask(mask)
           if (bans.count > 0)
-            sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{|ban| ban.mask}.join(', ')}'")
+            sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{ |ban| ban.mask }.join(', ')}'")
           else
             ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
             update_ban_list
@@ -235,7 +235,7 @@ module Axial
           subject_mask = Axial::MaskUtils.ensure_wildcard(subject_mask)
           subject_models = Models::Mask.get_users_from_mask(subject_mask)
           if (subject_models.count > 0)
-            sender.message("mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
+            sender.message("mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
             return
           end
 
@@ -336,7 +336,7 @@ module Axial
           subject_mask = Axial::MaskUtils.ensure_wildcard(subject_mask)
           subject_models = Models::Mask.get_users_from_mask(subject_mask)
           if (subject_models.count > 0)
-            channel.message("#{nick.name}: Mask '#{subject_mask}' conflicts with: #{subject_models.collect{|user| user.pretty_name}.join(', ')}")
+            channel.message("#{nick.name}: Mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
             return
           end
 
