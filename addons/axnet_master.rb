@@ -110,9 +110,9 @@ module Axial
 
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
-        @bot.reload_axnet
         @bot.axnet.transmit_to_axnet('RELOAD_AXNET')
         @bot.git_pull
+        @bot.reload_axnet
         @bot.reload_addons
       end
 

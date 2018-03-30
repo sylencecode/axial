@@ -56,6 +56,7 @@ module Axial
           addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
           addon_names = addon_list.collect{ |addon| addon[:name] }
           sender.message("unloading addons: #{addon_names.join(', ')}")
+          @bot.git_pull
           @bot.reload_addons
           addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
           addon_names = addon_list.collect{ |addon| addon[:name] }
