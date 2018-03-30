@@ -30,14 +30,14 @@ module Axial
           if (nick == @server_interface.myself)
             channel.opped = true
           else
-            nick.opped = true
+            nick.set_opped(channel, true)
             channel.nick_list.add(nick)
           end
         elsif (mode.include?('+'))
           if (nick == @server_interface.myself)
             channel.voiced = true
           else
-            nick.voiced = true
+            nick.set_voiced(channel, true)
             channel.nick_list.add(nick)
           end
         else
@@ -214,7 +214,8 @@ module Axial
         end
       end
 
-      def handle_self_part(channel, reason)
+      def handle_self_part(channel_name, reason)
+        channel = @server_interface.channel_list.get(channel_name)
         if (reason.empty?)
           LOGGER.debug("I left #{channel.name}")
         else
@@ -370,11 +371,17 @@ module Axial
         if (mode.ops.any? && channel.synced?)
           mode.ops.each do |nick_name|
             if (nick_name == @server_interface.myself.name)
+              if (channel.voiced?)
+                channel.voiced = false
+              end
               channel.opped = true
             else
               if (channel.synced?)
                 subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.opped = true
+                if (subject_nick.voiced_on?(channel))
+                  subject_nick.set_voiced(channel, false)
+                end
+                subject_nick.set_opped(channel, true)
               end
             end
           end
@@ -387,7 +394,7 @@ module Axial
             else
               if (channel.synced?)
                 subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.opped = false
+                subject_nick.set_opped(channel, false)
               end
             end
           end
@@ -400,7 +407,7 @@ module Axial
             else
               if (channel.synced?)
                 subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.voiced = true
+                subject_nick.set_voiced(channel, true)
               end
             end
           end
@@ -413,7 +420,7 @@ module Axial
             else
               if (channel.synced?)
                subject_nick = channel.nick_list.get(nick_name)
-               subject_nick.voiced = false
+               subject_nick.set_voiced(channel, false)
               end
             end
           end

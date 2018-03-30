@@ -1,4 +1,5 @@
 require 'axial/irc_types/nick'
+require 'axial/consumers/raw_consumer'
 require 'axial/addon'
 require 'axial/axnet/complaint'
 
@@ -21,6 +22,14 @@ module Axial
 
         throttle                    2
 
+
+        # flood protection
+        on_part                     :check_revolving_door
+        on_join                     :check_join_flood
+        on_channel_any              :check_channel_flood
+        on_nick_change              :check_nick_flood
+        # create a timer for pruning nick flood and text flood collections
+
         # axnet hooks
         on_startup                  :start_complaint_thread
         on_reload                   :start_complaint_thread
@@ -42,11 +51,8 @@ module Axial
         # create a timer for checking channel bans every minute, use banlist response to check timestamps
 
         # on kick...protect the people
-
-        # commands
         on_privmsg      'exec',     :handle_privmsg_exec
         on_channel    '?topic',     :handle_topic
-        # on_channel   '?status',     :display_status
         # on banned response
         # on invite only, invite
         # on limit, increase or remove
@@ -54,26 +60,6 @@ module Axial
         # if not joined to channels in autojoin list, etc..
         #on_mode :all, :handle_all
       end
-
-      # def display_status(channel, nick, command)
-      #   channel.message("status for #{nick.name}")
-      #   @server_interface.channel_list.all_channels.each do |channel|
-      #     if (channel.opped?)
-      #       channel.message("i am opped on #{channel.name}")
-      #     elsif (channel.voiced?)
-      #       channel.message("i am voiced on #{channel.name}")
-      #     else
-      #       channel.message("i have no status on #{channel.name}")
-      #     end
-      #     if (nick.opped_on?(channel))
-      #       channel.message("opped on #{channel.name}")
-      #     elsif (nick.voiced_on?(channel))
-      #       channel.message("voiced on #{channel.name}")
-      #     else
-      #       channel.message("no status on #{channel.name}")
-      #     end
-      #   end
-      # end
 
       def rejoin(channel, kicker_nick, reason)
         # TODO: get the password out of the database or out of the bot props yaml if one is set
@@ -142,32 +128,32 @@ module Axial
           possible_user = @bot.user_list.get_from_nick_object(subject_nick)
           # TODO: check for bot masks
           if (possible_user.nil?)
-            # if (subject_nick.opped_on?(channel))
+            # if (subject_nick.opped?)
             #   response_mode.deop(subject_nick.name)
-            # elsif (subject_nick.voiced_on?(channel))
+            # elsif (subject_nick.voiced?)
             #   response_mode.devoice(subject_nick.name)
             # end
           else
             if (possible_user.op?)
-              if (!subject_nick.opped_on?(channel))
+              if (!subject_nick.opped?)
                 response_mode.op(subject_nick.name)
               end
             # elsif (!possible_user.op?)
-            #   if (subject_nick.opped_on?(channel)
+            #   if (subject_nick.opped?)
             #     response_mode.deop(subject_nick.name)
             #   end
             elsif (possible_user.friend?)
-              if (!subject_nick.voiced_on?(channel))
+              if (!subject_nick.voiced?)
                 response_mode.voice(subject_nick.name)
               end
             # elsif (!possible_user.friend?)
-            #   if (subject_nick.voiced_on?(channel))
+            #   if (subject_nick.voiced?)
             #     response_mode.devoice(subject_nick.name)
             #   end
             # else
-            #   if (subject_nick.opped_on?(channel))
+            #   if (subject_nick.opped?)
             #     response_mode.deop(subject_nick.name)
-            #   elsif (subject_nick.voiced_on?(channel))
+            #   elsif (subject_nick.voiced?)
             #     response_mode.devoice(subject_nick.name)
             #   end
             end
@@ -242,7 +228,7 @@ module Axial
 
           wait_a_sec
 
-          if (!channel_nick.opped_on?(channel))
+          if (!channel_nick.opped?)
             channel.op(channel_nick)
           end
         end
@@ -271,6 +257,10 @@ module Axial
           complaint.channel_name  = channel
         end
         send_complaint(complaint)
+      end
+
+      def check_nick_flood(old_nick, new_nick)
+        LOGGER.debug("#{self.class} received a nick change from #{old_nick.name} to #{new_nick.name}")
       end
 
       def handle_ban_unban(channel, nick, mode)
@@ -435,12 +425,12 @@ module Axial
         user = @bot.user_list.get_user_from_mask(nick.uhost)
         if (!user.nil?)
           if (user.op?)
-            if (!nick.opped_on?(channel))
+            if (!nick.opped?)
               channel.op(nick)
               LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
           elsif (user.friend?)
-            if (!nick.voiced_on?(channel))
+            if (!nick.voiced?)
               channel.voice(nick)
               LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end

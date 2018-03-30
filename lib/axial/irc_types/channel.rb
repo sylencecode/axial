@@ -15,7 +15,7 @@ module Axial
         @name                 = channel_name
         @topic                = ''
         @mode                 = IRCTypes::Mode.new
-        @nick_list            = IRCTypes::NickList.new(@server_interface)
+        @nick_list            = IRCTypes::NickList.new(@server_interface, self)
         @synced               = false
         @opped                = false
         @voiced               = false

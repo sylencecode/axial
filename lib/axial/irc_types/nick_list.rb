@@ -6,9 +6,10 @@ end
 module Axial
   module IRCTypes
     class NickList
-      def initialize(server_interface)
-        @server_interface = server_interface
-        @nick_list = {}
+      def initialize(server_interface, channel)
+        @server_interface   = server_interface
+        @nick_list          = {}
+        @channel            = channel
       end
 
       def rename(old_nick_name, new_nick_name)
@@ -105,14 +106,16 @@ module Axial
           key = nick_or_name.downcase
         end
 
-        deleted_nick = @nick_list[key]
+        nick_to_delete = @nick_list[key]
 
         if (!key.nil? && @nick_list.has_key?(key))
+          nick_to_delete.set_voiced(@channel, false)
+          nick_to_delete.set_opped(@channel, false)
           @nick_list.delete(key)
         else
           raise(NickListError, "attempted to delete non-existent nick '#{key}")
         end
-        return deleted_nick
+        return nick_to_delete
       end
 
       def delete_silent(nick_or_name)
@@ -123,13 +126,15 @@ module Axial
           key = nick_or_name.downcase
         end
 
-        deleted_nick = @nick_list[key]
+        nick_to_delete = @nick_list[key]
+        nick_to_delete.set_voiced_on(@channel, false)
+        nick_to_delete.set_opped_on(@channel, false)
 
         if (!key.nil? && @nick_list.has_key?(key))
           LOGGER.debug("removing #{key} from nicklist")
           @nick_list.delete(key)
         end
-        return deleted_nick
+        return nick_to_delete
       end
 
       def clear()

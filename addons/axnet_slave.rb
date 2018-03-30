@@ -13,7 +13,7 @@ module Axial
         @version = '1.0.0'
 
         @slave_thread     = nil
-        @ping_thread      = nil
+        @announce_timer   = nil
         @running          = false
         @port             = 34567
         @handler          = nil
@@ -22,16 +22,16 @@ module Axial
         @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
         @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
 
-        on_startup                        :start_slave_threads
-        on_reload                         :start_slave_threads
+        on_startup                        :start_slave_thread
+        on_reload                         :start_slave_thread
         on_axnet_connect                  :axnet_login
         on_axnet_disconnect               :axnet_disconnect
-        on_axnet    'PING',               :send_pong
-        on_axnet    'PONG',               :receive_pong
+        on_axnet              'BOT_ADD',  :add_bot_user
+        on_axnet           'BOT_REMOVE',  :remove_bot_user
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
-        on_axnet    'RELOAD_AXNET',       :reload_axnet
-        on_channel  '?connstatus',        :display_conn_status
+        on_axnet         'RELOAD_AXNET',  :reload_axnet
+        on_channel        '?connstatus',  :display_conn_status
 
         @bot.axnet.register_transmitter(self, :send)
       end
@@ -45,13 +45,9 @@ module Axial
         if (user.nil? || !user.director?)
           return
         end
-        LOGGER.info("status for #{@handler.id} (#{@handler.remote_cn})")
+        LOGGER.info("status for #{@handler.uuid} (#{@handler.remote_cn})")
         LOGGER.info(@handler.socket.inspect)
         LOGGER.info(@handler.thread.inspect)
-      end
-
-      def receive_pong(handler, text)
-        LOGGER.debug("PONG from #{handler.remote_cn}")
       end
 
       def send(text)
@@ -60,17 +56,14 @@ module Axial
         end
       end
 
+      def refresh_axnet()
+        #LOGGER.debug('ping')
+      end
+
       def axnet_login(handler)
         @handler.send('USERLIST')
         @handler.send('BANLIST')
-      end
-
-      def send_ping()
-        @bot.axnet.transmit_to_axnet('PING')
-      end
-
-      def send_pong(handler, command)
-        @bot.axnet.transmit_to_axnet('PONG')
+        refresh_axnet
       end
 
       def reload_axnet(handler, command)
@@ -105,7 +98,7 @@ module Axial
         end
       end
 
-      def stop_slave_threads()
+      def stop_slave_thread()
         LOGGER.debug("slave thread exiting")
         @running = false
         @handler.close
@@ -113,10 +106,7 @@ module Axial
           @slave_thread.kill
         end
         @slave_thread = nil
-        if (!@ping_thread.nil?)
-          @ping_thread.kill
-        end
-        @ping_thread = nil
+        @bot.timer.delete(@announce_timer)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -166,9 +156,10 @@ module Axial
         retry
       end
 
-      def start_slave_threads()
-        LOGGER.debug("starting axial slave threads")
+      def start_slave_thread()
+        LOGGER.debug("starting axial slave thread")
         @running = true
+        @announce_timer = @bot.timer.every_3_seconds(self, :refresh_axnet)
         @slave_thread = Thread.new do
           while (@running)
             begin
@@ -182,28 +173,12 @@ module Axial
             end
           end
         end
-        @ping_thread = Thread.new do
-          while (@running)
-            begin
-              if (!@handler.nil?)
-                send_ping
-                sleep 60
-              end
-            rescue Exception => ex
-              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-              ex.backtrace.each do |i|
-                LOGGER.error(i)
-              end
-              sleep 60
-            end
-          end
-        end
       end
 
       def before_reload()
         super
         LOGGER.warn("#{self.class}: shutting down axnet slave connector")
-        stop_slave_threads
+        stop_slave_thread
       end
     end
   end

@@ -12,26 +12,44 @@ module Axial
         @ident                = ''
         @host                 = ''
         @user_model           = nil
-        @voiced               = false
-        @opped                = false
         @last_spoke           = {}
         @uuid                 = SecureRandom.uuid
+        @voiced_channels      = []
+        @opped_channels       = []
       end
 
-      def opped=(value)
-        @opped = value
+      def set_opped(channel, toggle_value)
+        if (toggle_value)
+          if (!opped_on?(channel))
+            @opped_channels.push(channel)
+          end
+        else
+          if (opped_on?(channel))
+            @opped_channels.delete_if{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+          end
+        end
       end
 
-      def voiced=(value)
-        @voiced = value
+      def set_voiced(channel, toggle_value)
+        if (toggle_value)
+          if (!voiced_on?(channel))
+            @voiced_channels.push(channel)
+          end
+        else
+          if (voiced_on?(channel))
+            @voiced_channels.delete_if{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+          end
+        end
       end
 
-      def opped?()
-        return @opped
+      def opped_on?(channel)
+        opped_channels = @opped_channels.select{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+        return opped_channels.any?
       end
 
-      def voiced?()
-        return @voiced
+      def voiced_on?(channel)
+        voiced_channels = @voiced_channels.select{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+        return voiced_channels.any?
       end
 
       def uhost()
