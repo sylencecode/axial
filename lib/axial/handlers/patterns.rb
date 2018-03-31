@@ -4,10 +4,10 @@ module Axial
       module Channel
         BAN_LIST_ENTRY        = /^:{0,1}\S+ 367 \S+ (\S+) (\S+) (\S+) (\S+)/
         BAN_LIST_END          = /^:{0,1}\S+ 368 \S+ (\S+)/
-        BANNED_FROM_CHANNEL   = /^:{0,1}\S+ 474 (\S+)/
-        CHANNEL_KEYWORD       = /^:{0,1}\S+ 475 (\S+)/
-        CHANNEL_FULL          = /^:{0,1}\S+ 471 (\S+)/
-        CHANNEL_INVITE_ONLY   = /^:{0,1}\S+ 473 (\S+)/
+        BANNED_FROM_CHANNEL   = /^:{0,1}\S+ 474 \S+ (\S+)/
+        CHANNEL_KEYWORD       = /^:{0,1}\S+ 475 \S+ (\S+)/
+        CHANNEL_FULL          = /^:{0,1}\S+ 471 \S+ (\S+)/
+        CHANNEL_INVITE_ONLY   = /^:{0,1}\S+ 473 \S+ (\S+)/
         CREATED               = /^:{0,1}\S+ 329 \S+ (\S+) (\S+)/
         INITIAL_MODE          = /^:{0,1}\S+ 324 \S+ (\S+) (\S+)/
         INVITED               = /^:{0,1}(\S+) INVITE \S+ :{0,1}(\S+)/

@@ -116,6 +116,7 @@ module Axial
       end
 
       def request_invite(channel_name)
+        puts channel_name.inspect
         queue_request(channel_name, :invite)
       end
 
@@ -151,13 +152,12 @@ module Axial
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         end
-        return
 
         request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
 
         puts request.inspect
 
-        case request_type
+        case request.type
           when :op
             handle_op_request(request.channel_name, request.bot_nick)
           when :invite
@@ -166,6 +166,10 @@ module Axial
           when :keyword
           when :banned
         end
+      end
+
+      def handle_invite_request(channel_name, bot_nick)
+        puts "want to invite #{bot_nick.name} to #{channel_name}"
       end
 
       def handle_op_request(channel_name, bot_nick)
