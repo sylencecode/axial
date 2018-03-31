@@ -279,8 +279,10 @@ module Axial
           return
         end
 
+        user = get_bot_or_user(nick)
+        response_mode = IRCTypes::Mode.new
+
         if (mode.ops.any?)
-          response_mode = IRCTypes::Mode.new
           mode.ops.each do |op|
             if (op == @server_interface.myself.name)
               channel.opped = true
