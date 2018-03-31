@@ -169,7 +169,7 @@ module Axial
 
       def start_complaint_timer()
         LOGGER.debug("starting complaint timer")
-        @complaint_timer = @bot.timer.every_30_seconds(self, :ingest)
+        @complaint_timer = @bot.timer.every_30_seconds(self, :check_for_complaints)
       end
 
       def check_for_complaints()
