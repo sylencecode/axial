@@ -1,4 +1,5 @@
 require 'axial/irc_types/nick'
+require 'axial/addon'
 
 module Axial
   module Addons
@@ -28,7 +29,7 @@ module Axial
         on_mode :deops,                   :check_if_mode_deopped
         on_mode :ops,                     :check_if_mode_opped
 
-        on_invite                         :handle_invited_to_channel
+        on_invite                         :handle_invite
       end
 
       def request_exists?(channel, request_type)
@@ -42,7 +43,7 @@ module Axial
       def check_if_mode_deopped(channel, mode)
         if (mode.deops.any?)
           mode.deops.each do |deop|
-            if (deop == @server_interface.myself.name)
+            if (deop == myself.name)
               send_axnet_op_request(channel)
             end
           end
@@ -52,7 +53,7 @@ module Axial
       def check_if_mode_opped(channel, mode)
         if (mode.ops.any?)
           mode.deops.each do |op|
-            if (op == @server_interface.myself.name)
+            if (op == myself.name)
               clear_pending_op_requests(channel)
             end
           end
@@ -63,27 +64,33 @@ module Axial
 
       end
 
-      def send_axnet_ban_request(channel_name)
+      def request_unban(channel_name)
         LOGGER.debug("banned from channel #{channel_name}, sending request")
       end
 
-      def send_axnet_channel_keyword_request(channel_name)
+      def request_keyword(channel_name)
         LOGGER.debug("channel #{channel_name} is keyword-protected, sending request")
       end
 
-      def send_axnet_invite_only_request(channel_name)
+      def request_invite(channel_name)
         LOGGER.debug("channel #{channel_name} is invite only, sending request")
       end
 
-      def send_axnet_channel_full_request(channel_name)
+      def request_limit_increase(channel_name)
         LOGGER.debug("channel #{channel_name} is full, sending request")
       end
 
-      def handle_invited_to_channel(nick, channel_name)
+      def send_axnet_op_request(channel)
+        if (!channel.opped?)
+          request_assistance(channel, :deopped)
+        end
+      end
+
+      def handle_invite(nick, channel_name)
         possible_user = user_list.get_from_nick_object(nick)
         if (bot_or_director?(possible_user))
           LOGGER.debug("got asked to join #{channel_name} by #{nick.uhost}")
-          @server_interface.join_channel(channel_name)
+          server.join_channel(channel_name)
         end
         return possible_user
       end
@@ -115,14 +122,14 @@ module Axial
         serialized_yaml = command.args
         axnet.relay_to_axnet(handler, 'COMPLAINT ' + serialized_yaml)
         request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
-        bot = IRCTypes::Nick.from_uhost(@server_interface, request.uhost)
+        bot = IRCTypes::Nick.from_uhost(server, request.uhost)
 
         if (bot.nil?)
           return
         end
 
         if (request.type == :deopped)
-          channel = @server_interface.channel_list.get_silent(request.channel_name)
+          channel = channel_list.get_silent(request.channel_name)
 
           if (channel.nil?)
             return
@@ -142,12 +149,6 @@ module Axial
           if (!channel_nick.opped_on?(channel))
             channel.op(channel_nick)
           end
-        end
-      end
-
-      def send_axnet_op_request(channel)
-        if (!channel.opped?)
-          request_assistance(channel, :deopped)
         end
       end
 

@@ -11,7 +11,7 @@ channels:
   - name: '#lulz'
     password: ''
 addons:
+  - AxnetAssistant
   - AxnetSlave
   - ChannelProtection
-  - ComplaintHandler
   - FloodProtection

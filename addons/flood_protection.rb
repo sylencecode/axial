@@ -159,7 +159,7 @@ module Axial
         else
           @nick_changes[nick.uuid].push(Time.now)
           if (@nick_changes[nick.uuid].count >= @nick_flood_threshold)
-            @server_interface.channel_list.all_channels.each do |channel|
+            server.channel_list.all_channels.each do |channel|
               if (channel.opped?)
                 ban_mask = MaskUtils.ensure_wildcard(nick.host)
                 channel.ban(ban_mask)

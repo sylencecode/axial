@@ -61,7 +61,7 @@ module Axial
       def rejoin(channel, kicker_nick, reason)
         # TODO: get the password out of the database or out of the bot props yaml if one is set
         wait_a_sec
-        @server_interface.join_channel(channel.name)
+        server.join_channel(channel.name)
       end
 
       def check_for_new_users()
@@ -141,7 +141,7 @@ module Axial
       end
 
       def protect_banned_users(channel, nick, mode)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -151,7 +151,7 @@ module Axial
         mode.bans.each do |in_mask|
           mask = in_mask.strip
           possible_users = get_bots_or_users_mask(mask)
-          if (@server_interface.myself.match_mask?(mask) || possible_users.any?)
+          if (myself.match_mask?(mask) || possible_users.any?)
             if (!user.bot?)
               response_mode.unban(mask)
               if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
@@ -167,7 +167,7 @@ module Axial
       end
 
       def handle_op_deop(channel, nick, mode)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -176,7 +176,7 @@ module Axial
 
         if (mode.ops.any?)
           mode.ops.each do |op|
-            if (op == @server_interface.myself.name)
+            if (op == myself.name)
               channel.opped = true
               check_channel_bans(channel)
               check_channel_users(channel)
@@ -196,7 +196,7 @@ module Axial
 
         if (mode.deops.any?)
           mode.deops.each do |deop|
-            if (deop == @server_interface.myself.name)
+            if (deop == myself.name)
               channel.opped = false
             else
               # re-op users and penalize offender unless deopped by a director or bot
@@ -222,7 +222,7 @@ module Axial
       end
 
       def handle_prevent_modes(channel, nick, mode)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -251,7 +251,7 @@ module Axial
       end
 
       def handle_enforce_modes(channel, nick, mode)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -274,7 +274,7 @@ module Axial
       end
 
       def auto_op_voice(channel, nick)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -302,7 +302,7 @@ module Axial
       end
 
       def auto_ban(channel, nick)
-        if (!channel.opped? || nick == @server_interface.myself)
+        if (!channel.opped? || nick == myself)
           return
         end
 
@@ -330,7 +330,7 @@ module Axial
         if (user.nil? || !user.director?)
           return
         end
-        @server_interface.send_raw(command.args)
+        server.send_raw(command.args)
         LOGGER.info("#{nick.name} EXEC #{command.args.inspect}")
       end
 
