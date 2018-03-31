@@ -34,8 +34,10 @@ module Axial
         on_reload                         :start_master_threads
 
         on_axnet              'BANLIST',  :send_ban_list
-        on_axnet             'BOT_AUTH',  :update_bot_list
+        on_axnet             'BOT_AUTH',  :add_bot
         on_axnet             'USERLIST',  :send_user_list
+
+        on_axnet_disconnect               :remove_bot
 
         on_dcc              'broadcast',  :handle_broadcast
         on_dcc                  'axnet',  :handle_axnet_command
@@ -56,19 +58,25 @@ module Axial
         end
       end
 
-      def update_bot_list(handler, command)
-        bot_yaml = command.args.gsub(/\0/, "\n")
-        new_bot = YAML.load(bot_yaml)
-        LOGGER.debug(new_bot.inspect)
-        LOGGER.info("new bot online: #{new_bot.pretty_name}")
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
+      def remove_bot(handler)
+        if (@bot.bot_list.include?(handler.remote_cn))
+          LOGGER.debug("removing #{handler.remote_cn} from bot list")
+          @bot.bot_list.delete(handler.remote_cn)
         end
       end
 
-      def transmit_bot_list()
+      def add_bot(handler, command)
+        bot_yaml = command.args.gsub(/\0/, "\n")
+        new_bot = YAML.load(bot_yaml)
+        if (@bot.bot_list.include?(new_bot.name))
+          @bot.bot_list.delete(new_bot.name)
+        end
+        @bot.bot_list.add(new_bot)
+        LOGGER.info("new bot online: #{new_bot.pretty_name}")
+        send_bot_list
+      end
+
+      def send_bot_list()
         @bot_user.name          = @bot.local_cn
         @bot_user.pretty_name   = @bot.local_cn
         @bot_user.role          = 'bot'
@@ -78,8 +86,14 @@ module Axial
           @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
         end
 
+        if (@bot.bot_list.include?(@bot_user.name))
+          @bot.bot_list.delete(@bot_user.name)
+        end
+        @bot.bot_list.add(@bot_user)
+
         serialized_yaml         = YAML.dump(@bot.bot_list).gsub(/\n/, "\0")
         @bot.axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
+        puts @bot.bot_list.inspect
       end
 
       def get_local_cn()
@@ -135,6 +149,14 @@ module Axial
           ex.backtrace.each do |i|
             LOGGER.error(i)
           end
+        end
+      end
+
+      def check_for_uhost_change()
+        if (!@server_interface.myself.uhost.casecmp(@last_uhost).zero?)
+          LOGGER.debug("uhost changed from #{@last_uhost} to #{@server_interface.myself.uhost}")
+          @last_uhost = @server_interface.myself.uhost
+          send_bot_list
         end
       end
 
@@ -232,6 +254,7 @@ module Axial
         end
         @master_thread = nil
         @bot.timer.delete(@refresh_timer)
+        @bot.timer.delete(@uhost_timer)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -260,6 +283,18 @@ module Axial
             @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
             client_socket = @ssl_listener.accept
             handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
+            handler.ssl_handshake
+            dupe_uuids = []
+            @handlers.each do |uuid, tmp_handler|
+              if (tmp_handler.remote_cn == handler.remote_cn)
+                LOGGER.warn("duplicate connection from #{handler.remote_cn}")
+                dupe_uuids.push(tmp_handler.uuid)
+              end
+            end
+            dupe_uuids.each do |uuid|
+              LOGGER.debug("closing duplicate connection handler #{uuid}")
+              @handlers[uuid].close
+            end
             Thread.new(handler) do |handler|
               begin
                 @handler_monitor.synchronize do
@@ -315,7 +350,8 @@ module Axial
             end
           end
         end
-        @refresh_timer = @bot.timer.every_3_seconds(self, :refresh_axnet)
+        @refresh_timer = @bot.timer.every_3_seconds(self, :send_bot_list)
+        @uhost_timer   = @bot.timer.every_second(self, :check_for_uhost_change)
       end
 
       def before_reload()

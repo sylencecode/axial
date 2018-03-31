@@ -28,7 +28,7 @@ module Axial
 
       def add(new_user)
         if (!new_user.is_a?(Axnet::User))
-          raise(AxnetError, "attempted to add an object of type other than Axnet::User: #{user_list.inspect}")
+          raise(AxnetError, "attempted to add an object of type other than Axnet::User: #{new_user.inspect}")
         end
         @monitor.synchronize do
           @user_list.push(new_user)

@@ -70,7 +70,6 @@ module Axial
       end
 
       def loop()
-        ssl_handshake
         @transmit_consumer.start
         LOGGER.info("established axnet connection to #{@remote_cn} (#{@remote_address})")
         while (text = @socket.gets)
