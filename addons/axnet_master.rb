@@ -13,22 +13,22 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @last_uhost             = myself.uhost
-        @uhost_timer            = nil
-        @refresh_timer          = nil
-        @master_thread          = nil
-        @handlers               = {}
-        @tcp_listener           = nil
-        @ssl_listener           = nil
-        @running                = false
-        @refresh_timer          = nil
-        @handler_monitor        = Monitor.new
-        @port                   = 34567
-        @cacert                 = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key                    = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert                   = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
-        @bot.local_cn           = get_local_cn
-        @bot_user               = Axnet::User.new
+        @last_uhost                       = myself.uhost
+        @uhost_timer                      = nil
+        @refresh_timer                    = nil
+        @master_thread                    = nil
+        @handlers                         = {}
+        @tcp_listener                     = nil
+        @ssl_listener                     = nil
+        @running                          = false
+        @refresh_timer                    = nil
+        @handler_monitor                  = Monitor.new
+        @port                             = 34567
+        @cacert                           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
+        @key                              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
+        @cert                             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @bot.local_cn                     = get_local_cn
+        @bot_user                         = Axnet::User.new
 
         on_startup                        :start_master_threads
         on_reload                         :start_master_threads
