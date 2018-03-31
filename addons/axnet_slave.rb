@@ -1,6 +1,7 @@
 require 'yaml'
 require 'axial/addon'
 require 'axial/axnet/socket_handler'
+require 'axial/axnet/user'
 
 module Axial
   module Addons
@@ -12,29 +13,66 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @slave_thread     = nil
-        @announce_timer   = nil
-        @running          = false
-        @port             = 34567
-        @handler          = nil
-        @master_address   = 'axial.sylence.org'
-        @cacert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @last_uhost             = @bot.server_interface.myself.uhost
+        @uhost_timer            = nil
+        @refresh_timer          = nil
+        @slave_thread           = nil
+        @running                = false
+        @port                   = 34567
+        @handler                = nil
+        @master_address         = 'axial.sylence.org'
+        @cacert                 = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
+        @key                    = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
+        @cert                   = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @bot.local_cn           = get_local_cn
+        @bot_user               = Axnet::User.new
 
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
         on_axnet_connect                  :axnet_login
         on_axnet_disconnect               :axnet_disconnect
-        on_axnet              'BOT_ADD',  :add_bot_user
-        on_axnet           'BOT_REMOVE',  :remove_bot_user
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
+        on_axnet                 'BOTS',  :update_bot_list
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet         'RELOAD_AXNET',  :reload_axnet
         on_channel        '?connstatus',  :display_conn_status
 
         @bot.axnet.register_transmitter(self, :send)
       end
+
+      def check_for_uhost_change()
+        if (!@server_interface.myself.uhost.casecmp(@last_uhost).zero?)
+          LOGGER.debug("uhost changed from #{@last_uhost} to #{@server_interface.myself.uhost}")
+          @last_uhost = @server_interface.myself.uhost
+          auth_to_axnet
+        end
+      end
+
+      def auth_to_axnet()
+        @bot_user.name          = @bot.local_cn
+        @bot_user.pretty_name   = @bot.local_cn
+        @bot_user.role          = 'bot'
+        @bot_user.id            = 0
+
+        if (!@server_interface.myself.uhost.empty?)
+          @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
+        end
+
+        serialized_yaml         = YAML.dump(@bot_user).gsub(/\n/, "\0")
+        @bot.axnet.transmit_to_axnet('BOT_AUTH ' + serialized_yaml)
+      end
+
+      def update_bot_list(handler, command)
+        bot_list_yaml = command.args.gsub(/\0/, "\n")
+        new_bot_list = YAML.load(bot_list_yaml)
+        @bot.axnet.update_bot_list(new_bot_list)
+        LOGGER.info("successfully downloaded new botlist from #{handler.remote_cn}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+    end
 
       def axnet_disconnect(handler)
         LOGGER.warn("axnet: lost connection to #{handler.remote_cn}")
@@ -56,14 +94,10 @@ module Axial
         end
       end
 
-      def refresh_axnet()
-        #LOGGER.debug('ping')
-      end
-
       def axnet_login(handler)
+        auth_to_axnet
         @handler.send('USERLIST')
         @handler.send('BANLIST')
-        refresh_axnet
       end
 
       def reload_axnet(handler, command)
@@ -98,17 +132,24 @@ module Axial
         end
       end
 
-      def stop_slave_thread()
-        LOGGER.debug("slave thread exiting")
-        @running = false
-        @handler.close
-        if (!@slave_thread.nil?)
-          @slave_thread.kill
+      def get_local_cn()
+        local_x509_cert = OpenSSL::X509::Certificate.new(File.read(@cert))
+        local_x509_array = local_x509_cert.subject.to_a
+        if (local_x509_array.empty?)
+          raise(AxnetError, "No subject info found in certificate: #{local_x509_cert.inspect}")
         end
-        @slave_thread = nil
-        @bot.timer.delete(@announce_timer)
-      rescue Exception => ex
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+
+        local_x509_fragments = local_x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
+        if (local_x509_fragments.empty?)
+          raise(AxnetError, "No CN found in #{local_x509_array.inspect}")
+        end
+
+        local_x509_cn_fragment = local_x509_fragments.flatten
+        if (local_x509_cn_fragment.count < 3)
+          raise(AxnetError, "CN fragment appears to be corrupt: #{local_x509_cn_fragment.inspect}")
+        end
+
+        return local_x509_cn_fragment[1]
       end
 
       def client()
@@ -158,9 +199,12 @@ module Axial
 
       def start_slave_thread()
         LOGGER.debug("starting axial slave thread")
-        @running = true
-        @announce_timer = @bot.timer.every_3_seconds(self, :refresh_axnet)
-        @slave_thread = Thread.new do
+
+        @running        = true
+        @refresh_timer  = @bot.timer.every_60_seconds(self, :auth_to_axnet)
+        @uhost_timer    = @bot.timer.every_second(self, :check_for_uhost_change)
+
+        @slave_thread   = Thread.new do
           while (@running)
             begin
               client
@@ -173,6 +217,20 @@ module Axial
             end
           end
         end
+      end
+
+      def stop_slave_thread()
+        LOGGER.debug("slave thread exiting")
+        @running = false
+        @handler.close
+        if (!@slave_thread.nil?)
+          @slave_thread.kill
+        end
+        @slave_thread = nil
+        @bot.timer.delete(@refresh_timer)
+        @bot.timer.delete(@uhost_timer)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
 
       def before_reload()

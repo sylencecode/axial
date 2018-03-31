@@ -35,6 +35,14 @@ module Axial
         end
       end
 
+      def delete(user_name)
+        @user_list.delete_if{ |tmp_user| tmp_user.name.casecmp(user_name).zero? }
+      end
+
+      def include?(user_name)
+        return @user_list.select{ |tmp_user| tmp_user.name.casecmp(user_name).zero? }.any?
+      end
+
       def get_from_nick_object(nick)
         if (!nick.kind_of?(IRCTypes::Nick))
           raise(UserObjectError, "Attempted to query a user record for an object type other than Axial::IRCTypes::Nick.")

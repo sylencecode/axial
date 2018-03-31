@@ -1,6 +1,7 @@
 require 'yaml'
 require 'axial/addon'
 require 'axial/axnet/socket_handler'
+require 'axial/axnet/user'
 
 module Axial
   module Addons
@@ -12,35 +13,36 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @master_thread    = nil
-        @handlers         = {}
-        @tcp_listener     = nil
-        @ssl_listener     = nil
-        @running          = false
-        @handler_monitor  = Monitor.new
-        @port             = 34567
-        @cacert           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @last_uhost             = @bot.server_interface.myself.uhost
+        @uhost_timer            = nil
+        @refresh_timer          = nil
+        @master_thread          = nil
+        @handlers               = {}
+        @tcp_listener           = nil
+        @ssl_listener           = nil
+        @running                = false
+        @refresh_timer          = nil
+        @handler_monitor        = Monitor.new
+        @port                   = 34567
+        @cacert                 = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
+        @key                    = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
+        @cert                   = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @bot.local_cn           = get_local_cn
+        @bot_user               = Axnet::User.new
 
-        on_startup                  :start_master_threads
-        on_reload                   :start_master_threads
+        on_startup                        :start_master_threads
+        on_reload                         :start_master_threads
 
-        on_axnet       'BANLIST',   :send_ban_list
-        on_axnet      'USERLIST',   :send_user_list
-        on_axnet          'PONG',   :receive_pong
-        on_axnet          'PING',   :send_pong
+        on_axnet              'BANLIST',  :send_ban_list
+        on_axnet             'BOT_AUTH',  :update_bot_list
+        on_axnet             'USERLIST',  :send_user_list
 
-        on_dcc       'broadcast',   :handle_broadcast
-        on_dcc           'axnet',   :handle_axnet_command
-        on_dcc      'connstatus',   :display_conn_status
+        on_dcc              'broadcast',  :handle_broadcast
+        on_dcc                  'axnet',  :handle_axnet_command
+        on_dcc             'connstatus',  :display_conn_status
 
         @bot.axnet.register_transmitter(self, :broadcast)
         @bot.axnet.register_relay(self, :relay)
-      end
-
-      def send_pong(handler, command)
-        handler.send('PONG')
       end
 
       def display_conn_status(dcc, command)
@@ -54,16 +56,58 @@ module Axial
         end
       end
 
+      def update_bot_list(handler, command)
+        bot_yaml = command.args.gsub(/\0/, "\n")
+        new_bot = YAML.load(bot_yaml)
+        LOGGER.debug(new_bot.inspect)
+        LOGGER.info("new bot online: #{new_bot.pretty_name}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def transmit_bot_list()
+        @bot_user.name          = @bot.local_cn
+        @bot_user.pretty_name   = @bot.local_cn
+        @bot_user.role          = 'bot'
+        @bot_user.id            = 0
+
+        if (!@server_interface.myself.uhost.empty?)
+          @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
+        end
+
+        serialized_yaml         = YAML.dump(@bot.bot_list).gsub(/\n/, "\0")
+        @bot.axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
+      end
+
+      def get_local_cn()
+        local_x509_cert = OpenSSL::X509::Certificate.new(File.read(@cert))
+        local_x509_array = local_x509_cert.subject.to_a
+        if (local_x509_array.empty?)
+          raise(AxnetError, "No subject info found in certificate: #{local_x509_cert.inspect}")
+        end
+
+        local_x509_fragments = local_x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
+        if (local_x509_fragments.empty?)
+          raise(AxnetError, "No CN found in #{local_x509_array.inspect}")
+        end
+
+        local_x509_cn_fragment = local_x509_fragments.flatten
+        if (local_x509_cn_fragment.count < 3)
+          raise(AxnetError, "CN fragment appears to be corrupt: #{local_x509_cn_fragment.inspect}")
+        end
+
+        return local_x509_cn_fragment[1]
+      end
+
       def handle_broadcast(dcc, command)
         @bot.axnet.transmit_to_axnet(command.args)
       end
 
       def send_help(dcc)
-        dcc.message("try axnet reload, axnet list, or axnet ping")
-      end
-
-      def send_ping()
-        @bot.axnet.transmit_to_axnet('PING')
+        dcc.message("try axnet reload or axnet list")
       end
 
       def receive_pong(handler, text)
@@ -82,8 +126,6 @@ module Axial
               list_axnet_connections(dcc)
             when /^reload$/i, /^stop\s+/i
               reload_axnet(dcc)
-            when /^ping$/i
-              send_ping
             else
               send_help(dcc)
           end
@@ -189,10 +231,7 @@ module Axial
           @master_thread.kill
         end
         @master_thread = nil
-        if (!@ping_thread.nil?)
-          @ping_thread.kill
-        end
-        @ping_thread = nil
+        @bot.timer.delete(@refresh_timer)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -276,20 +315,7 @@ module Axial
             end
           end
         end
-        @ping_thread = Thread.new do
-          while (@running)
-            begin
-              send_ping
-              sleep 60
-            rescue Exception => ex
-              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-              ex.backtrace.each do |i|
-                LOGGER.error(i)
-              end
-              sleep 60
-            end
-          end
-        end
+        @refresh_timer = @bot.timer.every_3_seconds(self, :refresh_axnet)
       end
 
       def before_reload()

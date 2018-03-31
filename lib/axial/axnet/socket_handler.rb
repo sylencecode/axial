@@ -4,11 +4,12 @@ require 'axial/consumers/raw_consumer'
 module Axial
   module Axnet
     class SocketHandler
-      attr_reader :socket, :thread, :remote_cn, :uuid
+      attr_reader :socket, :thread, :local_cn, :remote_cn, :uuid
 
       def initialize(bot, socket)
         @bot                  = bot
         @remote_cn            = 'unknown'
+        @local_cn             = 'unknown'
         @socket               = socket
         @socket.sync_close    = true
         @transmit_consumer    = Consumers::RawConsumer.new
@@ -45,15 +46,15 @@ module Axial
       end
 
       def ssl_handshake()
-        x509_cert = @socket.peer_cert
-        x509_array = x509_cert.subject.to_a
-        if (x509_array.empty?)
-          raise(AxnetError, "No subject info found in certificate: #{x509_cert.inspect}")
+        remote_x509_cert = @socket.peer_cert
+        remote_x509_array = remote_x509_cert.subject.to_a
+        if (remote_x509_array.empty?)
+          raise(AxnetError, "No subject info found in certificate: #{remote_x509_cert.inspect}")
         end
 
-        x509_fragments = x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
+        x509_fragments = remote_x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
         if (x509_fragments.empty?)
-          raise(AxnetError, "No CN found in #{x509_array.inspect}")
+          raise(AxnetError, "No CN found in #{remote_x509_array.inspect}")
         end
 
         x509_cn_fragment = x509_fragments.flatten

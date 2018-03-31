@@ -21,9 +21,9 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet, :ban_list, :user_list, :timer
+                  :axnet, :ban_list, :user_list, :timer, :bot_list
 
-    attr_accessor :real_nick
+    attr_accessor :real_nick, :local_cn
     @class_instance = nil
     @class_props_yaml = ''
     @server = nil
@@ -85,9 +85,12 @@ module Axial
 
     def load_axnet()
       Kernel.load(File.expand_path(File.join(File.dirname(__FILE__), 'interfaces/axnet_interface.rb')))
-      @axnet              = Interfaces::AxnetInterface.new(self)
-      @user_list                    = Axnet::UserList.new
-      @ban_list                     = Axnet::BanList.new
+      @axnet                      = Interfaces::AxnetInterface.new(self)
+      @bot_list                   = Axnet::UserList.new
+      @user_list                  = Axnet::UserList.new
+      @ban_list                   = Axnet::BanList.new
+      @local_cn                   = nil
+
       @axnet.register_queue_callback
       @axnet.start
     end

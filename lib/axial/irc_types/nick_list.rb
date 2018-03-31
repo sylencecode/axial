@@ -127,8 +127,8 @@ module Axial
         end
 
         nick_to_delete = @nick_list[key]
-        nick_to_delete.set_voiced_on(@channel, false)
-        nick_to_delete.set_opped_on(@channel, false)
+        nick_to_delete.set_voiced(@channel, false)
+        nick_to_delete.set_opped(@channel, false)
 
         if (!key.nil? && @nick_list.has_key?(key))
           LOGGER.debug("removing #{key} from nicklist")
