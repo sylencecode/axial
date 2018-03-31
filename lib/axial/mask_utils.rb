@@ -75,8 +75,6 @@ module Axial
       right_mask  = ensure_wildcard(right_mask)
       right_regexp = get_mask_regexp(right_mask)
       match = false
-      puts left_regexp.source
-      puts right_regexp.source
       if (right_regexp.match(left_mask))
         match = true
       elsif (left_regexp.match(right_mask))

@@ -99,7 +99,7 @@ module Axial
             queue_request(channel, :op)
           end
         elsif (mode.ops.any?)
-          mode.deops.each do |op|
+          mode.ops.each do |op|
             if (op == myself.name)
               clear_pending(channel, :op)
             end
@@ -120,13 +120,13 @@ module Axial
       end
 
       def request_limit_increase(channel_name)
+        puts "trying to get channel limit for #{channel_name} increased"
         queue_request(channel_name, :full)
       end
 
       def handle_invite(nick, channel_name)
-        possible_user = user_list.get_from_nick_object(nick)
+        possible_user = get_bot_or_user(nick)
         if (bot_or_director?(possible_user))
-          LOGGER.debug("got asked to join #{channel_name} by #{nick.uhost}")
           server.join_channel(channel_name)
         end
         return possible_user
@@ -172,7 +172,7 @@ module Axial
       end
 
       def handle_op_request(channel_name, bot_nick)
-        channel = channel_list.get_silent(request.channel_name)
+        channel = channel_list.get_silent(channel_name)
 
         if (channel.nil?)
           return
@@ -182,7 +182,7 @@ module Axial
           return
         end
 
-        channel_nick = channel.nick_list.get_silent(bot.name)
+        channel_nick = channel.nick_list.get_silent(bot_nick)
         if (channel_nick.nil?)
           return
         end

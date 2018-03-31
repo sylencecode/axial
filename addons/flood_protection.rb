@@ -139,7 +139,6 @@ module Axial
             ban_mask = MaskUtils.ensure_wildcard(nick.host)
             channel.ban(ban_mask)
             timer.in_5_minutes do
-              puts channel.ban_list.all_bans.inspect
               if (channel.ban_list.include?(ban_mask))
                 channel.unban(ban_mask)
               end
