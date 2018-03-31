@@ -350,7 +350,7 @@ module Axial
             end
           end
         end
-        @refresh_timer = @bot.timer.every_3_seconds(self, :send_bot_list)
+        @refresh_timer = @bot.timer.every_60_seconds(self, :send_bot_list)
         @uhost_timer   = @bot.timer.every_second(self, :check_for_uhost_change)
       end
 

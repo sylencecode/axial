@@ -66,7 +66,7 @@ module Axial
         bot_list_yaml = command.args.gsub(/\0/, "\n")
         new_bot_list = YAML.load(bot_list_yaml)
         @bot.bot_list.reload(new_bot_list)
-        LOGGER.info("successfully downloaded new botlist from #{handler.remote_cn}")
+        LOGGER.info("successfully downloaded new botlist from #{@handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -171,7 +171,7 @@ module Axial
             ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
             server_socket = ssl_socket.connect
             @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
-            LOGGER.info("retrieving userlist from axnet...")
+            @handler.ssl_handshake
             @bot.bind_handler.dispatch_axnet_connect_binds(@handler)
             @handler.clear_queue
             @handler.loop
