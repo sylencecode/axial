@@ -12,17 +12,17 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @nick_flood_threshold     = 2
+        @nick_flood_threshold     = 3
         @nick_flood_period        = 30
 
-        @join_flood_threshold     = 2
+        @join_flood_threshold     = 4
         @join_flood_period        = 10
 
-        @text_flood_threshold     = 2
-        @text_flood_period        = 15
+        @text_flood_threshold     = 10
+        @text_flood_period        = 20
 
-        @global_text_threshold    = 4
-        @global_text_period       = 30
+        @global_text_threshold    = 10
+        @global_text_period       = 5
 
         @revolving_door_period    = 30
 
@@ -42,11 +42,16 @@ module Axial
         start_flood_reset_timer
       end
 
-      def check_text_flood(channel, nick, text)
-        if (nick.opped_on?(channel) || nick.voiced_on?(channel))
-          return
-        end
+      def get_bot_or_user(nick)
         possible_user = @bot.user_list.get_from_nick_object(nick)
+        if (possible_user.nil?)
+          possible_user = @bot.bot_list.get_from_nick_object(nick)
+        end
+        return possible_user
+      end
+
+      def check_text_flood(channel, nick, text)
+        possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
         end
@@ -68,7 +73,7 @@ module Axial
       end
 
       def check_join_flood(channel, nick)
-        possible_user = @bot.user_list.get_from_nick_object(nick)
+        possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
         end
@@ -81,7 +86,7 @@ module Axial
       end
 
       def check_revolving_door(channel, nick, reason)
-        possible_user = @bot.user_list.get_from_nick_object(nick)
+        possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
         end
@@ -93,10 +98,7 @@ module Axial
       end
 
       def check_nick_flood(nick, old_nick_name)
-        if (nick.opped_on?(channel) || nick.voiced_on?(channel))
-          return
-        end
-        possible_user = @bot.user_list.get_from_nick_object(nick)
+        possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
         end

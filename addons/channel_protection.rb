@@ -51,6 +51,34 @@ module Axial
         on_channel    '?topic',     :handle_topic
       end
 
+      def get_bot_or_user(nick)
+        possible_user = @bot.user_list.get_from_nick_object(nick)
+        if (possible_user.nil?)
+          possible_user = @bot.bot_list.get_from_nick_object(nick)
+        end
+        return possible_user
+      end
+
+      def get_bot_or_user_mask(mask)
+        possible_user = @bot.user_list.get_user_from_mask(mask)
+        if (possible_user.nil?)
+          possible_user = @bot.bot_list.get_user_from_mask(mask)
+        end
+        return possible_user
+      end
+
+      def get_bots_or_users_mask(mask)
+        bots_or_users = []
+        @bot.user_list.get_users_from_mask(mask).each do |tmp_mask|
+          bots_or_users.push(tmp_mask)
+        end
+        @bot.bot_list.get_users_from_mask(mask).each do |tmp_mask|
+          bots_or_users.push(tmp_mask)
+        end
+        return bots_or_users
+      end
+
+
       def rejoin(channel, kicker_nick, reason)
         # TODO: get the password out of the database or out of the bot props yaml if one is set
         wait_a_sec
@@ -109,13 +137,10 @@ module Axial
 
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
-          possible_user = @bot.user_list.get_from_nick_object(subject_nick)
-          # TODO: check for bot masks before enabling deop/devoice
+          possible_user = get_bot_or_user(subject_nick)
           if (possible_user.nil?)
             next
-          elsif (possible_user.bot?)
-            next
-          elsif (possible_user.op?)
+          elsif (possible_user.op? || possible_user.bot?)
             if (!subject_nick.opped_on?(channel))
               response_mode.op(subject_nick.name)
             end
@@ -235,12 +260,12 @@ module Axial
           return
         end
 
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = get_bot_or_user(nick)
         response_mode = IRCTypes::Mode.new
 
         mode.bans.each do |in_mask|
           mask = in_mask.strip
-          possible_users = @bot.user_list.get_users_from_mask(mask)
+          possible_users = get_bots_or_users_mask(mask)
           if (@server_interface.myself.match_mask?(mask) || possible_users.any?)
             if (!bot_or_director?(user))
               channel.unban(mask)
@@ -270,7 +295,7 @@ module Axial
               check_channel_users(channel)
             else
               subject_nick = channel.nick_list.get(op)
-              possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+              possible_user = get_bot_or_user(subject_nick)
               if (possible_user.nil? || !possible_user.op?)
                 if (!bot_or_director?(user))
                   if (!subject_nick.opped_on?(channel))
@@ -290,7 +315,7 @@ module Axial
             else
               # re-op users and penalize offender unless deopped by a director or bot
               subject_nick = channel.nick_list.get(deop)
-              possible_user = @bot.user_list.get_from_nick_object(subject_nick)
+              possible_user = get_bot_or_user(subject_nick)
               if (!possible_user.nil? && possible_user.op?)
                 if (!bot_or_director?(user))
                   if (!subject_nick.opped_on?(channel))
@@ -320,7 +345,7 @@ module Axial
           return
         end
 
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = get_bot_or_user(nick)
         if (bot_or_director?(user))
           return
         end
@@ -349,7 +374,7 @@ module Axial
           return
         end
 
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = get_bot_or_user(nick)
         if (bot_or_director?(user))
           return
         end
@@ -373,7 +398,7 @@ module Axial
         end
 
         wait_a_sec
-        user = @bot.user_list.get_user_from_mask(nick.uhost)
+        user = get_bot_or_user_mask(nick.uhost)
         if (!user.nil?)
           if (user.op?)
             if (!nick.opped_on?(channel))
@@ -400,7 +425,7 @@ module Axial
           return
         end
 
-        user = @bot.user_list.get_user_from_mask(nick.uhost)
+        user = get_bot_or_user_mask(nick.uhost)
         if (user.nil?)
           @bot.ban_list.all_bans.each do |ban|
             if (ban.match_mask?(nick.uhost))
@@ -420,7 +445,7 @@ module Axial
       end
 
       def handle_privmsg_exec(nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = get_bot_or_user(nick)
         if (user.nil? || !user.director?)
           nick.message(Constants::ACCESS_DENIED)
           return

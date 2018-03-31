@@ -65,7 +65,7 @@ module Axial
       def update_bot_list(handler, command)
         bot_list_yaml = command.args.gsub(/\0/, "\n")
         new_bot_list = YAML.load(bot_list_yaml)
-        puts new_bot_list.inspect
+        @bot.bot_list.reload(new_bot_list)
         LOGGER.info("successfully downloaded new botlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
