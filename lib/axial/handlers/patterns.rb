@@ -9,7 +9,7 @@ module Axial
         CHANNEL_FULL          = /^:{0,1}\S+ 471 \S+ (\S+)/
         CHANNEL_INVITE_ONLY   = /^:{0,1}\S+ 473 \S+ (\S+)/
         CREATED               = /^:{0,1}\S+ 329 \S+ (\S+) (\S+)/
-        INITIAL_MODE          = /^:{0,1}\S+ 324 \S+ (\S+) (\S+)/
+        INITIAL_MODE          = /^:{0,1}\S+ 324 \S+ (\S+) (.*)/
         INVITED               = /^:{0,1}(\S+) INVITE \S+ :{0,1}(\S+)/
         JOIN                  = /^:{0,1}(\S+) JOIN :{0,1}(\S+)/
         KICK                  = /^:{0,1}(\S+) KICK (\S+) (\S+) :{0,1}(.*)/

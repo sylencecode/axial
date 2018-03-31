@@ -37,7 +37,12 @@ module Axial
       end
 
       def clear_pending(channel, type)
-        key = channel.name.downcase
+        if (channel.is_a?(IRCTypes::Channel))
+          key = channel.name.downcase
+        else
+          key = channel.downcase
+        end
+
         if (@requests.has_key?(key))
           @requests[key].delete(type.to_sym)
         end
@@ -93,7 +98,7 @@ module Axial
         end
       end
 
-      def check_if_opped(channel, mode = nil)
+      def check_if_opped(channel, nick = nil, mode = nil)
         if (mode.nil?)
           if (!channel.opped?)
             queue_request(channel, :op)
@@ -120,13 +125,13 @@ module Axial
       end
 
       def request_limit_increase(channel_name)
-        puts "trying to get channel limit for #{channel_name} increased"
         queue_request(channel_name, :full)
       end
 
       def handle_invite(nick, channel_name)
         possible_user = get_bot_or_user(nick)
         if (bot_or_director?(possible_user))
+          clear_pending(channel_name, :invite)
           server.join_channel(channel_name)
         end
         return possible_user
@@ -159,15 +164,39 @@ module Axial
           when :invite
             handle_invite_request(request.channel_name, request.bot_nick)
           when :full
+            handle_full_request(request.channel_name, request.bot_nick)
           when :keyword
+            handle_keyword_request(request.channel_name, request.bot_nick)
           when :banned
         end
       end
 
       def handle_invite_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil?)
+        if (!channel.nil? && channel.opped?)
           channel.invite(bot_nick.name)
+        end
+      end
+
+      def handle_keyword_request(channel_name, bot_nick)
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil?)
+          if (channel.mode.keyword?)
+            response = Axnet::AssistanceResponse.new(channel.name, :keyword, channel.mode.keyword)
+            send_response(response)
+          end
+        end
+      end
+
+      def handle_full_request(channel_name, bot_nick)
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil? && channel.opped?)
+          if (channel.mode.limit?)
+            response_mode = IRCTypes::Mode.new
+            response_mode.limit = channel.nick_list.count + 1
+            channel.set_mode(response_mode)
+            channel.invite(bot_nick.name)
+          end
         end
       end
 
@@ -198,6 +227,12 @@ module Axial
         LOGGER.debug("sending assistance request: #{request.type}, #{request.channel_name}, #{request.bot_nick.uhost}")
         serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
         axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
+      end
+
+      def send_response(response)
+        LOGGER.debug("sending asssistance response: #{response.type}, #{response.channel_name}, #{response.response}")
+        serialized_yaml = YAML.dump(response).gsub(/\n/, "\0")
+        axnet.send('ASSISTANCE_RESPONSE ' + serialized_yaml)
       end
 
       def get_bot_or_user(nick)

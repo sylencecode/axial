@@ -84,6 +84,10 @@ module Axial
         end
       end
 
+      def count()
+        return @nick_list.count
+      end
+
       def get_silent(nick_or_name)
         if (nick_or_name.is_a?(IRCTypes::Nick))
           key = nick_or_name.name.downcase

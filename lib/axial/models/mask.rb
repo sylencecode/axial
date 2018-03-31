@@ -27,7 +27,6 @@ module Axial
       def self.get_users_from_mask(in_mask)
         possible_users = []
         Mask.all.each do |mask|
-          puts "checking #{mask.mask}"
           if (MaskUtils.masks_match?(mask.mask, in_mask))
             possible_users.push(mask.user)
           end
