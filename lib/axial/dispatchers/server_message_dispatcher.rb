@@ -18,14 +18,21 @@ module Axial
             @bot.channel_handler.handle_ban_list_entry(channel, mask, who_set, set_at)
           when Channel::BANNED_FROM_CHANNEL
             @bot.channel_handler.handle_banned_from_channel(Regexp.last_match[1])
+          when Channel::CHANNEL_FULL
+            @bot.channel_handler.handle_channel_full(Regexp.last_match[1])
           when Channel::CHANNEL_INVITE_ONLY
             @bot.channel_handler.handle_channel_invite_only(Regexp.last_match[1])
+          when Channel::CHANNEL_KEYWORD
+            @bot.channel_handler.handle_channel_keyword(Regexp.last_match[1])
           when Channel::CREATED
             channel_name, created_at = Regexp.last_match.captures
             @bot.channel_handler.dispatch_created(channel_name, created_at.to_i)
           when Channel::INITIAL_MODE
            channel_name, initial_mode = Regexp.last_match.captures
            @bot.channel_handler.dispatch_initial_mode(channel_name, initial_mode)
+          when Channel::INVITED
+            uhost, channel_name = Regexp.last_match.captures
+            @bot.channel_handler.handle_invited_to_channel(uhost, channel_name)
           when Channel::JOIN
             uhost, channel_name = Regexp.last_match.captures
             @bot.channel_handler.dispatch_join(uhost, channel_name)

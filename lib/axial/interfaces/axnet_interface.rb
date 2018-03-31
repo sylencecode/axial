@@ -2,7 +2,7 @@ require 'axial/axnet/user'
 require 'axial/axnet/user_list'
 require 'axial/axnet/ban'
 require 'axial/axnet/ban_list'
-require 'axial/axnet/complaint'
+require 'axial/axnet/assistance_request'
 require 'axial/consumers/raw_consumer'
 
 class AxnetError < StandardError

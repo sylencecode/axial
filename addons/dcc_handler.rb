@@ -21,7 +21,7 @@ module Axial
       def send_dcc_chat_offer(nick, command)
         local_ip    = Resolv.getaddress(Socket.gethostname)
 
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.director?)
           return
         end
@@ -52,7 +52,7 @@ module Axial
           auth = false
           while (text = socket.gets)
             text.strip!
-            @bot.bind_handler.dispatch_dcc_binds(user, socket, text)
+            bind_handler.dispatch_dcc_binds(user, socket, text)
           end
         end
       end

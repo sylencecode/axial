@@ -14,7 +14,46 @@ module Axial
       @version          = 'uknown version'
       @throttle_secs    = 0
       @bot              = bot
-      @server_interface = @bot.server_interface
+    end
+
+    def bind_handler()
+      return @bot.bind_handler
+    end
+
+    def user_list()
+      return @bot.user_list
+    end
+
+    def bot_list()
+      return @bot.bot_list
+    end
+
+    def myself()
+      return @bot.server_interface.myself
+    end
+
+    def ban_list()
+      return @bot.ban_list
+    end
+
+    def axnet()
+      return @bot.axnet
+    end
+
+    def channel_list()
+      return @bot.server_interface.channel_list
+    end
+
+    def server()
+      return @bot.server_interface
+    end
+
+    def bot()
+      return @bot
+    end
+
+    def timer()
+      return @bot.timer
     end
 
     def throttle(seconds)
@@ -52,9 +91,24 @@ module Axial
       @listeners.push(type: :user_list, method: method)
     end
 
+    def on_channel_full(method)
+      LOGGER.debug("channel is full (#471) errors will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :channel_full, method: method)
+    end
+
+    def on_invite(method)
+      LOGGER.debug("channel invitations will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :invited_to_channel, method: method)
+    end
+
     def on_banned_from_channel(method)
       LOGGER.debug("banned from channel (#474) will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :banned_from_channel, method: method)
+    end
+
+    def on_channel_keyword(method)
+      LOGGER.debug("channel keyword (#475) will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :channel_keyword, method: method)
     end
 
     def on_channel_invite_only(method)

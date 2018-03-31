@@ -13,7 +13,7 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @last_uhost             = @bot.server_interface.myself.uhost
+        @last_uhost             = myself.uhost
         @uhost_timer            = nil
         @refresh_timer          = nil
         @master_thread          = nil
@@ -43,8 +43,8 @@ module Axial
         on_dcc                  'axnet',  :handle_axnet_command
         on_dcc             'connstatus',  :display_conn_status
 
-        @bot.axnet.register_transmitter(self, :broadcast)
-        @bot.axnet.register_relay(self, :relay)
+        axnet.register_transmitter(self, :broadcast)
+        axnet.register_relay(self, :relay)
       end
 
       def display_conn_status(dcc, command)
@@ -59,19 +59,19 @@ module Axial
       end
 
       def remove_bot(handler)
-        if (@bot.bot_list.include?(handler.remote_cn))
+        if (bot_list.include?(handler.remote_cn))
           LOGGER.debug("removing #{handler.remote_cn} from bot list")
-          @bot.bot_list.delete(handler.remote_cn)
+          bot_list.delete(handler.remote_cn)
         end
       end
 
       def add_bot(handler, command)
         bot_yaml = command.args.gsub(/\0/, "\n")
         new_bot = YAML.load(bot_yaml)
-        if (@bot.bot_list.include?(new_bot.name))
-          @bot.bot_list.delete(new_bot.name)
+        if (bot_list.include?(new_bot.name))
+          bot_list.delete(new_bot.name)
         end
-        @bot.bot_list.add(new_bot)
+        bot_list.add(new_bot)
         LOGGER.info("new bot online: #{new_bot.pretty_name}")
         send_bot_list
       end
@@ -86,13 +86,13 @@ module Axial
           @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
         end
 
-        if (@bot.bot_list.include?(@bot_user.name))
-          @bot.bot_list.delete(@bot_user.name)
+        if (bot_list.include?(@bot_user.name))
+          bot_list.delete(@bot_user.name)
         end
-        @bot.bot_list.add(@bot_user)
+        bot_list.add(@bot_user)
 
-        serialized_yaml         = YAML.dump(@bot.bot_list).gsub(/\n/, "\0")
-        @bot.axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
+        serialized_yaml         = YAML.dump(bot_list).gsub(/\n/, "\0")
+        axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
       end
 
       def get_local_cn()
@@ -116,7 +116,7 @@ module Axial
       end
 
       def handle_broadcast(dcc, command)
-        @bot.axnet.transmit_to_axnet(command.args)
+        axnet.transmit_to_axnet(command.args)
       end
 
       def send_help(dcc)
@@ -173,7 +173,7 @@ module Axial
 
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
-        @bot.axnet.transmit_to_axnet('RELOAD_AXNET')
+        axnet.transmit_to_axnet('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_axnet
         @bot.reload_addons
@@ -181,7 +181,7 @@ module Axial
 
       def send_user_list(handler, command)
         LOGGER.debug("user list requested from #{handler.remote_cn}")
-        user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
+        user_list_yaml = YAML.dump(user_list).gsub(/\n/, "\0")
         handler.send('USERLIST_RESPONSE ' + user_list_yaml)
         LOGGER.debug("sent user list to #{handler.remote_cn}")
       rescue Exception => ex
@@ -193,7 +193,7 @@ module Axial
 
       def send_ban_list(handler, command)
         LOGGER.debug("ban list requested from #{handler.remote_cn}")
-        ban_list_yaml = YAML.dump(@bot.ban_list).gsub(/\n/, "\0")
+        ban_list_yaml = YAML.dump(ban_list).gsub(/\n/, "\0")
         handler.send('BANLIST_RESPONSE ' + ban_list_yaml)
         LOGGER.debug("sent ban list to #{handler.remote_cn}")
       rescue Exception => ex
@@ -252,8 +252,8 @@ module Axial
           @master_thread.kill
         end
         @master_thread = nil
-        @bot.timer.delete(@refresh_timer)
-        @bot.timer.delete(@uhost_timer)
+        timer.delete(@refresh_timer)
+        timer.delete(@uhost_timer)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
@@ -297,11 +297,11 @@ module Axial
             Thread.new(handler) do |handler|
               begin
                 @handler_monitor.synchronize do
-                  @bot.bind_handler.dispatch_axnet_connect_binds(handler)
+                  bind_handler.dispatch_axnet_connect_binds(handler)
                 end
                 handler.loop
                 @handler_monitor.synchronize do
-                  @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
+                  bind_handler.dispatch_axnet_disconnect_binds(handler)
                   LOGGER.debug("deleting handler #{handler.uuid} (#{handler.remote_cn})")
                   @handlers.delete(handler.uuid)
                   LOGGER.debug("(#{handler.remote_cn} disconnected (#{handler.uuid})")
@@ -312,7 +312,7 @@ module Axial
                   LOGGER.error(i)
                 end
                 @handler_monitor.synchronize do
-                  @bot.bind_handler.dispatch_axnet_disconnect_binds(handler)
+                  bind_handler.dispatch_axnet_disconnect_binds(handler)
                   @handlers.delete(handler.uuid)
                 end
               end
@@ -349,8 +349,8 @@ module Axial
             end
           end
         end
-        @refresh_timer = @bot.timer.every_minute(self, :send_bot_list)
-        @uhost_timer   = @bot.timer.every_second(self, :check_for_uhost_change)
+        @refresh_timer = timer.every_minute(self, :send_bot_list)
+        @uhost_timer   = timer.every_second(self, :check_for_uhost_change)
       end
 
       def before_reload()

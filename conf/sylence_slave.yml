@@ -13,4 +13,5 @@ channels:
 addons:
   - AxnetSlave
   - ChannelProtection
+  - ComplaintHandler
   - FloodProtection

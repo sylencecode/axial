@@ -17,7 +17,7 @@ module Axial
         @myself = IRCTypes::Nick.new(self)
       end
 
-      def join(channel_name, password = '')
+      def join_channel(channel_name, password = '')
         if (password.empty?)
           @bot.connection_handler.send_raw("JOIN #{channel_name}")
         else
@@ -38,6 +38,10 @@ module Axial
             @bot.connection_handler.send_raw("MODE #{channel_name} #{mode}")
           end
         end
+      end
+
+      def invite_to_channel(nick_name, channel_name)
+        @bot.connection_handler.send_raw("INVITE #{nick_name} #{channel_name}")
       end
 
       def send_who(channel_name)

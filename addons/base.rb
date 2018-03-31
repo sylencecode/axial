@@ -22,7 +22,7 @@ module Axial
       end
 
       def handle_channel_reload(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.director?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
         else

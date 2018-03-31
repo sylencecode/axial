@@ -19,24 +19,24 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @timer   = nil
+        @ingest_timer         = nil
 
-        on_channel  '?feed', :handle_rss_command
-        on_channel  '?news', :handle_rss_command
-        on_channel  '?rss',  :handle_rss_command
-        on_startup  :start_ingest_timer
-        on_reload   :start_ingest_timer
+        on_channel  '?feed',  :handle_rss_command
+        on_channel  '?news',  :handle_rss_command
+        on_channel  '?rss',   :handle_rss_command
+        on_startup            :start_ingest_timer
+        on_reload             :start_ingest_timer
       end
 
       def stop_ingest_timer()
         LOGGER.debug("stopping ingest timer")
-        @bot.timer.delete(@timer)
+        timer.delete(@ingest_timer)
       end
 
       def start_ingest_timer()
         LOGGER.debug("starting ingest timer")
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
-        @timer = @bot.timer.every_minute(self, :ingest)
+        @ingest_timer = timer.every_minute(self, :ingest)
       end
 
       def ingest()
@@ -77,7 +77,7 @@ module Axial
             text += " #{Colors.gray}|#{Colors.reset} "
             text += link.to_s
 
-            @bot.server_interface.channel_list.all_channels.each do |channel|
+            channel_list.all_channels.each do |channel|
               channel.message(text)
             end
             ingested = ingested + 1
@@ -204,7 +204,7 @@ module Axial
       end
 
       def stop_ingest(channel, nick)
-        if (!@timer.nil? && @bot.timer.include?(@timer))
+        if (!@ingest_timer.nil? && timer.include?(@ingest_timer))
           channel.message("#{nick.name}: ok, stopping feed ingest.")
           stop_ingest_timer
           LOGGER.info("RSS: #{nick.uhost} stopped ingest")
@@ -215,7 +215,7 @@ module Axial
       end
 
       def start_ingest(channel, nick)
-        if (!@timer.nil? && @bot.timer.include?(@timer))
+        if (!@ingest_timer.nil? && timer.include?(@ingest_timer))
           channel.message("#{nick.name}: already ingesting feeds.")
           return
         else

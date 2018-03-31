@@ -38,7 +38,7 @@ module Axial
       end
 
       def handle_channel_add_mask(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.manager?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
         else
@@ -47,7 +47,7 @@ module Axial
       end
 
       def handle_channel_ban(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
         else
@@ -60,7 +60,7 @@ module Axial
       end
 
       def handle_channel_unban(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
+        user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
         else
@@ -88,7 +88,7 @@ module Axial
         mask = MaskUtils.ensure_wildcard(mask)
 
         begin
-          bans = @bot.ban_list.get_bans_from_mask(mask)
+          bans = ban_list.get_bans_from_mask(mask)
           if (bans.count > 0)
             sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{ |ban| ban.mask }.join(', ')}'")
           else
@@ -118,7 +118,7 @@ module Axial
         mask = MaskUtils.ensure_wildcard(mask)
 
         begin
-          bans = @bot.ban_list.get_bans_from_mask(mask)
+          bans = ban_list.get_bans_from_mask(mask)
           if (bans.count == 0)
             sender.message("no bans matching '#{mask}'")
             return
@@ -150,8 +150,8 @@ module Axial
           user = Axnet::User.from_model(user_model)
           new_user_list.add(user)
         end
-        @bot.axnet.update_user_list(new_user_list)
-        @bot.axnet.broadcast_user_list
+        axnet.update_user_list(new_user_list)
+        axnet.broadcast_user_list
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -165,8 +165,8 @@ module Axial
           ban = Axnet::Ban.new(ban_model.mask, ban_model.user.pretty_name, ban_model.reason, ban_model.set_at)
           new_ban_list.add(ban)
         end
-        @bot.axnet.update_ban_list(new_ban_list)
-        @bot.axnet.broadcast_ban_list
+        axnet.update_ban_list(new_ban_list)
+        axnet.broadcast_ban_list
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

@@ -196,7 +196,7 @@ module Axial
         if (!channel.has_key?('password') || channel['password'].nil? || channel['password'].empty?)
           channel['password'] = ''
         end
-        @server_interface.join(channel['name'], channel['password'])
+        @server_interface.join_channel(channel['name'], channel['password'])
       end
     end
 

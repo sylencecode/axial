@@ -13,7 +13,7 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @last_uhost             = @bot.server_interface.myself.uhost
+        @last_uhost             = myself.uhost
         @uhost_timer            = nil
         @refresh_timer          = nil
         @slave_thread           = nil
@@ -35,9 +35,8 @@ module Axial
         on_axnet                 'BOTS',  :update_bot_list
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet         'RELOAD_AXNET',  :reload_axnet
-        on_channel        '?connstatus',  :display_conn_status
 
-        @bot.axnet.register_transmitter(self, :send)
+        axnet.register_transmitter(self, :send)
       end
 
       def check_for_uhost_change()
@@ -59,13 +58,13 @@ module Axial
         end
 
         serialized_yaml         = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        @bot.axnet.transmit_to_axnet('BOT_AUTH ' + serialized_yaml)
+        axnet.transmit_to_axnet('BOT_AUTH ' + serialized_yaml)
       end
 
       def update_bot_list(handler, command)
         bot_list_yaml = command.args.gsub(/\0/, "\n")
         new_bot_list = YAML.load(bot_list_yaml)
-        @bot.bot_list.reload(new_bot_list)
+        bot_list.reload(new_bot_list)
         LOGGER.info("successfully downloaded new botlist from #{@handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -76,16 +75,6 @@ module Axial
 
       def axnet_disconnect(handler)
         LOGGER.warn("axnet: lost connection to #{handler.remote_cn}")
-      end
-
-      def display_conn_status(channel, nick, command)
-        user = @bot.user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.director?)
-          return
-        end
-        LOGGER.info("status for #{@handler.uuid} (#{@handler.remote_cn})")
-        LOGGER.info(@handler.socket.inspect)
-        LOGGER.info(@handler.thread.inspect)
       end
 
       def send(text)
@@ -111,7 +100,7 @@ module Axial
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
         new_user_list = YAML.load(user_list_yaml)
-        @bot.axnet.update_user_list(new_user_list)
+        axnet.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -123,7 +112,7 @@ module Axial
       def update_ban_list(handler, command)
         ban_list_yaml = command.args.gsub(/\0/, "\n")
         new_ban_list = YAML.load(ban_list_yaml)
-        @bot.axnet.update_ban_list(new_ban_list)
+        axnet.update_ban_list(new_ban_list)
         LOGGER.info("successfully downloaded new banlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -172,10 +161,10 @@ module Axial
             server_socket = ssl_socket.connect
             @handler = Axnet::SocketHandler.new(@bot, server_socket)
             @handler.ssl_handshake
-            @bot.bind_handler.dispatch_axnet_connect_binds(@handler)
+            bind_handler.dispatch_axnet_connect_binds(@handler)
             @handler.clear_queue
             @handler.loop
-            @bot.bind_handler.dispatch_axnet_disconnect_binds(@handler)
+            bind_handler.dispatch_axnet_disconnect_binds(@handler)
             LOGGER.error("lost connection to #{@handler.remote_cn}")
             sleep 15
           rescue Errno::ECONNREFUSED
@@ -203,8 +192,8 @@ module Axial
         LOGGER.debug("starting axial slave thread")
 
         @running        = true
-        @refresh_timer  = @bot.timer.every_minute(self, :auth_to_axnet)
-        @uhost_timer    = @bot.timer.every_second(self, :check_for_uhost_change)
+        @refresh_timer  = timer.every_minute(self, :auth_to_axnet)
+        @uhost_timer    = timer.every_second(self, :check_for_uhost_change)
 
         @slave_thread   = Thread.new do
           while (@running)
@@ -229,8 +218,8 @@ module Axial
           @slave_thread.kill
         end
         @slave_thread = nil
-        @bot.timer.delete(@refresh_timer)
-        @bot.timer.delete(@uhost_timer)
+        timer.delete(@refresh_timer)
+        timer.delete(@uhost_timer)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end

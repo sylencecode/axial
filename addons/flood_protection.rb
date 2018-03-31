@@ -26,7 +26,7 @@ module Axial
 
         @revolving_door_period    = 15
 
-        @timer                    = nil
+        @flood_reset_timer        = nil
         @nick_changes             = {} # not channel-specific, needs to ban on all channels
         @join_counter             = [] # needs to be channel-specific
         @text_flood_counter       = {} # needs to be channel-specific
@@ -43,9 +43,9 @@ module Axial
       end
 
       def get_bot_or_user(nick)
-        possible_user = @bot.user_list.get_from_nick_object(nick)
+        possible_user = user_list.get_from_nick_object(nick)
         if (possible_user.nil?)
-          possible_user = @bot.bot_list.get_from_nick_object(nick)
+          possible_user = bot_list.get_from_nick_object(nick)
         end
         return possible_user
       end
@@ -67,7 +67,7 @@ module Axial
             response_mode.moderated = true
             channel.set_mode(response_mode)
 
-            @bot.timer.in_30_seconds do
+            timer.in_30_seconds do
               if (channel.opped?)
                 if (channel.mode.moderated?)
                   response_mode = IRCTypes::Mode.new
@@ -88,7 +88,7 @@ module Axial
               ban_mask = MaskUtils.ensure_wildcard(nick.host)
               channel.ban(ban_mask)
               channel.kick(nick, "text flood: #{@text_flood_counter[nick.uuid].count} lines in #{@text_flood_period} seconds")
-              @bot.timer.in_5_minutes do
+              timer.in_5_minutes do
                 if (channel.opped?)
                   if (channel.ban_list.include?(ban_mask))
                     channel.unban(ban_mask)
@@ -114,7 +114,7 @@ module Axial
               response_mode = IRCTypes::Mode.new
               response_mode.invite_only = true
               channel.set_mode(response_mode)
-              @bot.timer.in_1_minute do
+              timer.in_1_minute do
                 if (channel.opped?)
                   if (channel.mode.invite_only?)
                     response_mode = IRCTypes::Mode.new
@@ -138,7 +138,7 @@ module Axial
           if (@revolving_doors.has_key?(nick.uuid))
             ban_mask = MaskUtils.ensure_wildcard(nick.host)
             channel.ban(ban_mask)
-            @bot.timer.in_5_minutes do
+            timer.in_5_minutes do
               puts channel.ban_list.all_bans.inspect
               if (channel.ban_list.include?(ban_mask))
                 channel.unban(ban_mask)
@@ -164,7 +164,7 @@ module Axial
                 ban_mask = MaskUtils.ensure_wildcard(nick.host)
                 channel.ban(ban_mask)
                 channel.kick(nick, "nick flood: #{@nick_changes[nick.uuid].count} nick changes in #{@nick_flood_period} seconds")
-                @bot.timer.in_5_minutes do
+                timer.in_5_minutes do
                   if (channel.opped?)
                     if (channel.ban_list.include?(ban_mask))
                       channel.unban(ban_mask)
@@ -199,12 +199,12 @@ module Axial
 
       def start_flood_reset_timer()
         LOGGER.debug("starting flood reset timer")
-        @timer = @bot.timer.every_second(self, :reset_flood_counters)
+        @flood_reset_timer = timer.every_second(self, :reset_flood_counters)
       end
 
       def stop_flood_reset_timer()
         LOGGER.debug("stopping flood reset timer")
-        @bot.timer.delete(@timer)
+        timer.delete(@flood_reset_timer)
       end
 
       def before_reload()

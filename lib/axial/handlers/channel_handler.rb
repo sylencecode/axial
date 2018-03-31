@@ -95,6 +95,36 @@ module Axial
         end
       end
 
+      def handle_invited_to_channel(uhost, channel_name)
+        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
+        if (nick.nil?)
+          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+        end
+
+        channel = @server_interface.channel_list.get_silent(channel_name)
+        if (channel.nil?)
+          @bot.bind_handler.dispatch_invited_to_channel_binds(nick, channel_name)
+        end
+      end
+
+      def handle_channel_keyword(channel_name)
+        @bot.bind_handler.dispatch_channel_keyword_binds(channel_name)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def handle_channel_full(channel_name)
+        @bot.bind_handler.dispatch_channel_full_binds(channel_name)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def handle_who_list_end(channel_name)
         channel = @server_interface.channel_list.get(channel_name)
         channel.sync_complete
