@@ -93,7 +93,6 @@ module Axial
 
         serialized_yaml         = YAML.dump(@bot.bot_list).gsub(/\n/, "\0")
         @bot.axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
-        puts @bot.bot_list.inspect
       end
 
       def get_local_cn()

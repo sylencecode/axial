@@ -47,9 +47,7 @@ module Axial
         end
         
         tcp_server.close
-        if (socket.nil?)
-          puts "no socket"
-        else
+        if (!socket.nil?)
           socket.puts("Hello #{user.pretty_name}.")
           auth = false
           while (text = socket.gets)

@@ -92,8 +92,6 @@ module Axial
       end
 
       def random(channel, nick, command)
-#        index = SecureRandom.random_number(DB_CONNECTION[:things].count) + 1
-#        puts index
         thing_model = Models::Thing.order(Sequel.lit('RANDOM()')).first
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
