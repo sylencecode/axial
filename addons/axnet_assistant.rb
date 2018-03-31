@@ -69,7 +69,9 @@ module Axial
         if (myself.uhost.empty?)
           LOGGER.warn("cannot dispatch assistance request, bot uhost is unknown")
         else
-          request = Axnet::AssistanceRequest.new(myself, channel_name, type.to_sym)
+          bot_nick = IRCTypes::Nick.new(nil)
+          bot_nick.uhost = myself.uhost
+          request = Axnet::AssistanceRequest.new(bot_nick, channel_name, type.to_sym)
           send_request(request)
         end
       end
@@ -143,37 +145,49 @@ module Axial
         end
       end
 
-      def handle_axnet_request(handler, command)
+      def handle_assistance_request(handler, command)
         serialized_yaml = command.args
-        axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
-        request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
-        bot = request.bot_nick
+        puts "INBOUND #{command.command}: #{command.args.inspect}"
+        if (axnet.master?)
+          axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
+        end
+        return
 
-        if (bot.nil?)
+        request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+
+        puts request.inspect
+
+        case request_type
+          when :op
+            handle_op_request(request.channel_name, request.bot_nick)
+          when :invite
+            handle_invite_request(request.channel_name, request.bot_nick)
+          when :full
+          when :keyword
+          when :banned
+        end
+      end
+
+      def handle_op_request(channel_name, bot_nick)
+        channel = channel_list.get_silent(request.channel_name)
+
+        if (channel.nil?)
+          return
+        elsif (!channel.synced?)
+          return
+        elsif (!channel.opped?)
           return
         end
 
-        if (request.type == :deopped)
-          channel = channel_list.get_silent(request.channel_name)
+        channel_nick = channel.nick_list.get_silent(bot.name)
+        if (channel_nick.nil?)
+          return
+        end
 
-          if (channel.nil?)
-            return
-          elsif (!channel.synced?)
-            return
-          elsif (!channel.opped?)
-            return
-          end
+        wait_a_sec
 
-          channel_nick = channel.nick_list.get_silent(bot.name)
-          if (channel_nick.nil?)
-            return
-          end
-
-          wait_a_sec
-
-          if (!channel_nick.opped_on?(channel))
-            channel.op(channel_nick)
-          end
+        if (!channel_nick.opped_on?(channel))
+          channel.op(channel_nick)
         end
       end
 

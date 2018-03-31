@@ -43,6 +43,7 @@ module Axial
         on_dcc                  'axnet',  :handle_axnet_command
         on_dcc             'connstatus',  :display_conn_status
 
+        axnet.master = true
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
       end

@@ -20,6 +20,15 @@ module Axial
         @relay_object         = nil
         @relay_method         = nil
         @command_queue        = Consumers::RawConsumer.new
+        @master               = false
+      end
+
+      def master=(master)
+        @master = master
+      end
+
+      def master?()
+        return @master
       end
 
       def self.copy(bot, old_interface)
