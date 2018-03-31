@@ -42,6 +42,7 @@ module Axial
         on_user_list                :check_for_new_users
         on_ban_list                 :check_for_new_bans
         on_self_kick                :rejoin
+        on_kick                     :handle_kick
         # create a timer for checking channel bans every minute, use banlist response to check timestamps
 
         # on kick...protect the people
@@ -78,6 +79,24 @@ module Axial
         return bots_or_users
       end
 
+      def handle_kick(channel, kicker_nick, kicked_nick, reason)
+        user = get_bot_or_user(kicker_nick)
+        possible_user = get_bot_or_user(kicked_nick)
+        if (!possible_user.nil? && possible_user.op?)
+          if (!bot_or_director?(user))
+            if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
+              # immediate
+              channel.deop(kicker_nick.name)
+            end
+          end
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
 
       def rejoin(channel, kicker_nick, reason)
         # TODO: get the password out of the database or out of the bot props yaml if one is set
@@ -263,7 +282,7 @@ module Axial
             if (!bot_or_director?(user))
               channel.unban(mask)
               if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
-                channel.deop(nick.name)
+                channel.deop(nick)
               end
             end
           end
@@ -318,7 +337,7 @@ module Axial
                   end
                   if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
                     # immediate
-                    channel.deop(nick.name)
+                    channel.deop(nick)
                   end
                 end
               end
