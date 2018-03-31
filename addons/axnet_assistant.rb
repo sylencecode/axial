@@ -66,8 +66,12 @@ module Axial
           channel_name = channel.downcase
         end
 
-        request = Axnet::AssistanceRequest.new(myself.uhost, channel_name, type.to_sym)
-        send_request(request)
+        if (myself.uhost.empty?)
+          LOGGER.warn("cannot dispatch assistance request, bot uhost is unknown")
+        else
+          request = Axnet::AssistanceRequest.new(myself, channel_name, type.to_sym)
+          send_request(request)
+        end
       end
 
       def clear_pending_join_requests(channel)
@@ -143,7 +147,7 @@ module Axial
         serialized_yaml = command.args
         axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
-        bot = IRCTypes::Nick.from_uhost(server, request.uhost)
+        bot = request.bot_nick
 
         if (bot.nil?)
           return
@@ -174,7 +178,7 @@ module Axial
       end
 
       def send_request(request)
-        LOGGER.debug("sending assistance request: #{request.inspect}")
+        LOGGER.debug("sending assistance request: #{request.type}, #{request.channel_name}, #{request.bot_nick.uhost}")
         serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
         axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
       end

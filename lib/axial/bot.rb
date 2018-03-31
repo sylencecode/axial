@@ -191,6 +191,10 @@ module Axial
       repo_object.pull
     end
 
+    def whois_myself()
+      @server_interface.send_raw("WHOIS #{@real_nick}")
+    end
+
     def autojoin_channels()
       @autojoin_channels.each do |channel|
         if (!channel.has_key?('password') || channel['password'].nil? || channel['password'].empty?)

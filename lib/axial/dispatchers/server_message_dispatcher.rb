@@ -73,6 +73,7 @@ module Axial
             LOGGER.info("begin motd")
           when Server::MOTD_END, Server::MOTD_ERROR
             LOGGER.info("end of motd, performing autojoin")
+            @bot.whois_myself
             @bot.autojoin_channels
           when Server::MOTD_ENTRY
             LOGGER.info("motd: #{Regexp.last_match[1]}")
@@ -80,6 +81,9 @@ module Axial
             if (Regexp.last_match[1] =~ /MODES=(\d+)/)
               @bot.server.max_modes = Regexp.last_match[1]
             end
+          when Server::WHOIS_UHOST
+            nick, ident, host = Regexp.last_match.captures
+            @bot.server_handler.dispatch_whois_uhost(nick, ident, host)
           when Server::ANY_NUMERIC
             LOGGER.warn("[#{Regexp.last_match[1]}] #{Regexp.last_match[2]}")
           else

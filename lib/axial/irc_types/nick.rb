@@ -60,6 +60,14 @@ module Axial
         end
       end
 
+      def uhost=(new_uhost)
+        if (new_uhost =~ /^(\S+)!(\S+)@(\S+)/)
+          @name = Regexp.last_match[1]
+          @ident = Regexp.last_match[2]
+          @host = Regexp.last_match[3]
+        end
+      end
+
       def message(text)
         @server_interface.send_private_message(@name, text)
       end

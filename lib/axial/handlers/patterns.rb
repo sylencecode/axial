@@ -35,6 +35,7 @@ module Axial
         NICK_IN_USE           = /^:{0,1}\S+ 433 \S+ :{0,1}(.*)/
         NICK_MODE             = /^(\S+) MODE :{0,1}(.*)/
         PARAMETERS            = /^:{0,1}\S+ 005 \S+ :{0,1}(.*)/
+        WHOIS_UHOST           = /^:{0,1}\S+ 311 \S+ (\S+) (\S+) (\S+)/
       end
 
       module Messages

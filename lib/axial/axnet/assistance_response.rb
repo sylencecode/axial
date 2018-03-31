@@ -1,3 +1,5 @@
+require 'axial/irc_types/nick'
+
 module Axial
   module Axnet
     class AssistanceResponse

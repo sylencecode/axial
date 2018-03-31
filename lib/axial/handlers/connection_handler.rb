@@ -44,11 +44,13 @@ module Axial
 
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
+        @bot.timer.delete(@uhost_timer)
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
         LOGGER.info("reconnecting in 30 seconds...")
         sleep 30
         retry
       rescue Exception => ex
+        @bot.timer.delete(@uhost_timer)
         LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -93,6 +95,9 @@ module Axial
           @server.real_address = Regexp.last_match[1]
           LOGGER.info("actual server host: #{@server.real_address}")
           @bot.server_consumer.send(raw)
+          @uhost_timer = @bot.timer.every_minute do
+            @bot.server_interface.send_raw("WHOIS #{@bot.real_nick}")
+          end
         elsif (raw =~ /^PING\s+(.*)/)
           pong(Regexp.last_match[1])
         else

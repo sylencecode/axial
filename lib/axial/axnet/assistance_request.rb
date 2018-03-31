@@ -1,9 +1,11 @@
+require 'axial/irc_types/nick'
+
 module Axial
   module Axnet
     class AssistanceRequest
-      attr_reader :uhost, :channel_name, :type, :request_types
+      attr_reader :bot_nick, :channel_name, :type, :request_types
 
-      def initialize(uhost, channel_name, type)
+      def initialize(bot_nick, channel_name, type)
         @request_types = %i(op keyword invite full banned)
 
         if (!@request_types.include?(type))
@@ -12,7 +14,7 @@ module Axial
           @type           = type
         end
 
-        @uhost            = uhost
+        @bot_nick         = bot_nick
         @channel_name     = channel_name
       end
     end

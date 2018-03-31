@@ -17,8 +17,8 @@ module Axial
       end
 
       def handle_who_list_entry(nick_name, uhost, channel_name, mode)
-        if (nick_name == @bot.real_nick && @server_interface.myself.uhost.empty?)
-          @server_interface.myself = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+        if (nick_name == @bot.real_nick)
+          @server_interface.myself.uhost = uhost
         end
 
         channel = @server_interface.channel_list.get(channel_name)
@@ -281,10 +281,8 @@ module Axial
 
       def dispatch_join(uhost, channel_name)
         nick_name = uhost.split('!').first
-        if (@server_interface.myself.uhost.empty?)
-          if (nick_name == @bot.real_nick)
-            @server_interface.myself = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-          end
+        if (nick_name == @bot.real_nick)
+          @server_interface.myself.uhost = uhost
         end
 
         if (uhost == @server_interface.myself.uhost)
