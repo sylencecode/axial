@@ -58,7 +58,7 @@ module Axial
         end
 
         serialized_yaml         = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        axnet.transmit_to_axnet('BOT_AUTH ' + serialized_yaml)
+        axnet.send('BOT_AUTH ' + serialized_yaml)
       end
 
       def update_bot_list(handler, command)

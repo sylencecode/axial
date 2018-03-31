@@ -39,7 +39,7 @@ module Axial
       end
 
       def register_queue_callback()
-        @command_queue.register_callback(self, :transmit_to_axnet)
+        @command_queue.register_callback(self, :send)
       end
 
       def register_transmitter(object, method)
@@ -52,7 +52,7 @@ module Axial
         @relay_method = method.to_sym
       end
 
-      def relay_to_axnet(handler, text)
+      def relay(handler, text)
         if (@relay_object.nil? || @relay_method.nil?)
           return
         elsif (!@relay_object.respond_to?(@relay_method))
@@ -62,7 +62,7 @@ module Axial
         end
       end
 
-      def transmit_to_axnet(text)
+      def send(text)
         if (@transmitter_object.respond_to?(@transmitter_method))
           @transmitter_object.public_send(@transmitter_method, text)
         else
@@ -77,13 +77,13 @@ module Axial
       def broadcast_user_list()
         LOGGER.info("transmitting new userlist to axnet...")
         user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
-        transmit_to_axnet('USERLIST_RESPONSE ' + user_list_yaml)
+        send('USERLIST_RESPONSE ' + user_list_yaml)
       end
 
       def broadcast_ban_list()
         LOGGER.info("transmitting new ban to axnet...")
         ban_list_yaml = YAML.dump(@bot.ban_list).gsub(/\n/, "\0")
-        transmit_to_axnet('BANLIST_RESPONSE ' + ban_list_yaml)
+        send('BANLIST_RESPONSE ' + ban_list_yaml)
       end
 
       def update_user_list(new_user_list)

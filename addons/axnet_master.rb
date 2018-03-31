@@ -72,7 +72,7 @@ module Axial
           bot_list.delete(new_bot.name)
         end
         bot_list.add(new_bot)
-        LOGGER.info("new bot online: #{new_bot.pretty_name}")
+        LOGGER.info("updating bot_user info for #{new_bot.pretty_name}")
         send_bot_list
       end
 
@@ -92,7 +92,7 @@ module Axial
         bot_list.add(@bot_user)
 
         serialized_yaml         = YAML.dump(bot_list).gsub(/\n/, "\0")
-        axnet.transmit_to_axnet("BOTS #{serialized_yaml}")
+        axnet.send("BOTS #{serialized_yaml}")
       end
 
       def get_local_cn()
@@ -116,7 +116,7 @@ module Axial
       end
 
       def handle_broadcast(dcc, command)
-        axnet.transmit_to_axnet(command.args)
+        axnet.send(command.args)
       end
 
       def send_help(dcc)
@@ -173,7 +173,7 @@ module Axial
 
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
-        axnet.transmit_to_axnet('RELOAD_AXNET')
+        axnet.send('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_axnet
         @bot.reload_addons

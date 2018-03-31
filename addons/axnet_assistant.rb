@@ -1,5 +1,7 @@
-require 'axial/irc_types/nick'
 require 'axial/addon'
+require 'axial/irc_types/nick'
+require 'axial/axnet/assistance_request'
+require 'axial/axnet/assistance_response'
 
 module Axial
   module Addons
@@ -20,70 +22,99 @@ module Axial
         on_axnet    'ASSISTANCE_REQUEST', :handle_assistance_request
         on_axnet   'ASSISTANCE_RESPONSE', :handle_assistance_response
 
-        on_self_join                      :send_axnet_op_request
-        on_self_join                      :clear_pending_join_requests
         on_banned_from_channel            :request_unban
         on_channel_invite_only            :request_invite
         on_channel_full                   :request_limit_increase
         on_channel_keyword                :request_keyword
-        on_mode :deops,                   :check_if_mode_deopped
-        on_mode :ops,                     :check_if_mode_opped
+
+        on_mode :deops,                   :check_if_deopped
+        on_mode :ops,                     :check_if_opped
+
+        on_self_join                      :check_if_opped
+        on_self_join                      :clear_pending_join_requests
 
         on_invite                         :handle_invite
       end
 
-      def request_exists?(channel, request_type)
+      def clear_pending(channel, type)
         key = channel.name.downcase
-        exists = false
         if (@requests.has_key?(key))
-          possible_requests = requests[key].select{ |request| request.type == request_type.to_sym }
+          @requests[key].delete(type.to_sym)
         end
       end
 
-      def check_if_mode_deopped(channel, mode)
-        if (mode.deops.any?)
-          mode.deops.each do |deop|
-            if (deop == myself.name)
-              send_axnet_op_request(channel)
-            end
-          end
+      def queue_request(channel, type)
+        if (channel.is_a?(IRCTypes::Channel))
+          key = channel.name.downcase
+        else
+          key = channel.downcase
         end
+
+        if (!@requests.has_key?(key))
+          @requests[key] = [ type.to_sym ]
+        elsif (!@requests[key].include?(type.to_sym))
+          @requests[key].push(type.to_sym)
+        end
+
+        request(key, type.to_sym)
       end
 
-      def check_if_mode_opped(channel, mode)
-        if (mode.ops.any?)
-          mode.deops.each do |op|
-            if (op == myself.name)
-              clear_pending_op_requests(channel)
-            end
-          end
+      def request(channel, type)
+        if (channel.is_a?(IRCTypes::Channel))
+          channel_name = channel.name.downcase
+        else
+          channel_name = channel.downcase
         end
+
+        request = Axnet::AssistanceRequest.new(myself.uhost, channel_name, type.to_sym)
+        send_request(request)
       end
 
       def clear_pending_join_requests(channel)
+        clear_pending(channel, :keyword)
+        clear_pending(channel, :full)
+        clear_pending(channel, :invite)
+        clear_pending(channel, :banned)
+      end
 
+      def check_if_deopped(channel, mode = nil)
+        if (mode.nil?)
+          if (!channel.opped?)
+            queue_request(channel, :op)
+          end
+        elsif (mode.deops.any?)
+          mode.deops.each do |deop|
+            if (deop == myself.name)
+              queue_request(channel, :op)
+            end
+          end
+        end
+      end
+
+      def check_if_opped(channel, mode)
+        if (mode.ops.any?)
+          mode.deops.each do |op|
+            if (op == myself.name)
+              clear_pending(channel, :op)
+            end
+          end
+        end
       end
 
       def request_unban(channel_name)
-        LOGGER.debug("banned from channel #{channel_name}, sending request")
+        queue_request(channel_name, :banned)
       end
 
       def request_keyword(channel_name)
-        LOGGER.debug("channel #{channel_name} is keyword-protected, sending request")
+        queue_request(channel_name, :keyword)
       end
 
       def request_invite(channel_name)
-        LOGGER.debug("channel #{channel_name} is invite only, sending request")
+        queue_request(channel_name, :invite)
       end
 
       def request_limit_increase(channel_name)
-        LOGGER.debug("channel #{channel_name} is full, sending request")
-      end
-
-      def send_axnet_op_request(channel)
-        if (!channel.opped?)
-          request_assistance(channel, :deopped)
-        end
+        queue_request(channel_name, :full)
       end
 
       def handle_invite(nick, channel_name)
@@ -95,20 +126,10 @@ module Axial
         return possible_user
       end
 
-      def stop_request_timer()
-        LOGGER.debug("stopping request timer")
-        timer.delete(@request_timer)
-      end
-
-      def start_request_timer()
-        LOGGER.debug("starting request timer")
-        @request_timer = timer.every_30_seconds(self, :check_for_requests)
-      end
-
       def check_for_requests()
-        channel_list.all_channels.each do |channel|
-          if (!channel.opped?)
-            send_axnet_op_request(channel)
+        @requests.each do |channel_name, pending_requests|
+          pending_requests.each do |pending_request|
+            request(channel_name, pending_request)
           end
         end
       rescue Exception => ex
@@ -120,7 +141,7 @@ module Axial
 
       def handle_axnet_request(handler, command)
         serialized_yaml = command.args
-        axnet.relay_to_axnet(handler, 'COMPLAINT ' + serialized_yaml)
+        axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
         bot = IRCTypes::Nick.from_uhost(server, request.uhost)
 
@@ -153,20 +174,9 @@ module Axial
       end
 
       def send_request(request)
+        LOGGER.debug("sending assistance request: #{request.inspect}")
         serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
-        axnet.transmit_to_axnet('COMPLAINT ' + serialized_yaml)
-      end
-
-      def request_assistance(channel, type)
-        if (channel.is_a?(IRCTypes::Channel))
-          channel_name = channel.name
-        else
-          channel_name = channel
-        end
-
-        request = Axnet::AssistanceRequest.new(myself.uhost, channel_name, type.to_sym)
-
-        send_request(request)
+        axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
       end
 
       def get_bot_or_user(nick)
@@ -194,6 +204,16 @@ module Axial
           bots_or_users.push(tmp_mask)
         end
         return bots_or_users
+      end
+
+      def stop_request_timer()
+        LOGGER.debug("stopping request timer")
+        timer.delete(@request_timer)
+      end
+
+      def start_request_timer()
+        LOGGER.debug("starting request timer")
+        @request_timer = timer.every_5_seconds(self, :check_for_requests)
       end
 
       def bot_or_director?(user)
