@@ -16,13 +16,13 @@ module Axial
         @enforce_modes              = [ :topic_ops_only, :no_outside_messages ]
         @prevent_modes              = [ :invite_only, :limit, :keyword, :moderated ]
         @op_deop_modes              = [ :ops, :deops ]
-        @complaint_thread           = nil
+        @complaint_timer            = nil
 
         throttle                    2
 
         # axnet hooks
-        on_startup                  :start_complaint_thread
-        on_reload                   :start_complaint_thread
+        on_startup                  :start_complaint_timer
+        on_reload                   :start_complaint_timer
         on_axnet       'COMPLAINT', :handle_axnet_complaint
         on_self_join                :send_axnet_op_complaint
         # on banned response
@@ -160,39 +160,32 @@ module Axial
           channel.set_mode(response_mode)
         end
       end
-        
-      def stop_complaint_thread()
-        LOGGER.debug("stopping complaint thread")
-        @complaining = false
-        if (!@complaint_thread.nil?)
-          @complaint_thread.kill
-        end
-        @complaint_thread = nil
+
+
+      def stop_complaint_timer()
+        LOGGER.debug("stopping complaint timer")
+        @bot.timer.delete(@complaint_timer)
       end
 
-      def start_complaint_thread()
-        LOGGER.debug("starting complaint thread")
-        @complaining = true
-        @complaint_thread = Thread.new do
-          while (@complaining)
-            sleep 15
-            begin
-              @server_interface.channel_list.all_channels.each do |channel|
-                if (!channel.synced?)
-                  return
-                end
+      def start_complaint_timer()
+        LOGGER.debug("starting complaint timer")
+        @complaint_timer = @bot.timer.every_30_seconds(self, :ingest)
+      end
 
-                if (!channel.opped?)
-                  complain(channel, :deopped)
-                end
-              end
-            rescue Exception => ex
-              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-              ex.backtrace.each do |i|
-                LOGGER.error(i)
-              end
-            end
+      def check_for_complaints()
+        @server_interface.channel_list.all_channels.each do |channel|
+          if (!channel.synced?)
+            return
           end
+
+          if (!channel.opped?)
+            send_axnet_op_complaint(channel)
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -311,7 +304,7 @@ module Axial
           mode.deops.each do |deop|
             if (deop == @server_interface.myself.name)
               channel.opped = false
-              complain(channel, :deopped)
+              send_axnet_op_complaint(channel)
             else
               # re-op users and penalize offender unless deopped by a director or bot
               subject_nick = channel.nick_list.get(deop)
@@ -456,8 +449,8 @@ module Axial
 
       def before_reload()
         super
-        LOGGER.info("#{self.class}: stopping complaint thread")
-        stop_complaint_thread
+        LOGGER.info("#{self.class}: stopping complaint timer")
+        stop_complaint_timer
       end
     end
   end
