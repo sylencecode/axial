@@ -65,7 +65,7 @@ module Axial
       def update_bot_list(handler, command)
         bot_list_yaml = command.args.gsub(/\0/, "\n")
         new_bot_list = YAML.load(bot_list_yaml)
-        @bot.axnet.update_bot_list(new_bot_list)
+        puts new_bot_list.inspect
         LOGGER.info("successfully downloaded new botlist from #{handler.remote_cn}")
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -176,6 +176,8 @@ module Axial
             @handler.clear_queue
             @handler.loop
             @bot.bind_handler.dispatch_axnet_disconnect_binds(@handler)
+            LOGGER.error("lost connection to #{@handler.remote_cn}")
+            sleep 15
           rescue Errno::ECONNREFUSED
             LOGGER.info("could not connect to #{@master_address}:#{@port} - connection refused")
             sleep 15
