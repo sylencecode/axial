@@ -11,8 +11,11 @@ channels:
   - name: '#lulz'
     password: ''
 addons:
+  - AxnetMaster
   - Base
   - ChannelProtection
+  - DCCHandler
+  - FloodProtection
   - GoogleSearch
   - LearnerOfThings
   - RSSSubscriber

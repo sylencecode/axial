@@ -1,15 +1,16 @@
 ---
 server:
-  address: sylence.org
-  port: 6667
-  ssl: false
+  address: irc.sylence.org
+  port: 6697
+  ssl: true
 bot:
-  nick: k-paxial
-  real_name: k-paxial
-  user_name: k-paxial
+  nick: taxial
+  real_name: taxial
+  user_name: taxial
 channels:
   - name: '#lulz'
     password: ''
 addons:
   - AxnetSlave
   - ChannelProtection
+  - FloodProtection

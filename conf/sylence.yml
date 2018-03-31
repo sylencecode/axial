@@ -15,6 +15,7 @@ addons:
   - Base
   - ChannelProtection
   - DCCHandler
+  - FloodProtection
   - GoogleSearch
   - LearnerOfThings
   - RSSSubscriber
