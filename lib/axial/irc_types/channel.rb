@@ -70,7 +70,7 @@ module Axial
           return
         end
         mode = IRCTypes::Mode.new
-        mode.deop(nick.name)
+        mode.deop(nick)
         set_mode(mode)
       end
 

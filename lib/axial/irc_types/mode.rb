@@ -1,4 +1,5 @@
 require 'axial/bot'
+require 'axial/irc_types/nick'
 
 module Axial
   module IRCTypes
@@ -144,19 +145,39 @@ module Axial
         end
       end
 
-      def op(nickname)
+      def op(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          nickname = nick_or_name.name
+        else
+          nickname = nick_or_name
+        end
         @ops.push(nickname)
       end
 
-      def deop(nickname)
+      def deop(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          nickname = nick_or_name.name
+        else
+          nickname = nick_or_name
+        end
         @deops.push(nickname)
       end
 
-      def voice(nickname)
+      def voice(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          nickname = nick_or_name.name
+        else
+          nickname = nick_or_name
+        end
         @voices.push(nickname)
       end
 
-      def devoice(nickname)
+      def devoice(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          nickname = nick_or_name.name
+        else
+          nickname = nick_or_name
+        end
         @devoices.push(nickname)
       end
 

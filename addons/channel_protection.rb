@@ -86,7 +86,8 @@ module Axial
           if (!bot_or_director?(user))
             if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
               # immediate
-              channel.deop(kicker_nick.name)
+              channel.deop(kicker_nick)
+              channel.kick(kicker_nick, "don't do that.")
             end
           end
         end
@@ -169,9 +170,9 @@ module Axial
             end
           # else
           # if (subject_nick.opped_on?(channel))
-          #   response_mode.deop(subject_nick.name)
+          #   response_mode.deop(subject_nick)
           # elsif (subject_nick.voiced_on?(channel))
-          #   response_mode.devoice(subject_nick.name)
+          #   response_mode.devoice(subject_nick)
           end
         end
 
@@ -313,7 +314,7 @@ module Axial
               if (possible_user.nil? || !possible_user.op?)
                 if (!bot_or_director?(user))
                   if (!subject_nick.opped_on?(channel))
-                    response_mode.deop(subject_nick.name)
+                    response_mode.deop(subject_nick)
                   end
                 end
               end
@@ -336,8 +337,7 @@ module Axial
                     response_mode.op(subject_nick.name)
                   end
                   if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
-                    # immediate
-                    channel.deop(nick)
+                    response_mode.deop(nick)
                   end
                 end
               end
