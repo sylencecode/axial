@@ -2,7 +2,7 @@ module Axial
   class MaskError < StandardError
   end
 
-  class MaskUtils 
+  class MaskUtils
     @do_not_wildcard = [
       '*.irccloud.com'
     ]
@@ -45,21 +45,21 @@ module Axial
       mask = ensure_wildcard(mask)
       return mask.gsub(/\*/, '%').gsub(/\?/, '%')
     end
-  
+
     def self.mask_ipv4(host)
       host_parts = host.split(/\./)
       host_parts.pop
       host = host_parts.join('.') + '.*'
       return host
     end
-  
+
     def self.mask_ipv6(host)
       host_parts = host.split(/:/)
       host_parts.pop
       host = host_parts.join(':') + ':*'
       return host
     end
-  
+
     def self.mask_dns(host)
       host_parts = host.split(/\./)
       if host_parts.count > 2
@@ -68,7 +68,23 @@ module Axial
       end
       return host
     end
-  
+
+    def self.masks_match?(left_mask, right_mask)
+      left_mask = ensure_wildcard(left_mask)
+      left_regexp = get_mask_regexp(left_mask)
+      right_mask  = ensure_wildcard(right_mask)
+      right_regexp = get_mask_regexp(right_mask)
+      match = false
+      puts left_regexp.source
+      puts right_regexp.source
+      if (right_regexp.match(left_mask))
+        match = true
+      elsif (left_regexp.match(right_mask))
+        match = true
+      end
+      return match
+    end
+
     def self.gen_wildcard_host(host)
       @do_not_wildcard.each do |domain|
         wc = get_mask_regexp(domain)
@@ -76,7 +92,7 @@ module Axial
           return host
         end
       end
-  
+
       if (host =~ /^\d+\.\d+\.\d+\.\d+$/) # ipv4
         return mask_ipv4(host)
       elsif (host =~ /^\S+:.*:.*:.*:.*:.*:.*:\S+$/) # ipv6
@@ -85,7 +101,7 @@ module Axial
         return mask_dns(host)
       end
     end
-  
+
     def self.strip_ident(ident)
       ident.gsub!(/^~/, '')
       if (ident.empty?)
@@ -95,7 +111,7 @@ module Axial
       end
       return ident
     end
-  
+
     def self.gen_wildcard_mask(mask)
       if (mask =~ /^(\S+)!(\S+)@(\S+)$/)
         # TODO: mode to decide whether to include the nick in the mask?

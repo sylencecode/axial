@@ -15,16 +15,16 @@ module Axial
         @nick_flood_threshold     = 3
         @nick_flood_period        = 30
 
-        @join_flood_threshold     = 4
-        @join_flood_period        = 10
+        @join_flood_threshold     = 3
+        @join_flood_period        = 7
 
-        @text_flood_threshold     = 10
-        @text_flood_period        = 20
+        @text_flood_threshold     = 5
+        @text_flood_period        = 3
 
-        @global_text_threshold    = 10
-        @global_text_period       = 5
+        @global_text_threshold    = 7
+        @global_text_period       = 2
 
-        @revolving_door_period    = 30
+        @revolving_door_period    = 15
 
         @timer                    = nil
         @nick_changes             = {} # not channel-specific, needs to ban on all channels
@@ -51,6 +51,10 @@ module Axial
       end
 
       def check_text_flood(channel, nick, text)
+        if (!channel.opped?)
+          return
+        end
+
         possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
@@ -58,7 +62,21 @@ module Axial
 
         @global_text_counter.push(Time.now)
         if (@global_text_counter.count >= @global_text_threshold)
-          channel.message("i'm gonna +m this bitch but i better remember to -m it")
+          if (!channel.mode.moderated? )
+            response_mode = IRCTypes::Mode.new
+            response_mode.moderated = true
+            channel.set_mode(response_mode)
+
+            @bot.timer.in_30_seconds do
+              if (channel.opped?)
+                if (channel.mode.moderated?)
+                  response_mode = IRCTypes::Mode.new
+                  response_mode.moderated = false
+                  channel.set_mode(response_mode)
+                end
+              end
+            end
+          end
         end
 
         if (!@text_flood_counter.has_key?(nick.uuid))
@@ -66,8 +84,18 @@ module Axial
         else
           @text_flood_counter[nick.uuid].push(Time.now)
           if (@text_flood_counter[nick.uuid].count >= @text_flood_threshold)
-            ban_mask = MaskUtils.ensure_wildcard(nick.host)
-            channel.message("text flood, gonna have to ban #{ban_mask} now")
+            if (channel.opped?)
+              ban_mask = MaskUtils.ensure_wildcard(nick.host)
+              channel.ban(ban_mask)
+              channel.kick(nick, "text flood: #{@text_flood_counter[nick.uuid].count} lines in #{@text_flood_period} seconds")
+              @bot.timer.in_5_minutes do
+                if (channel.opped?)
+                  if (channel.ban_list.include?(ban_mask))
+                    channel.unban(ban_mask)
+                  end
+                end
+              end
+            end
           end
         end
       end
@@ -81,7 +109,22 @@ module Axial
         @revolving_doors[nick.uuid] = Time.now
         @recent_joins.push(Time.now)
         if (@recent_joins.count >= @join_flood_threshold)
-          channel.message("don't make +i this mofo in case i forget to -i it")
+          if (channel.opped?)
+            if (!channel.mode.invite_only?)
+              response_mode = IRCTypes::Mode.new
+              response_mode.invite_only = true
+              channel.set_mode(response_mode)
+              @bot.timer.in_1_minute do
+                if (channel.opped?)
+                  if (channel.mode.invite_only?)
+                    response_mode = IRCTypes::Mode.new
+                    response_mode.invite_only = false
+                    channel.set_mode(response_mode)
+                  end
+                end
+              end
+            end
+          end
         end
       end
 
@@ -91,9 +134,17 @@ module Axial
           return
         end
 
-        if (@revolving_doors.has_key?(nick.uuid))
-          ban_mask = MaskUtils.ensure_wildcard(nick.host)
-          channel.message("revolving door, gonna have to ban #{ban_mask} now")
+        if (channel.opped?)
+          if (@revolving_doors.has_key?(nick.uuid))
+            ban_mask = MaskUtils.ensure_wildcard(nick.host)
+            channel.ban(ban_mask)
+            @bot.timer.in_5_minutes do
+              puts channel.ban_list.all_bans.inspect
+              if (channel.ban_list.include?(ban_mask))
+                channel.unban(ban_mask)
+              end
+            end
+          end
         end
       end
 
@@ -109,8 +160,18 @@ module Axial
           @nick_changes[nick.uuid].push(Time.now)
           if (@nick_changes[nick.uuid].count >= @nick_flood_threshold)
             @server_interface.channel_list.all_channels.each do |channel|
-              ban_mask = MaskUtils.ensure_wildcard(nick.host)
-              channel.message("that's #{@nick_changes[nick.uuid].count} nicks from #{nick.name}, banning #{ban_mask}")
+              if (channel.opped?)
+                ban_mask = MaskUtils.ensure_wildcard(nick.host)
+                channel.ban(ban_mask)
+                channel.kick(nick, "nick flood: #{@nick_changes[nick.uuid].count} nick changes in #{@nick_flood_period} seconds")
+                @bot.timer.in_5_minutes do
+                  if (channel.opped?)
+                    if (channel.ban_list.include?(ban_mask))
+                      channel.unban(ban_mask)
+                    end
+                  end
+                end
+              end
             end
           end
         end
@@ -139,14 +200,6 @@ module Axial
       def start_flood_reset_timer()
         LOGGER.debug("starting flood reset timer")
         @timer = @bot.timer.every_second(self, :reset_flood_counters)
-      end
-
-
-      def handle_ban_unban(channel, nick, mode)
-              response_mode = IRCTypes::Mode.new
-              response_mode.ban(ban.mask)
-              channel.set_mode(response_mode)
-              channel.kick(nick, ban.long_reason)
       end
 
       def stop_flood_reset_timer()

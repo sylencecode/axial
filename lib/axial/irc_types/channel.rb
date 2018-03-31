@@ -93,7 +93,7 @@ module Axial
       end
 
       def set_mode(mode)
-        if (!mode.is_a?(Axial::IRCTypes::Mode))
+        if (!mode.is_a?(IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
         end
         if (opped?)

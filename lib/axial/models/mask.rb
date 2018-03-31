@@ -14,17 +14,11 @@ module Axial
 
       many_to_one :user
       
-      def self.get_masks_that_match(in_mask)
+      def self.get_masks_that_match(left_mask)
         matches = []
-        user_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
-        in_regexp = Axial::MaskUtils.get_mask_regexp(user_mask)
-        self.all.each do |mask|
-          match_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
-          # need to check masks both ways to ensure no duplicates
-          if (match_regexp.match(user_mask))
-            matches.push(mask)
-          elsif (in_regexp.match(mask.mask))
-            matches.push(mask)
+        self.all.each do |right_mask|
+          if (masks_match?(left_mask, right_mask))
+            matches.push(right_mask)
           end
         end
         return matches
@@ -32,13 +26,9 @@ module Axial
 
       def self.get_users_from_mask(in_mask)
         possible_users = []
-        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
-        in_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
         Mask.all.each do |mask|
-          match_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
-          if (match_regexp.match(in_mask))
-            possible_users.push(mask.user)
-          elsif (in_regexp.match(mask.mask))
+          puts "checking #{mask.mask}"
+          if (MaskUtils.masks_match?(mask.mask, in_mask))
             possible_users.push(mask.user)
           end
         end
@@ -46,7 +36,6 @@ module Axial
       end
 
       def self.get_user_from_mask(in_mask)
-        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
           raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name }.join(', ')}")
@@ -55,7 +44,7 @@ module Axial
       end
     
       def self.create_or_find(uhost)
-        mask = Axial::MaskUtils.gen_wildcard_mask(uhost)
+        mask = MaskUtils.gen_wildcard_mask(uhost)
         db_mask = self[mask: mask]
         if (db_mask.nil?)
           db_mask = self.create(mask: mask)

@@ -85,7 +85,7 @@ module Axial
         in_mask.strip!
         reason.strip!
 
-        mask = Axial::MaskUtils.ensure_wildcard(mask)
+        mask = MaskUtils.ensure_wildcard(mask)
 
         begin
           bans = @bot.ban_list.get_bans_from_mask(mask)
@@ -115,7 +115,7 @@ module Axial
           return
         end
 
-        mask = Axial::MaskUtils.ensure_wildcard(mask)
+        mask = MaskUtils.ensure_wildcard(mask)
 
         begin
           bans = @bot.ban_list.get_bans_from_mask(mask)
@@ -232,7 +232,7 @@ module Axial
             return
           end
 
-          subject_mask = Axial::MaskUtils.ensure_wildcard(subject_mask)
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
           subject_models = Models::Mask.get_users_from_mask(subject_mask)
           if (subject_models.count > 0)
             sender.message("mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
@@ -333,7 +333,7 @@ module Axial
             return
           end
 
-          subject_mask = Axial::MaskUtils.ensure_wildcard(subject_mask)
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
           subject_models = Models::Mask.get_users_from_mask(subject_mask)
           if (subject_models.count > 0)
             channel.message("#{nick.name}: Mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")

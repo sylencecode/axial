@@ -281,7 +281,7 @@ module Axial
           begin
             @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
             client_socket = @ssl_listener.accept
-            handler = Axial::Axnet::SocketHandler.new(@bot, client_socket)
+            handler = Axnet::SocketHandler.new(@bot, client_socket)
             handler.ssl_handshake
             dupe_uuids = []
             @handlers.each do |uuid, tmp_handler|
@@ -349,7 +349,7 @@ module Axial
             end
           end
         end
-        @refresh_timer = @bot.timer.every_60_seconds(self, :send_bot_list)
+        @refresh_timer = @bot.timer.every_minute(self, :send_bot_list)
         @uhost_timer   = @bot.timer.every_second(self, :check_for_uhost_change)
       end
 

@@ -26,8 +26,7 @@ module Axial
       def match_mask?(in_mask)
         match = false
         @masks.each do |mask|
-          mask_regexp = Axial::MaskUtils.get_mask_regexp(mask)
-          if (mask_regexp.match(in_mask))
+          if (MaskUtils.masks_match?(mask, in_mask))
             match = true
             break
           end

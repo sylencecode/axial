@@ -170,7 +170,7 @@ module Axial
             tcp_socket = TCPSocket.new(@master_address, @port)
             ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
             server_socket = ssl_socket.connect
-            @handler = Axial::Axnet::SocketHandler.new(@bot, server_socket)
+            @handler = Axnet::SocketHandler.new(@bot, server_socket)
             @handler.ssl_handshake
             @bot.bind_handler.dispatch_axnet_connect_binds(@handler)
             @handler.clear_queue
@@ -203,7 +203,7 @@ module Axial
         LOGGER.debug("starting axial slave thread")
 
         @running        = true
-        @refresh_timer  = @bot.timer.every_60_seconds(self, :auth_to_axnet)
+        @refresh_timer  = @bot.timer.every_minute(self, :auth_to_axnet)
         @uhost_timer    = @bot.timer.every_second(self, :check_for_uhost_change)
 
         @slave_thread   = Thread.new do

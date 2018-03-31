@@ -24,7 +24,7 @@ module Axial
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           elsif (in_mask.empty?)
-            channel.message("#{nick.name}: try ?whofrom <mask> instead of whatever you just did.")
+            channel.message("#{nick.name}: try #{command.command} <mask> instead of whatever you just did.")
           else
             users = Models::Mask.get_users_from_mask(in_mask).collect{ |user| user.pretty_name }
             LOGGER.debug("#{nick.uhost} requested nicks from '#{in_mask}'")
@@ -32,7 +32,7 @@ module Axial
               user_string = users.join(', ')
               channel.message("#{nick.name}: possible users for '#{in_mask}': #{user_string}")
             else
-              channel.message("#{nick.name}: i can't find an users matching '#{in_mask}'.")
+              channel.message("#{nick.name}: i can't find any users matching '#{in_mask}'.")
             end
           end
         rescue Exception => ex

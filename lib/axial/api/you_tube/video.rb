@@ -11,7 +11,7 @@ module Axial
           @title = "unknown title"
           @view_count = 0
           @json = ""
-          @duration = Axial::TimeSpan.empty
+          @duration = TimeSpan.empty
           @description = ""
           @link = ""
         end 

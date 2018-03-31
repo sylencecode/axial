@@ -58,6 +58,54 @@ module Axial
         end
       end
 
+      def dispatch_banned_from_channel_binds(channel_name)
+        @binds.select{ |bind| bind[:type] == :banned_from_channel }.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel_name)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def dispatch_channel_invite_only_binds(channel_name)
+        @binds.select{ |bind| bind[:type] == :channel_invite_only }.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel_name)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def dispatch_mode_binds(channel, nick, mode)
         @binds.select{ |bind| bind[:type] == :mode }.each do |bind|
           Thread.new do

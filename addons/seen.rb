@@ -43,16 +43,16 @@ module Axial
           if (subject_model.nil?)
             channel.message("#{nick.name}: I don't know anything about #{subject_name}.")
           else
-            seen_at = Axial::TimeSpan.new(subject_model.seen.last, Time.now)
+            seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
             msg = "#{nick.name}: I saw #{subject_name} #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
             channel.message(msg)
           end
         else # nick is currently on channel
           if (who.last_spoke.empty?) # but hasn't said anything
-            joined_at = Axial::TimeSpan.new(channel.joined_at, Time.now)
+            joined_at = TimeSpan.new(channel.joined_at, Time.now)
             channel.message("#{nick.name}: #{who.name} is on #{channel.name} but hasn't spoken since I joined #{joined_at.approximate_to_s} ago.")
           else # on channel, and has said something recently
-            last_spoke = Axial::TimeSpan.new(who.last_spoke[:time], Time.now)
+            last_spoke = TimeSpan.new(who.last_spoke[:time], Time.now)
             channel.message("#{nick.name}: #{who.name} is on #{channel.name} and spoke #{last_spoke.approximate_to_s} ago: <#{who.name}> #{who.last_spoke[:text]}")
           end
         end

@@ -70,9 +70,24 @@ module Axial
         channel = @server_interface.channel_list.get(channel_name)
         channel.ban_list.synced = true
         @bot.bind_handler.dispatch_irc_ban_list_end_binds(channel)
-        channel.ban_list.all_bans.each do |ban|
-          puts("#{ban.inspect}")
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
+      end
+
+      def handle_banned_from_channel(channel_name)
+        @bot.bind_handler.dispatch_banned_from_channel_binds(channel_name)
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def handle_channel_invite_only(channel_name)
+        @bot.bind_handler.dispatch_channel_invite_only_binds(channel_name)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -279,6 +294,7 @@ module Axial
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
         @server_interface.set_channel_mode(channel_name, '')
+        @server_interface.set_channel_mode(channel_name, '+b')
         @bot.bind_handler.dispatch_self_join_binds(channel)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -380,9 +396,6 @@ module Axial
           else
             LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
           end
-          channel.ban_list.all_bans.each do |ban|
-            puts("#{ban.inspect}")
-          end
         end
 
         if (mode.bans.any?)
@@ -393,9 +406,6 @@ module Axial
             end
           else
             LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
-          end
-          channel.ban_list.all_bans.each do |ban|
-            puts("#{ban.inspect}")
           end
         end
 

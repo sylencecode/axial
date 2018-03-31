@@ -25,6 +25,8 @@ module Axial
         on_reload                   :start_complaint_timer
         on_axnet       'COMPLAINT', :handle_axnet_complaint
         on_self_join                :send_axnet_op_complaint
+        on_banned_from_channel      :send_axnet_ban_complaint
+        on_channel_invite_only      :send_axnet_invite_only_complaint
         # on banned response
         # on invite only, invite
         # on limit, increase or remove
@@ -50,6 +52,14 @@ module Axial
         # commands
         on_privmsg      'exec',     :handle_privmsg_exec
         on_channel    '?topic',     :handle_topic
+      end
+
+      def send_axnet_ban_complaint(channel_name)
+        LOGGER.debug("banned from channel #{channel_name}, sending complaint")
+      end
+
+      def send_axnet_invite_only_complaint(channel_name)
+        LOGGER.debug("channel #{channel_name} is invite only, sending complaint")
       end
 
       def get_bot_or_user(nick)
@@ -280,10 +290,10 @@ module Axial
           mask = in_mask.strip
           possible_users = get_bots_or_users_mask(mask)
           if (@server_interface.myself.match_mask?(mask) || possible_users.any?)
-            if (!bot_or_director?(user))
-              channel.unban(mask)
+            if (!user.bot?)
+              response_mode.unban(mask)
               if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
-                channel.deop(nick)
+                response_mode.deop(nick)
               end
             end
           end

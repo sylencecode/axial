@@ -94,5 +94,5 @@ end
 require 'axial/models/user.rb'
 require 'axial/models/mask.rb'
 
-Axial::Models::User.create_from_nickname_mask('sylence', '*sylence@*.sylence.org')
-Axial::Models::User[name: 'sylence'].update(role: 'director')
+Models::User.create_from_nickname_mask('sylence', '*sylence@*.sylence.org')
+Models::User[name: 'sylence'].update(role: 'director')

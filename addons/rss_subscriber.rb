@@ -122,7 +122,7 @@ module Axial
           return
         end
 
-        parsed_urls = Axial::URIUtils.extract(feed_url)
+        parsed_urls = URIUtilsUtils.extract(feed_url)
         if (parsed_urls.count == 0)
           channel.message("#{nick.name}: '#{feed_url}' is not a valid URI. (http|https)")
           return
@@ -154,7 +154,7 @@ module Axial
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "#{feed.ingest_count} ingested"
             msg += " #{Colors.gray}|#{Colors.reset} "
-            last = Axial::TimeSpan.new(Time.now, feed.last_ingest)
+            last = TimeSpan.new(Time.now, feed.last_ingest)
             msg += "last: #{last.short_to_s} ago"
             msg += " #{Colors.gray}|#{Colors.reset} "
             if (feed.enabled)

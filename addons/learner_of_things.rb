@@ -94,7 +94,7 @@ module Axial
       def random(channel, nick, command)
         thing_model = Models::Thing.order(Sequel.lit('RANDOM()')).first
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
-        learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
+        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}random thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
@@ -118,7 +118,7 @@ module Axial
           return
         end
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
-        learned_at = Axial::TimeSpan.new(thing_model.learned_at, Time.now)
+        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)

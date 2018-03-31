@@ -37,7 +37,7 @@ module Axial
 
       def self.get_from_nick_object(nick)
         if (!nick.kind_of?(IRCTypes::Nick))
-          raise(UserObjectError, "Attempted to query a user record for an object type other than Axial::IRCTypes::Nick.")
+          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick.")
         end
 
         user_model = self[name: nick.name.downcase]
@@ -50,8 +50,7 @@ module Axial
       def match_mask?(in_mask)
         match = false
         masks.each do |mask|
-          mask_regexp = Axial::MaskUtils.get_mask_regexp(mask.mask)
-          if (mask_regexp.match(in_mask))
+          if (MaskUtils.masks_match?(mask.mask, in_mask))
             match = true
             break
           end
@@ -60,7 +59,7 @@ module Axial
       end
 
       def self.create_from_nickname_mask(nickname, mask)
-        mask = Axial::MaskUtils.ensure_wildcard(mask)
+        mask = MaskUtils.ensure_wildcard(mask)
         user_model = User.create(name: nickname.downcase, pretty_name: nickname)
         user_model.seen = Seen.create(user_id: user_model.id, status: 'for the first time', last: Time.now)
         mask_model = Models::Mask.create(mask: mask, user_id: user_model.id)

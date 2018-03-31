@@ -19,7 +19,7 @@ module Axial
           params[:key]     = @youtube_key
           rest_endpoint = URI::parse(@rest_api)
           rest_endpoint.query = URI.encode_www_form(params)
-          video = Axial::API::YouTube::Video.new
+          video = API::YouTube::Video.new
           response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
           json = JSON.parse(response)
           video.json = json

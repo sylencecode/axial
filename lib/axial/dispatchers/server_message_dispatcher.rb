@@ -16,6 +16,10 @@ module Axial
           when Channel::BAN_LIST_ENTRY
             channel, mask, who_set, set_at = Regexp.last_match.captures
             @bot.channel_handler.handle_ban_list_entry(channel, mask, who_set, set_at)
+          when Channel::BANNED_FROM_CHANNEL
+            @bot.channel_handler.handle_banned_from_channel(Regexp.last_match[1])
+          when Channel::CHANNEL_INVITE_ONLY
+            @bot.channel_handler.handle_channel_invite_only(Regexp.last_match[1])
           when Channel::CREATED
             channel_name, created_at = Regexp.last_match.captures
             @bot.channel_handler.dispatch_created(channel_name, created_at.to_i)

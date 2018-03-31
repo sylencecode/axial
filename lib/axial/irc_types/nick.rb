@@ -69,12 +69,11 @@ module Axial
       end
 
       def match_mask?(in_mask)
-        mask_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
-        if (mask_regexp.match(uhost))
-          return true
-        else
-          return false
+        match = false
+        if (MaskUtils.masks_match?(uhost, in_mask))
+          match = true
         end
+        return match
       end
 
       def self.from_uhost(server_interface, uhost)

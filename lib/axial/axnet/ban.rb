@@ -34,12 +34,11 @@ module Axial
       end
 
       def match_mask?(in_mask)
-        match_regexp = Axial::MaskUtils.get_mask_regexp(@mask)
-        if (match_regexp.match(in_mask))
-          return true
-        else
-          return false
+        match = false
+        if (MaskUtils.masks_match?(@mask, in_mask))
+          match = true
         end
+        return match
       end
     end
   end

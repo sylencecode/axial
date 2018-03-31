@@ -45,7 +45,7 @@ module Axial
 
       def get_from_nick_object(nick)
         if (!nick.kind_of?(IRCTypes::Nick))
-          raise(UserObjectError, "Attempted to query a user record for an object type other than Axial::IRCTypes::Nick.")
+          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick.")
         end
 
         user = get_user_from_mask(nick.uhost)
@@ -53,7 +53,7 @@ module Axial
       end
 
       def get_user_from_mask(in_mask)
-        in_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
+        in_mask = MaskUtils.ensure_wildcard(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
           raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name} .join(', ')}")
@@ -64,14 +64,9 @@ module Axial
       def get_users_from_mask(in_mask)
         possible_users = []
         @monitor.synchronize do
-          left_mask = Axial::MaskUtils.ensure_wildcard(in_mask)
-          left_regexp = Axial::MaskUtils.get_mask_regexp(in_mask)
           @user_list.each do |user|
-            user.masks.each do |right_mask|
-              right_regexp = Axial::MaskUtils.get_mask_regexp(right_mask)
-              if (right_regexp.match(left_mask))
-                possible_users.push(user)
-              elsif (left_regexp.match(right_mask))
+            user.masks.each do |mask|
+              if (MaskUtils.masks_match?(mask, in_mask))
                 possible_users.push(user)
               end
             end

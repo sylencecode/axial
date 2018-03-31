@@ -23,12 +23,12 @@ module Axial
     end
 
     def on_nick_change(method)
-      LOGGER.debug("Nick changes will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("nick changes will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :nick_change, method: method)
     end
 
     def on_startup(method)
-      LOGGER.debug("Startup will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("startup will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :startup, method: method)
     end
 
@@ -43,17 +43,27 @@ module Axial
     end
 
     def on_ban_list(method)
-      LOGGER.debug("Banlist update invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("banlist update invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :ban_list, method: method)
     end
 
     def on_user_list(method)
-      LOGGER.debug("Userlist update will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("userlist update will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :user_list, method: method)
     end
 
+    def on_banned_from_channel(method)
+      LOGGER.debug("banned from channel (#474) will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :banned_from_channel, method: method)
+    end
+
+    def on_channel_invite_only(method)
+      LOGGER.debug("invite only (#473) will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :channel_invite_only, method: method)
+    end
+
     def on_reload(method)
-      LOGGER.debug("Addon reload will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("addon reload will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :reload, method: method)
     end
 
@@ -64,7 +74,7 @@ module Axial
       args = in_args.flatten
       method = args.pop
       modes = args
-      LOGGER.debug("Channel mode change (#{modes.join(', ')}) will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel mode change (#{modes.join(', ')}) will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :mode, method: method, modes: modes)
     end
 
@@ -79,17 +89,17 @@ module Axial
     end
 
     def on_kick(method)
-      LOGGER.debug("Channel kick will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel kick will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :kick, method: method)
     end
 
     def on_self_kick(method)
-      LOGGER.debug("Getting kicked myself will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("getting kicked will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :self_kick, method: method)
     end
 
     def on_part(method)
-      LOGGER.debug("Channel part will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel part will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :part, method: method)
     end
 
@@ -99,12 +109,12 @@ module Axial
     end
 
     def on_channel_sync(method)
-      LOGGER.debug("Channel sync will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel sync will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :channel_sync, method: method)
     end
 
     def on_join(method)
-      LOGGER.debug("Channel join will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel join will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :join, method: method)
     end
 
@@ -114,29 +124,29 @@ module Axial
     end
 
     def on_self_join(method)
-      LOGGER.debug("Channel self-join will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("channel self-join will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :self_join, method: method)
     end
 
     def on_channel_any(method)
-      LOGGER.debug("All channel messages will invoke method '#{self.class}.#{method}'")
+      LOGGER.debug("all channel messages will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :channel_any, method: method)
     end
 
     def on_channel(command, method)
       if (command.is_a?(Regexp))
-        LOGGER.debug("Channel comand expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel comand expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
       else
-        LOGGER.debug("Channel command '#{command}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel command '#{command}' will invoke method '#{self.class}.#{method}'")
       end
       @listeners.push(type: :channel, command: command, method: method)
     end
 
     def on_channel_glob(text, method)
       if (text.is_a?(Regexp))
-        LOGGER.debug("Channel global expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel global expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
       else
-        LOGGER.debug("Channel global text '#{text}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel global text '#{text}' will invoke method '#{self.class}.#{method}'")
       end
       @listeners.push(type: :channel_glob, text: text, method: method)
     end
@@ -151,7 +161,7 @@ module Axial
     end
 
     def on_privmsg(command, method)
-      LOGGER.debug("Private message '#{command}' will invoke method '#{self.class}.#{method}")
+      LOGGER.debug("private message '#{command}' will invoke method '#{self.class}.#{method}")
       @listeners.push(type: :privmsg, command: command, method: method)
     end
 
