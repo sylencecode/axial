@@ -92,6 +92,17 @@ module Axial
         set_mode(mode)
       end
 
+      def invite(nick_or_name)
+        if (nick_or_name.is_a?(IRCTypes::Nick))
+          nick_name = nick_or_name.name.downcase
+        elsif (nick_or_name.is_a?(String))
+          nick_name = nick_or_name.downcase
+        end
+
+        @server_interface.send_raw("INVITE #{nick_name} #{@name}")
+      end
+
+
       def set_mode(mode)
         if (!mode.is_a?(IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")

@@ -40,10 +40,6 @@ module Axial
         end
       end
 
-      def invite_to_channel(nick_name, channel_name)
-        @bot.connection_handler.send_raw("INVITE #{nick_name} #{channel_name}")
-      end
-
       def send_who(channel_name)
         @bot.connection_handler.send_raw("WHO #{channel_name}")
       end

@@ -83,12 +83,8 @@ module Axial
         clear_pending(channel, :banned)
       end
 
-      def check_if_deopped(channel, mode = nil)
-        if (mode.nil?)
-          if (!channel.opped?)
-            queue_request(channel, :op)
-          end
-        elsif (mode.deops.any?)
+      def check_if_deopped(channel, mode)
+        if (mode.deops.any?)
           mode.deops.each do |deop|
             if (deop == myself.name)
               queue_request(channel, :op)
@@ -97,8 +93,12 @@ module Axial
         end
       end
 
-      def check_if_opped(channel, mode)
-        if (mode.ops.any?)
+      def check_if_opped(channel, mode = nil)
+        if (mode.nil?)
+          if (!channel.opped?)
+            queue_request(channel, :op)
+          end
+        elsif (mode.ops.any?)
           mode.deops.each do |op|
             if (op == myself.name)
               clear_pending(channel, :op)
@@ -116,7 +116,6 @@ module Axial
       end
 
       def request_invite(channel_name)
-        puts channel_name.inspect
         queue_request(channel_name, :invite)
       end
 
@@ -148,14 +147,11 @@ module Axial
 
       def handle_assistance_request(handler, command)
         serialized_yaml = command.args
-        puts "INBOUND #{command.command}: #{command.args.inspect}"
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         end
 
         request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
-
-        puts request.inspect
 
         case request.type
           when :op
@@ -169,7 +165,10 @@ module Axial
       end
 
       def handle_invite_request(channel_name, bot_nick)
-        puts "want to invite #{bot_nick.name} to #{channel_name}"
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil?)
+          channel.invite(bot_nick.name)
+        end
       end
 
       def handle_op_request(channel_name, bot_nick)
