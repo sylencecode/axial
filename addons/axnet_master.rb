@@ -82,8 +82,8 @@ module Axial
         @bot_user.role          = 'bot'
         @bot_user.id            = 0
 
-        if (!@server_interface.myself.uhost.empty?)
-          @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
+        if (!myself.uhost.empty?)
+          @bot_user.masks       = [ MaskUtils.ensure_wildcard(myself.uhost) ]
         end
 
         if (bot_list.include?(@bot_user.name))
@@ -152,9 +152,9 @@ module Axial
       end
 
       def check_for_uhost_change()
-        if (!@server_interface.myself.uhost.casecmp(@last_uhost).zero?)
-          LOGGER.debug("uhost changed from #{@last_uhost} to #{@server_interface.myself.uhost}")
-          @last_uhost = @server_interface.myself.uhost
+        if (!myself.uhost.casecmp(@last_uhost).zero?)
+          LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
+          @last_uhost = myself.uhost
           send_bot_list
         end
       end

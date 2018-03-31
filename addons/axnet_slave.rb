@@ -13,19 +13,19 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        @last_uhost             = myself.uhost
-        @uhost_timer            = nil
-        @refresh_timer          = nil
-        @slave_thread           = nil
-        @running                = false
-        @port                   = 34567
-        @handler                = nil
-        @master_address         = 'axial.sylence.org'
-        @cacert                 = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key                    = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert                   = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
-        @bot.local_cn           = get_local_cn
-        @bot_user               = Axnet::User.new
+        @last_uhost                       = myself.uhost
+        @uhost_timer                      = nil
+        @refresh_timer                    = nil
+        @slave_thread                     = nil
+        @running                          = false
+        @port                             = 34567
+        @handler                          = nil
+        @master_address                   = 'axial.sylence.org'
+        @cacert                           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
+        @key                              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
+        @cert                             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
+        @bot.local_cn                     = get_local_cn
+        @bot_user                         = Axnet::User.new
 
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
@@ -40,9 +40,9 @@ module Axial
       end
 
       def check_for_uhost_change()
-        if (!@server_interface.myself.uhost.casecmp(@last_uhost).zero?)
-          LOGGER.debug("uhost changed from #{@last_uhost} to #{@server_interface.myself.uhost}")
-          @last_uhost = @server_interface.myself.uhost
+        if (!myself.uhost.casecmp(@last_uhost).zero?)
+          LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
+          @last_uhost = myself.uhost
           auth_to_axnet
         end
       end
@@ -53,8 +53,8 @@ module Axial
         @bot_user.role          = 'bot'
         @bot_user.id            = 0
 
-        if (!@server_interface.myself.uhost.empty?)
-          @bot_user.masks       = [ MaskUtils.ensure_wildcard(@server_interface.myself.uhost) ]
+        if (!myself.uhost.empty?)
+          @bot_user.masks       = [ MaskUtils.ensure_wildcard(myself.uhost) ]
         end
 
         serialized_yaml         = YAML.dump(@bot_user).gsub(/\n/, "\0")
