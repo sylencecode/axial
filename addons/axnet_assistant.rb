@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/mask_utils'
 require 'axial/irc_types/nick'
 require 'axial/axnet/assistance_request'
 require 'axial/axnet/assistance_response'
@@ -170,6 +171,7 @@ module Axial
           when :keyword
             handle_keyword_request(request.channel_name, request.bot_nick)
           when :banned
+            handle_banned_request(request.channel_name, request.bot_nick)
         end
       end
 
@@ -199,6 +201,19 @@ module Axial
       def handle_keyword_response(channel_name, keyword)
         if (server.trying_to_join.has_key?(channel_name.downcase))
           server.trying_to_join[channel_name.downcase] = keyword
+        end
+      end
+
+      def handle_banned_request(channel_name, bot_nick)
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil?)
+          if (channel.opped?)
+            channel.ban_list.all_bans.each do |ban|
+              if (MaskUtils.masks_match?(ban, bot_nick.uhost))
+                channel.message("checking #{ban}")
+              end
+            end
+          end
         end
       end
 
