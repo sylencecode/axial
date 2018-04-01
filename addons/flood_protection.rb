@@ -19,10 +19,10 @@ module Axial
         @join_flood_period        = 7
 
         @text_flood_threshold     = 5
-        @text_flood_period        = 3
+        @text_flood_period        = 5
 
-        @global_text_threshold    = 7
-        @global_text_period       = 2
+        @global_text_threshold    = 10
+        @global_text_period       = 3
 
         @revolving_door_period    = 15
 
