@@ -43,9 +43,18 @@ module Axial
         on_dcc                  'axnet',  :handle_axnet_command
         on_dcc             'connstatus',  :display_conn_status
 
+        on_channel              '?ping',  :pong_channel
+
         axnet.master = true
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
+      end
+
+      def pong_channel(channel, nick, command)
+        user = user_list.get_from_nick_object(nick)
+        if (!user.nil? && user.director?)
+          channel.message("pong")
+        end
       end
 
       def display_conn_status(dcc, command)

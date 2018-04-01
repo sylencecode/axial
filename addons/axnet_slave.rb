@@ -36,7 +36,16 @@ module Axial
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet         'RELOAD_AXNET',  :reload_axnet
 
+        on_channel              '?ping',  :pong_channel
+
         axnet.register_transmitter(self, :send)
+      end
+
+      def pong_channel(channel, nick, command)
+        user = user_list.get_from_nick_object(nick)
+        if (!user.nil? && user.director?)
+          channel.message("pong")
+        end
       end
 
       def check_for_uhost_change()
