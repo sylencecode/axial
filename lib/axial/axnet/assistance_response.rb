@@ -14,7 +14,7 @@ module Axial
           @type           = type
         end
 
-        @channel_name     = channel_name
+        @channel_name     = channel_name.downcase
         @response         = response
       end
     end

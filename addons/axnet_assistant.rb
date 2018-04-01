@@ -59,9 +59,8 @@ module Axial
           @requests[key] = [ type.to_sym ]
         elsif (!@requests[key].include?(type.to_sym))
           @requests[key].push(type.to_sym)
+          request(key, type.to_sym)
         end
-
-        request(key, type.to_sym)
       end
 
       def request(channel, type)
@@ -132,6 +131,9 @@ module Axial
         possible_user = get_bot_or_user(nick)
         if (bot_or_director?(possible_user))
           clear_pending(channel_name, :invite)
+          if (!server.trying_to_join.has_key?(channel.name.downcase))
+            server.trying_to_join[channel.name.downcase] = ''
+          end
           server.join_channel(channel_name)
         end
         return possible_user
@@ -175,6 +177,28 @@ module Axial
         channel = channel_list.get_silent(channel_name)
         if (!channel.nil? && channel.opped?)
           channel.invite(bot_nick.name)
+        end
+      end
+
+      def handle_assistance_response(handler, command)
+        serialized_yaml = command.args
+        if (axnet.master?)
+          axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + serialized_yaml)
+        end
+
+        response = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+
+        case response.type
+          when :keyword
+            handle_keyword_response(response.channel_name, response.response)
+          else
+            LOGGER.warn("unknown axnet assistance response: #{response.inspect}")
+        end
+      end
+
+      def handle_keyword_response(channel_name, keyword)
+        if (server.trying_to_join.has_key?(channel_name.downcase))
+          server.trying_to_join[channel_name.downcase] = keyword
         end
       end
 
@@ -269,7 +293,7 @@ module Axial
 
       def start_request_timer()
         LOGGER.debug("starting request timer")
-        @request_timer = timer.every_5_seconds(self, :check_for_requests)
+        @request_timer = timer.every_30_seconds(self, :check_for_requests)
       end
 
       def bot_or_director?(user)

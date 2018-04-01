@@ -8,13 +8,24 @@ end
 module Axial
   module Interfaces
     class ServerInterface
-      attr_reader     :channel_list
+      attr_reader     :channel_list, :trying_to_join
       attr_accessor   :myself
 
       def initialize(bot)
-        @bot = bot
-        @channel_list = IRCTypes::ChannelList.new(self)
-        @myself = IRCTypes::Nick.new(self)
+        @bot              = bot
+        @channel_list     = IRCTypes::ChannelList.new(self)
+        @myself           = IRCTypes::Nick.new(self)
+        @trying_to_join   = {}
+      end
+
+      def retry_joins()
+        @trying_to_join.each do |channel_name, keyword|
+          if (keyword.nil? || keyword.empty?)
+            join_channel(channel_name)
+          else
+            join_channel(channel_name, keyword)
+          end
+        end
       end
 
       def join_channel(channel_name, password = '')

@@ -59,8 +59,10 @@ module Axial
       end
 
       def rejoin(channel, kicker_nick, reason)
-        # TODO: get the password out of the database or out of the bot props yaml if one is set
         wait_a_sec
+        if (!server.trying_to_join.has_key?(channel.name.downcase))
+          server.trying_to_join[channel.name.downcase] = ''
+        end
         server.join_channel(channel.name)
       end
 

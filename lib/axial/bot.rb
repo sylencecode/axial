@@ -200,7 +200,10 @@ module Axial
         if (!channel.has_key?('password') || channel['password'].nil? || channel['password'].empty?)
           channel['password'] = ''
         end
-        @server_interface.join_channel(channel['name'], channel['password'])
+        if (!@server_interface.trying_to_join.has_key?(channel['name'].downcase))
+          @server_interface.trying_to_join[channel['name'].downcase] = channel['password']
+        end
+        @server_interface.join_channel(channel['name'].downcase, channel['password'])
       end
     end
 

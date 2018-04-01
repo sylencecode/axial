@@ -321,6 +321,9 @@ module Axial
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
+        if (@server_interface.trying_to_join.has_key?(channel_name.downcase))
+          @server_interface.trying_to_join.delete(channel_name.downcase)
+        end
         @server_interface.set_channel_mode(channel_name, '')
         @server_interface.set_channel_mode(channel_name, '+b')
         @bot.bind_handler.dispatch_self_join_binds(channel)
