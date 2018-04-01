@@ -25,15 +25,15 @@ module Axial
         flood_tolerance                   :channel_text,      limit: 12,  time: 22
         flood_tolerance                   :channel_text,      limit: 15,  time: 30
                                           
-        flood_tolerance                   :all_channel_text,  limit: 7,   time: 3
-        flood_tolerance                   :all_channel_text,  limit: 10,  time: 4
-        flood_tolerance                   :all_channel_text,  limit: 15,  time: 7
+        flood_tolerance                   :all_channel_text,  limit: 7,   time: 4
+        flood_tolerance                   :all_channel_text,  limit: 10,  time: 7
+        flood_tolerance                   :all_channel_text,  limit: 15,  time: 10
                                           
-        #flood_tolerance                   :revolving_door,                time: 30
+        flood_tolerance                   :revolving_door,                time: 30
                                           
-        flood_tolerance                   :join,              limit: 3,   time: 20
-        flood_tolerance                   :join,              limit: 5,   time: 5
-        flood_tolerance                   :join,              limit: 7,   time: 20
+        flood_tolerance                   :join,              limit: 3,   time: 2
+        flood_tolerance                   :join,              limit: 5,   time: 7
+        flood_tolerance                   :join,              limit: 7,   time: 15
         flood_tolerance                   :join,              limit: 10,  time: 30
                                           
         on_part                           :check_revolving_door
