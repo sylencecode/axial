@@ -10,6 +10,7 @@ module Axial
         CHANNEL_INVITE_ONLY   = /^:{0,1}\S+ 473 \S+ (\S+)/
         CREATED               = /^:{0,1}\S+ 329 \S+ (\S+) (\S+)/
         INITIAL_MODE          = /^:{0,1}\S+ 324 \S+ (\S+) (.*)/
+        INITIAL_TOPIC         = /^:{0,1}\S+ 332 \S+ (\S+) :(.*)/
         INVITED               = /^:{0,1}(\S+) INVITE \S+ :{0,1}(\S+)/
         JOIN                  = /^:{0,1}(\S+) JOIN :{0,1}(\S+)/
         KICK                  = /^:{0,1}(\S+) KICK (\S+) (\S+) :{0,1}(.*)/
@@ -21,6 +22,7 @@ module Axial
         NOT_OPERATOR          = /^:{0,1}\S+ 482 (\S+)/
         PART                  = /^:{0,1}(\S+) PART (\S+) :{0,1}(.*)/
         PART_NO_REASON        = /^:{0,1}(\S+) PART (\S+)/
+        TOPIC_CHANGE          = /^:{0,1}(\S+) TOPIC (\S+) :{0,1}(.*)/
         QUIT                  = /^:{0,1}(\S+) QUIT :{0,1}(.*)/
         WHO_LIST_END          = /^:{0,1}\S+ 315 \S+ (\S+)/
         WHO_LIST_ENTRY        = /^:{0,1}\S+ 352 \S+ (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)/

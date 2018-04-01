@@ -42,7 +42,6 @@ module Axial
 
         # commands
         on_privmsg      'exec',     :handle_privmsg_exec
-        on_channel    '?topic',     :handle_topic
       end
 
       def handle_kick(channel, kicker_nick, kicked_nick, reason)

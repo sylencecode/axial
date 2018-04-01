@@ -29,7 +29,10 @@ module Axial
             @bot.channel_handler.dispatch_created(channel_name, created_at.to_i)
           when Channel::INITIAL_MODE
            channel_name, initial_mode = Regexp.last_match.captures
-           @bot.channel_handler.dispatch_initial_mode(channel_name, initial_mode)
+           @bot.channel_handler.handle_initial_mode(channel_name, initial_mode)
+          when Channel::INITIAL_TOPIC
+           channel_name, initial_topic = Regexp.last_match.captures
+           @bot.channel_handler.handle_initial_topic(channel_name, initial_topic)
           when Channel::INVITED
             uhost, channel_name = Regexp.last_match.captures
             @bot.channel_handler.handle_invited_to_channel(uhost, channel_name)
@@ -54,6 +57,9 @@ module Axial
           when Channel::PART, Channel::PART_NO_REASON
             uhost, channel_name, reason = Regexp.last_match.captures
             @bot.channel_handler.dispatch_part(uhost, channel_name, reason)
+          when Channel::TOPIC_CHANGE
+            uhost, channel_name, topic = Regexp.last_match.captures
+            @bot.channel_handler.handle_topic_change(uhost, channel_name, topic)
           when Channel::QUIT
             uhost, reason = Regexp.last_match.captures
             @bot.channel_handler.dispatch_quit(uhost, reason)

@@ -17,7 +17,24 @@ module Axial
         on_channel  '?about',   :send_help
         on_channel '?reload',   :handle_channel_reload
         on_channel    '?lag',   :ctcp_ping_user
+        on_channel  '?topic',   :change_topic
         on_dcc      'reload',   :handle_dcc_reload
+        on_topic                :handle_topic_change
+      end
+
+      def change_topic(channel, nick, command)
+        if (command.args.empty?)
+          channel.message("#{nick.name}: current topic for #{channel.name} is: #{channel.topic}")
+        else
+          new_topic = command.args
+          if (channel.opped?)
+            channel.set_topic(new_topic)
+          end
+        end
+      end
+
+      def handle_topic_change(channel, nick, topic)
+        channel.message("new topic from #{nick.name}: #{topic}")
       end
 
       def ctcp_ping_user(channel, nick, command)

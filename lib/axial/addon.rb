@@ -162,6 +162,11 @@ module Axial
       @listeners.push(type: :quit, method: method)
     end
 
+    def on_topic(method)
+      LOGGER.debug("channel topic changes will invoke method '#{self.class}.#{method}'")
+      @listeners.push(type: :topic_change, method: method)
+    end
+
     def on_channel_sync(method)
       LOGGER.debug("channel sync will invoke method '#{self.class}.#{method}'")
       @listeners.push(type: :channel_sync, method: method)

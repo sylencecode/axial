@@ -448,14 +448,29 @@ module Axial
         end
       end
 
-      def dispatch_initial_mode(channel_name, initial_mode)
+      def handle_topic_change(uhost, channel_name, topic)
+        channel = @server_interface.channel_list.get(channel_name)
+        nick_name = uhost.split('!').first
+        nick = channel.nick_list.get(nick_name)
+        channel.topic = topic
+        @bot.bind_handler.dispatch_topic_change_binds(channel, nick, topic)
+        LOGGER.debug("#{channel.name} topic changed by #{nick.name} to: #{topic}")
+      end
+
+      def handle_initial_mode(channel_name, initial_mode)
         channel = @server_interface.channel_list.get(channel_name)
         mode_string = initial_mode.strip
         channel.mode.merge_string(mode_string)
       end
 
+      def handle_initial_topic(channel_name, initial_topic)
+        channel = @server_interface.channel_list.get(channel_name)
+        channel.topic = initial_topic
+      end
+
       def dispatch_created(channel_name, created_at)
-        LOGGER.debug("channel #{channel_name} created at " + Time.at(created_at).inspect)
+        channel = @server_interface.channel_list.get(channel_name)
+        channel.created = Time.at(created_at)
       end
 
       def dispatch_nick_change(uhost, new_nick_name)

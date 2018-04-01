@@ -154,6 +154,30 @@ module Axial
         end
       end
 
+      def dispatch_topic_change_binds(channel, nick, topic)
+        @binds.select{ |bind| bind[:type] == :topic_change }.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                bind[:object].public_send(bind[:method], channel, nick, topic)
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def dispatch_channel_invite_only_binds(channel_name)
         @binds.select{ |bind| bind[:type] == :channel_invite_only }.each do |bind|
           Thread.new do

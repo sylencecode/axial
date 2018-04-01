@@ -9,7 +9,7 @@ module Axial
   module IRCTypes
     class Channel
       attr_reader :name, :monitor, :joined_at, :uuid, :ban_list
-      attr_accessor :password, :nick_list, :opped, :voiced, :mode, :topic
+      attr_accessor :password, :nick_list, :opped, :voiced, :mode, :topic, :created
 
       def initialize(server_interface, channel_name)
         @server_interface     = server_interface
@@ -22,6 +22,7 @@ module Axial
         @voiced               = false
         @joined_at            = Time.now
         @uuid                 = SecureRandom.uuid
+        @created              = Time.now
         # lock this for an update
         @ban_list             = IRCTypes::ChannelBanList.new(self)
       end
@@ -92,6 +93,10 @@ module Axial
         set_mode(mode)
       end
 
+      def set_topic(topic)
+        @server_interface.send_raw("TOPIC #{@name} :#{topic}")
+      end
+
       def invite(nick_or_name)
         if (nick_or_name.is_a?(IRCTypes::Nick))
           nick_name = nick_or_name.name.downcase
@@ -101,7 +106,6 @@ module Axial
 
         @server_interface.send_raw("INVITE #{nick_name} #{@name}")
       end
-
 
       def set_mode(mode)
         if (!mode.is_a?(IRCTypes::Mode))
