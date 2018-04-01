@@ -70,22 +70,20 @@ module Axial
 
       def ban_mask(sender, user, command)
         if (command.args.strip =~ /(\S+)(.*)/)
-          in_mask, reason = Regexp.last_match.captures
+          mask, reason = Regexp.last_match.captures
         else
           sender.message("try #{command.command} <mask> <reason>")
         end
 
-        if (in_mask.nil? || in_mask.strip.empty?)
+        if (mask.nil? || mask.strip.empty?)
           sender.message("try #{command.command} <mask> <reason>")
           return
         elsif (reason.nil? || reason.strip.empty?)
           reason = 'banned'
         end
 
-        in_mask.strip!
-        reason.strip!
-
-        mask = MaskUtils.ensure_wildcard(mask)
+        mask = MaskUtils.ensure_wildcard(mask.strip)
+        reason = reason.strip
 
         begin
           bans = ban_list.get_bans_from_mask(mask)
