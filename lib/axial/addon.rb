@@ -194,20 +194,20 @@ module Axial
 
     def on_channel(command, method)
       if (command.is_a?(Regexp))
-        LOGGER.debug("channel comand expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
       else
-        LOGGER.debug("channel command '#{command}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
       end
       @listeners.push(type: :channel, command: command, method: method)
     end
 
-    def on_channel_glob(text, method)
+    def on_channel_leftover(text, method)
       if (text.is_a?(Regexp))
-        LOGGER.debug("channel global expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel leftover expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
       else
-        LOGGER.debug("channel global text '#{text}' will invoke method '#{self.class}.#{method}'")
+        LOGGER.debug("channel leftover text '#{text}' will invoke method '#{self.class}.#{method}'")
       end
-      @listeners.push(type: :channel_glob, text: text, method: method)
+      @listeners.push(type: :channel_leftover, text: text, method: method)
     end
 
     def on_axnet(command, method)

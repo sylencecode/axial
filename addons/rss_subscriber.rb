@@ -21,9 +21,9 @@ module Axial
 
         @ingest_timer         = nil
 
-        on_channel  '?feed',  :handle_rss_command
-        on_channel  '?news',  :handle_rss_command
-        on_channel  '?rss',   :handle_rss_command
+        on_channel   'feed',  :handle_rss_command
+        on_channel   'news',  :handle_rss_command
+        on_channel   'rss',   :handle_rss_command
         on_startup            :start_ingest_timer
         on_reload             :start_ingest_timer
       end

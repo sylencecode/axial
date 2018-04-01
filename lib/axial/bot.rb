@@ -21,7 +21,8 @@ module Axial
   class Bot
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
-                  :axnet, :ban_list, :user_list, :timer, :bot_list
+                  :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
+                  :dcc_command_character
 
     attr_accessor :real_nick, :local_cn
     @class_instance = nil
@@ -145,7 +146,7 @@ module Axial
           addon_object.listeners.each do |listener|
             if (listener[:type] == :mode)
               @binds.push(type: listener[:type], object: addon_object, method: listener[:method].to_sym, modes: listener[:modes])
-            elsif (listener[:type] == :channel_glob)
+            elsif (listener[:type] == :channel_leftover)
               @binds.push(type: listener[:type], object: addon_object, text: listener[:text], method: listener[:method].to_sym)
             else
               @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method].to_sym)
@@ -208,31 +209,35 @@ module Axial
     end
 
     def set_defaults()
-      @addons             = []
-      @binds              = []
-      @running            = true
+      @addons                     = []
+      @binds                      = []
+      @running                    = true
     end
     private :set_defaults
 
     def load_server_settings()
-      address             = @props['server']['address']  || 'irc.efnet.org'
-      port                = @props['server']['port']     || 6667
-      timeout             = @props['server']['timeout']  || 10
-      ssl                 = @props['server']['ssl']      || false
-      password            = @props['server']['password'] || ''
-      @server             = IRCTypes::Server.new(address, port, ssl, password, timeout)
-      Bot.server          = @server
+      address                     = @props['server']['address']         || 'irc.efnet.org'
+      port                        = @props['server']['port']            || 6667
+      timeout                     = @props['server']['timeout']         || 10
+      ssl                         = @props['server']['ssl']             || false
+      password                    = @props['server']['password']        || ''
+
+      @server                     = IRCTypes::Server.new(address, port, ssl, password, timeout)
+      Bot.server                  = @server
     end
     private :load_server_settings
 
     def load_properties()
-      @props              = YAML.load_file(@props_yaml)
-      @addon_list         = @props['addons']             || []
-      @autojoin_channels  = @props['channels']           || []
-      @nick               = @props['bot']['nick']        || 'unnamed'
-      @real_name          = @props['bot']['real_name']   || 'unnamed'
-      @user               = @props['bot']['user_name']   || 'unnamed'
-      @real_nick          = @props['bot']['nick']        || 'unnamed'
+      @props                      = YAML.load_file(@props_yaml)
+      @addon_list                 = @props['addons']                    || []
+      @autojoin_channels          = @props['channels']                  || []
+      @nick                       = @props['bot']['nick']               || 'unnamed'
+      @real_name                  = @props['bot']['real_name']          || 'unnamed'
+      @user                       = @props['bot']['user_name']          || 'unnamed'
+      @real_nick                  = @props['bot']['nick']               || 'unnamed'
+      @dcc_command_character      = @props['dcc_command_character']     || '.'
+      @channel_command_character  = @props['channel_command_character'] || '?'
+      @real_nick                  = @props['bot']['nick']               || 'unnamed'
     end
     private :load_properties
   end

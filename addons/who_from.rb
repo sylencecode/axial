@@ -12,8 +12,8 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        on_channel '?whofrom', :who_from
-        on_channel '?who',     :who_from
+        on_channel 'whofrom', :who_from
+        on_channel 'who',     :who_from
       end
 
       def who_from(channel, nick, command)

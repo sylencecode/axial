@@ -634,7 +634,7 @@ module Axial
             end
           end
           if (bind[:command].is_a?(String))
-            match = '^(' + Regexp.escape(bind[:command]) + ')'
+            match = '^' + @bot.channel_command_character + '(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
             args_match = match + '\s+(.*)'
             # this is done to ensure that a command is typed in its entirety, even if it had no arguments
@@ -700,29 +700,14 @@ module Axial
           end
         end
 
-        # wasn't a command, check against the channel globs
-        @binds.select{ |bind| bind[:type] == :channel_glob }.each do |bind|
+        # wasn't a command, check against the channel leftover patterns
+        @binds.select{ |bind| bind[:type] == :channel_leftover }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end
           end
-          if (bind[:text].is_a?(String))
-            if (text.include?(bind[:text]))
-              bind[:object].last = Time.now
-              Thread.new do
-                begin
-                  bind[:object].public_send(bind[:method], channel, nick, text)
-                rescue Exception => ex
-                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-                  ex.backtrace.each do |i|
-                    LOGGER.error(i)
-                  end
-                end
-              end
-              break
-            end
-          elsif (bind[:text].is_a?(Regexp))
+          if (bind[:text].is_a?(Regexp))
             if (text =~ bind[:text])
               bind[:object].last = Time.now
               Thread.new do
@@ -742,7 +727,7 @@ module Axial
               break
             end
           else
-            LOGGER.error("#{self.class}: unsure how to handle bind #{bind[:text]} - it isn't a string or regexp.")
+            LOGGER.error("#{self.class}: unsure how to handle bind #{bind[:text]} - it isn't a regexp.")
           end
         end
       rescue Exception => ex
@@ -845,7 +830,7 @@ module Axial
           end
           dcc = IRCTypes::DCC.from_socket(@bot.server_interface, socket, user)
           if (bind[:command].is_a?(String))
-            match = '^(' + Regexp.escape(bind[:command]) + ')'
+            match = '^' + @bot.dcc_command_character + '(' + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
             args_match = match + '\s+(.*)'
             # this is done to ensure that a command is typed in its entirety, even if it had no arguments
@@ -879,25 +864,6 @@ module Axial
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
                     bind[:object].public_send(bind[:method], dcc, command_object)
-                  else
-                    LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
-                  end
-                rescue Exception => ex
-                  LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-                  ex.backtrace.each do |i|
-                    LOGGER.error(i)
-                  end
-                end
-              end
-              break
-            end
-          elsif (bind[:command].is_a?(Regexp))
-            if (text =~ bind[:command])
-              bind[:object].last = Time.now
-              Thread.new do
-                begin
-                  if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], dcc, text)
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end

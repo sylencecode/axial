@@ -27,6 +27,10 @@ module Axial
         @bot.local_cn                     = get_local_cn
         @bot_user                         = Axnet::User.new
 
+        if (axnet.master)
+          raise(AddonError, "attempted to load both the axnet master and slave addons")
+        end
+
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
         on_axnet_connect                  :axnet_login
@@ -36,7 +40,7 @@ module Axial
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet         'RELOAD_AXNET',  :reload_axnet
 
-        on_channel              '?ping',  :pong_channel
+        on_channel               'ping',  :pong_channel
 
         axnet.register_transmitter(self, :send)
       end

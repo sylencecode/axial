@@ -11,10 +11,11 @@ module Axial
         @name    = 'last seen'
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
+  
+        on_channel      'seen',   :seen
+        on_channel 'lastspoke',   :seen
+        on_channel      'last',   :seen
 
-        on_channel      '?seen',  :seen
-        on_channel '?lastspoke',  :seen
-        on_channel      '?last',  :seen
         on_channel_any            :update_last_spoke
         on_join                   :update_seen_join
         on_part                   :update_seen_part

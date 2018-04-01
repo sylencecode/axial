@@ -201,15 +201,15 @@ module Axial
 
         throttle   2
 
-        on_channel '?arabic',    :translate_arabic
-        on_channel '?chinese',   :translate_chinese
-        on_channel '?english',   :translate_english
-        on_channel '?french',    :translate_french
-        on_channel '?german',    :translate_german
-        on_channel '?hebrew',    :translate_hebrew
-        on_channel '?japanese',  :translate_japanese
-        on_channel '?russian',   :translate_russian
-        on_channel '?spanish',   :translate_spanish
+        on_channel 'arabic',    :translate_arabic
+        on_channel 'chinese',   :translate_chinese
+        on_channel 'english',   :translate_english
+        on_channel 'french',    :translate_french
+        on_channel 'german',    :translate_german
+        on_channel 'hebrew',    :translate_hebrew
+        on_channel 'japanese',  :translate_japanese
+        on_channel 'russian',   :translate_russian
+        on_channel 'spanish',   :translate_spanish
       end
 
       def translate_arabic(channel, nick, command)

@@ -13,11 +13,11 @@ module Axial
 
         throttle 10
 
-        on_channel   '?help',   :send_help
-        on_channel  '?about',   :send_help
-        on_channel '?reload',   :handle_channel_reload
-        on_channel    '?lag',   :ctcp_ping_user
-        on_channel  '?topic',   :change_topic
+        on_channel    'help',   :send_help
+        on_channel   'about',   :send_help
+        on_channel  'reload',   :handle_channel_reload
+        on_channel     'lag',   :ctcp_ping_user
+        on_channel   'topic',   :change_topic
         on_dcc      'reload',   :handle_dcc_reload
         on_topic                :handle_topic_change
       end

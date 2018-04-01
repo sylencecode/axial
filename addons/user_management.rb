@@ -14,13 +14,13 @@ module Axial
         @version = '1.1.0'
         @valid_roles = %w(director manager op friend)
 
-        on_channel  '?addmask',   :handle_channel_add_mask
-        on_channel  '?adduser',   :add_user
-        on_channel '?getmasks',   :get_masks
-        on_channel  '?setrole',   :set_role
-        on_channel      '?ban',   :handle_channel_ban
+        on_channel  'addmask',    :handle_channel_add_mask
+        on_channel  'adduser',    :add_user
+        on_channel 'getmasks',    :get_masks
+        on_channel  'setrole',    :set_role
+        on_channel      'ban',    :handle_channel_ban
+        on_channel    'unban',    :handle_channel_unban
         on_dcc           'ban',   :handle_dcc_ban
-        on_channel    '?unban',   :handle_channel_unban
         on_dcc         'unban',   :handle_dcc_unban
         on_dcc       'addmask',   :handle_dcc_add_mask
 
