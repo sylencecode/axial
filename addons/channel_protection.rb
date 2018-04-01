@@ -1,5 +1,6 @@
-require 'axial/irc_types/nick'
 require 'axial/addon'
+require 'axial/mask_utils'
+require 'axial/irc_types/nick'
 
 module Axial
   module Addons
@@ -150,8 +151,9 @@ module Axial
         user = get_bot_or_user(nick)
         response_mode = IRCTypes::Mode.new
 
-        mode.bans.each do |in_mask|
-          mask = in_mask.strip
+        kicks = []
+        mode.bans.each do |ban_mask|
+          mask = ban_mask.strip
           possible_users = get_bots_or_users_mask(mask)
           if (myself.match_mask?(mask) || possible_users.any?)
             if (!bot_or_director?(user))
@@ -160,11 +162,21 @@ module Axial
                 response_mode.deop(nick)
               end
             end
+          else
+            channel.nick_list.all_nicks.each do |tmp_nick|
+              if (MaskUtils.masks_match?(ban_mask, tmp_nick.uhost))
+                kicks.push(nick: tmp_nick, reason: "banned by #{nick.name}")
+              end
+            end
           end
         end
 
         if (response_mode.any?)
           channel.set_mode(response_mode)
+        end
+
+        kicks.each do |kick|
+          channel.kick(kick[:nick], kick[:reason])
         end
       end
 
