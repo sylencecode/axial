@@ -26,7 +26,7 @@ module Axial
           elsif (in_mask.empty?)
             channel.message("#{nick.name}: try #{command.command} <mask> instead of whatever you just did.")
           else
-            users = Models::Mask.get_users_from_mask(in_mask).collect{ |user| user.pretty_name }
+            users = Models::Mask.get_users_from_overlaps(in_mask).collect{ |user| user.pretty_name }
             LOGGER.debug("#{nick.uhost} requested nicks from '#{in_mask}'")
             if (users.count > 0)
               user_string = users.join(', ')

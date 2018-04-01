@@ -34,7 +34,14 @@ module Axial
         return possible_users.uniq
       end
 
-      def get_users_from_overlaps(in_mask)
+      def self.get_users_from_overlaps(in_mask)
+        possible_users = []
+        Mask.all.each do |mask|
+          if (MaskUtils.masks_overlap?(mask.mask, in_mask))
+            possible_users.push(mask.user)
+          end
+        end
+        return possible_users.uniq
       end
 
       def self.get_user_from_mask(in_mask)
