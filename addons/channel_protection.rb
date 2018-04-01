@@ -138,7 +138,7 @@ module Axial
           possible_user = get_bot_or_user(subject_nick)
           if (possible_user.nil?)
             next
-          elsif (possible_user.op? || possible_user.bot?)
+          elsif (possible_user.op?)
             if (!subject_nick.opped_on?(channel))
               response_mode.op(subject_nick.name)
             end
