@@ -58,7 +58,7 @@ module Axial
         if (possible_users.count > 1)
           raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name} .join(', ')}")
         end
-        return possible_users.first
+        return possible_users.uniq.first
       end
 
       def get_users_from_mask(in_mask)
@@ -72,7 +72,7 @@ module Axial
             end
           end
         end
-        return possible_users
+        return possible_users.uniq
       end
 
       def reload(user_list)

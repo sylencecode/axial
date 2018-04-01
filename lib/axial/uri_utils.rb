@@ -30,7 +30,7 @@ module Axial
           url_array.push(url)
         end
       end
-      return url_array
+      return url_array.uniq
     end
  
     def self.shorten(in_url)

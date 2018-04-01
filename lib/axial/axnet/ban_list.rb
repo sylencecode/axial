@@ -44,7 +44,7 @@ module Axial
             end
           end
         end
-        return bans
+        return bans.uniq
       end
 
       def reload(ban_list)
