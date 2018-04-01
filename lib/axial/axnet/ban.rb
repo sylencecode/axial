@@ -33,6 +33,14 @@ module Axial
         return "banned #{@set_at.strftime("%m/%d/%Y")} by #{@user_name}: #{@reason}"
       end
 
+      def masks_overlap?(in_mask)
+        match = false
+        if (MaskUtils.masks_overlap?(@mask, in_mask))
+          match = true
+        end
+        return match
+      end
+
       def match_mask?(in_mask)
         match = false
         if (MaskUtils.masks_match?(@mask, in_mask))

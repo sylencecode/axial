@@ -75,6 +75,20 @@ module Axial
         return possible_users.uniq
       end
 
+      def get_users_from_overlap(in_mask)
+        possible_users = []
+        @monitor.synchronize do
+          @user_list.each do |user|
+            user.masks.each do |mask|
+              if (MaskUtils.masks_overlap?(mask, in_mask))
+                possible_users.push(user)
+              end
+            end
+          end
+        end
+        return possible_users.uniq
+      end
+
       def reload(user_list)
         if (!user_list.is_a?(Axnet::UserList))
           raise(AxnetError, "attempted to add an object of type other than Axnet::UserList: #{user_list.inspect}")

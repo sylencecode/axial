@@ -154,9 +154,13 @@ module Axial
         kicks = []
         mode.bans.each do |ban_mask|
           mask = ban_mask.strip
-          possible_users = get_bots_or_users_mask(mask)
+          possible_users = get_bots_or_users_overlap(mask)
           if (myself.match_mask?(mask) || possible_users.any?)
             if (!bot_or_director?(user))
+              if (possible_users.any?)
+                protected_user_names = possible_users.uniq.collect{ |user| user.name }
+                channel.message("#{nick.name}: mask '#{ban_mask}' would potentially ban protected users: #{protected_user_names.join(', ')}")
+              end
               response_mode.unban(mask)
               if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
                 response_mode.deop(nick)
@@ -370,6 +374,17 @@ module Axial
           bots_or_users.push(tmp_mask)
         end
         bot_list.get_users_from_mask(mask).each do |tmp_mask|
+          bots_or_users.push(tmp_mask)
+        end
+        return bots_or_users
+      end
+
+      def get_bots_or_users_overlap(mask)
+        bots_or_users = []
+        user_list.get_users_from_overlap(mask).each do |tmp_mask|
+          bots_or_users.push(tmp_mask)
+        end
+        bot_list.get_users_from_overlap(mask).each do |tmp_mask|
           bots_or_users.push(tmp_mask)
         end
         return bots_or_users
