@@ -634,7 +634,7 @@ module Axial
             end
           end
           if (bind[:command].is_a?(String))
-            match = '^' + @bot.channel_command_character + '(' + Regexp.escape(bind[:command]) + ')'
+            match = '^(' + Regexp.escape(@bot.channel_command_character) + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
             args_match = match + '\s+(.*)'
             # this is done to ensure that a command is typed in its entirety, even if it had no arguments
@@ -830,7 +830,7 @@ module Axial
           end
           dcc = IRCTypes::DCC.from_socket(@bot.server_interface, socket, user)
           if (bind[:command].is_a?(String))
-            match = '^' + @bot.dcc_command_character + '(' + Regexp.escape(bind[:command]) + ')'
+            match = '^(' + Regexp.escape(@bot.dcc_command_character) + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
             args_match = match + '\s+(.*)'
             # this is done to ensure that a command is typed in its entirety, even if it had no arguments
