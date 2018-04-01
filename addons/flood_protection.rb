@@ -15,7 +15,7 @@ module Axial
         @nick_flood_threshold     = 3
         @nick_flood_period        = 30
 
-        @join_flood_threshold     = 3
+        @join_flood_threshold     = 4
         @join_flood_period        = 7
 
         @text_flood_threshold     = 5
@@ -24,7 +24,7 @@ module Axial
         @global_text_threshold    = 10
         @global_text_period       = 3
 
-        @revolving_door_period    = 15
+        @revolving_door_period    = 30
 
         @flood_reset_timer        = nil
         @nick_changes             = {} # not channel-specific, needs to ban on all channels
@@ -90,6 +90,7 @@ module Axial
               channel.kick(nick, "text flood: #{@text_flood_counter[nick.uuid].count} lines in #{@text_flood_period} seconds")
               timer.in_5_minutes do
                 if (channel.opped?)
+                  wait_a_sec
                   if (channel.ban_list.include?(ban_mask))
                     channel.unban(ban_mask)
                   end
@@ -116,6 +117,7 @@ module Axial
               channel.set_mode(response_mode)
               timer.in_1_minute do
                 if (channel.opped?)
+                  wait_a_sec
                   if (channel.mode.invite_only?)
                     response_mode = IRCTypes::Mode.new
                     response_mode.invite_only = false
@@ -139,8 +141,11 @@ module Axial
             ban_mask = MaskUtils.ensure_wildcard(nick.host)
             channel.ban(ban_mask)
             timer.in_5_minutes do
-              if (channel.ban_list.include?(ban_mask))
-                channel.unban(ban_mask)
+              if (channel.opped?)
+                wait_a_sec
+                if (channel.ban_list.include?(ban_mask))
+                  channel.unban(ban_mask)
+                end
               end
             end
           end
@@ -165,6 +170,7 @@ module Axial
                 channel.kick(nick, "nick flood: #{@nick_changes[nick.uuid].count} nick changes in #{@nick_flood_period} seconds")
                 timer.in_5_minutes do
                   if (channel.opped?)
+                    wait_a_sec
                     if (channel.ban_list.include?(ban_mask))
                       channel.unban(ban_mask)
                     end
