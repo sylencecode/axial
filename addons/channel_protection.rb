@@ -154,7 +154,7 @@ module Axial
           mask = in_mask.strip
           possible_users = get_bots_or_users_mask(mask)
           if (myself.match_mask?(mask) || possible_users.any?)
-            if (!user.bot?)
+            if (!bot_or_director?(user))
               response_mode.unban(mask)
               if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
                 response_mode.deop(nick)
@@ -354,7 +354,7 @@ module Axial
 
       def get_bots_or_users_mask(mask)
         bots_or_users = []
-        @ser_list.get_users_from_mask(mask).each do |tmp_mask|
+        user_list.get_users_from_mask(mask).each do |tmp_mask|
           bots_or_users.push(tmp_mask)
         end
         bot_list.get_users_from_mask(mask).each do |tmp_mask|

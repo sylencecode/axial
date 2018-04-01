@@ -88,7 +88,7 @@ module Axial
         clear_pending(channel, :banned)
       end
 
-      def check_if_deopped(channel, mode)
+      def check_if_deopped(channel, nick, mode)
         if (mode.deops.any?)
           mode.deops.each do |deop|
             if (deop == myself.name)
