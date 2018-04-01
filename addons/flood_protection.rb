@@ -8,38 +8,67 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'flood protection'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                             = 'flood protection'
+        @author                           = 'sylence <sylence@sylence.org>'
+        @version                          = '1.1.0'
 
-        @nick_flood_threshold     = 3
-        @nick_flood_period        = 30
-
-        @join_flood_threshold     = 4
-        @join_flood_period        = 7
-
-        @text_flood_threshold     = 5
-        @text_flood_period        = 5
-
-        @global_text_threshold    = 10
-        @global_text_period       = 3
-
-        @revolving_door_period    = 30
-
-        @flood_reset_timer        = nil
-        @nick_changes             = {} # not channel-specific, needs to ban on all channels
-        @join_counter             = [] # needs to be channel-specific
-        @text_flood_counter       = {} # needs to be channel-specific
-        @revolving_doors          = {} # needs to be channel-specific
-        @global_text_counter      = [] # needs to be channel-specific
-        @recent_joins             = [] # needs to be channel-specific
-
-        on_part                   :check_revolving_door
-        on_join                   :check_join_flood
-        on_channel_any            :check_text_flood
-        on_nick_change            :check_nick_flood
+        flood_init
+        
+        flood_tolerance                   :nick_change,       limit: 2,   time: 3
+        flood_tolerance                   :nick_change,       limit: 3,   time: 7
+        flood_tolerance                   :nick_change,       limit: 4,   time: 20
+        flood_tolerance                   :nick_change,       limit: 5,   time: 30
+                                          
+        flood_tolerance                   :channel_text,      limit: 5,   time: 5
+        flood_tolerance                   :channel_text,      limit: 7,   time: 12
+        flood_tolerance                   :channel_text,      limit: 10,  time: 17
+        flood_tolerance                   :channel_text,      limit: 12,  time: 22
+        flood_tolerance                   :channel_text,      limit: 15,  time: 30
+                                          
+        flood_tolerance                   :all_channel_text,  limit: 7,   time: 3
+        flood_tolerance                   :all_channel_text,  limit: 10,  time: 4
+        flood_tolerance                   :all_channel_text,  limit: 15,  time: 7
+                                          
+        #flood_tolerance                   :revolving_door,                time: 30
+                                          
+        flood_tolerance                   :join,              limit: 3,   time: 20
+        flood_tolerance                   :join,              limit: 5,   time: 5
+        flood_tolerance                   :join,              limit: 7,   time: 20
+        flood_tolerance                   :join,              limit: 10,  time: 30
+                                          
+        on_part                           :check_revolving_door
+        on_join                           :check_join_flood
+        on_channel_any                    :check_text_flood
+        on_nick_change                    :check_nick_flood
 
         start_flood_reset_timer
+      end
+      
+      def flood_init()
+        @flood_reset_timer      = nil
+        @flood_tracker          = {}
+        @flood_limits           = {}
+        @types                  = %i(all_channel_text channel_text join nick_change revolving_door)
+
+        @types.each do |type|
+          @flood_limits[type]   = []
+          @flood_tracker[type]  = {}
+        end
+      end
+
+      def flood_tolerance(flood_type, flood_hash)
+        if (!@types.include?(flood_type))
+          raise(AddonError, "#{self.class}: invalid flood type '#{flood_type}' provided.")
+        end
+        if (@flood_limits.nil?)
+          @flood_limits = {}
+        end
+        if (!@flood_limits.has_key?(flood_type))
+          @flood_limits[flood_type] = []
+        end
+        if (!@flood_limits.include?(flood_hash))
+          @flood_limits[flood_type].push(flood_hash)
+        end
       end
 
       def get_bot_or_user(nick)
@@ -51,48 +80,70 @@ module Axial
       end
 
       def check_text_flood(channel, nick, text)
-        if (!channel.opped?)
-          return
-        end
-
         possible_user = get_bot_or_user(nick)
         if (!possible_user.nil?)
           return
         end
 
-        @global_text_counter.push(Time.now)
-        if (@global_text_counter.count >= @global_text_threshold)
-          if (!channel.mode.moderated? )
-            response_mode = IRCTypes::Mode.new
-            response_mode.moderated = true
-            channel.set_mode(response_mode)
+        if (!@flood_tracker[:all_channel_text].has_key?(channel))
+          @flood_tracker[:all_channel_text][channel] = {}
+        end
 
-            timer.in_30_seconds do
-              if (channel.opped?)
-                if (channel.mode.moderated?)
-                  response_mode = IRCTypes::Mode.new
-                  response_mode.moderated = false
-                  channel.set_mode(response_mode)
+        if (!@flood_tracker[:channel_text].has_key?(channel))
+          @flood_tracker[:channel_text][channel] = {}
+        end
+
+        # check channel text
+        if (@flood_limits.has_key?(:channel_text) && @flood_limits[:channel_text].any?)
+          if (!@flood_tracker[:channel_text][channel].has_key?(nick.uuid))
+            @flood_tracker[:channel_text][channel][nick.uuid] = [ Time.now ]
+          else
+            @flood_tracker[:channel_text][channel][nick.uuid].push(Time.now)
+            @flood_limits[:channel_text].each do |flood_limit|
+              message_count = @flood_tracker[:channel_text][channel][nick.uuid].select{ |time| time >= Time.now - flood_limit[:time] }.count
+              if (message_count >= flood_limit[:limit])
+                if (channel.opped?)
+                  ban_mask = MaskUtils.ensure_wildcard(nick.host)
+                  channel.ban(ban_mask)
+                  channel.kick(nick, "text flood: #{message_count} lines in #{flood_limit[:time]} seconds")
+                  timer.in_5_minutes do
+                    if (channel.opped?)
+                      wait_a_sec
+                      if (channel.ban_list.include?(ban_mask))
+                        channel.unban(ban_mask)
+                      end
+                    end
+                  end
                 end
               end
             end
           end
         end
 
-        if (!@text_flood_counter.has_key?(nick.uuid))
-          @text_flood_counter[nick.uuid] = [ Time.now ]
-        else
-          @text_flood_counter[nick.uuid].push(Time.now)
-          if (@text_flood_counter[nick.uuid].count >= @text_flood_threshold)
-            if (channel.opped?)
-              ban_mask = MaskUtils.ensure_wildcard(nick.host)
-              channel.ban(ban_mask)
-              channel.kick(nick, "text flood: #{@text_flood_counter[nick.uuid].count} lines in #{@text_flood_period} seconds")
-              timer.in_5_minutes do
+        if (@flood_limits.has_key?(:all_channel_text) && @flood_limits[:all_channel_text].any?)
+          if (!@flood_tracker[:all_channel_text][channel].has_key?(nick.uuid))
+            @flood_tracker[:all_channel_text][channel][nick.uuid] = [ Time.now ]
+          else
+            @flood_tracker[:all_channel_text][channel][nick.uuid].push(Time.now)
+            @flood_limits[:all_channel_text].each do |flood_limit|
+              message_count = @flood_tracker[:all_channel_text][channel][nick.uuid].select{ |time| time >= Time.now - flood_limit[:time] }.count
+              if (message_count >= flood_limit[:limit])
                 if (channel.opped?)
-                  wait_a_sec
-                  if (channel.ban_list.include?(ban_mask))
-                    channel.unban(ban_mask)
+                  if (!channel.mode.moderated?)
+                    response_mode = IRCTypes::Mode.new
+                    response_mode.moderated = true
+                    channel.set_mode(response_mode)
+
+                    timer.in_30_seconds do
+                      if (channel.opped?)
+                        wait_a_sec
+                        if (channel.mode.moderated?)
+                          response_mode = IRCTypes::Mode.new
+                          response_mode.moderated = false
+                          channel.set_mode(response_mode)
+                        end
+                      end
+                    end
                   end
                 end
               end
@@ -107,21 +158,43 @@ module Axial
           return
         end
 
-        @revolving_doors[nick.uuid] = Time.now
-        @recent_joins.push(Time.now)
-        if (@recent_joins.count >= @join_flood_threshold)
-          if (channel.opped?)
-            if (!channel.mode.invite_only?)
-              response_mode = IRCTypes::Mode.new
-              response_mode.invite_only = true
-              channel.set_mode(response_mode)
-              timer.in_1_minute do
-                if (channel.opped?)
-                  wait_a_sec
-                  if (channel.mode.invite_only?)
-                    response_mode = IRCTypes::Mode.new
-                    response_mode.invite_only = false
-                    channel.set_mode(response_mode)
+        if (@flood_limits[:revolving_door].any?)
+          if (!@flood_tracker[:revolving_door].has_key?(channel))
+            @flood_tracker[:revolving_door][channel] = {}
+          end
+
+          if (!@flood_tracker[:revolving_door][channel].has_key?(nick.uuid))
+            @flood_tracker[:revolving_door][channel][nick.uuid] = [ Time.now ]
+          else
+            @flood_tracker[:revolving_door][channel][nick.uuid].push(Time.now)
+          end
+        end
+
+        if (@flood_limits[:join].any?)
+          if (!@flood_tracker[:join].has_key?(channel))
+            @flood_tracker[:join][channel] = []
+          end
+
+          @flood_tracker[:join][channel].push(Time.now)
+
+          @flood_limits[:join].each do |flood_limit|
+            join_count = @flood_tracker[:join][channel].select{ |join_time| join_time >= Time.now - flood_limit[:time] }.count
+            if (join_count >= flood_limit[:limit])
+              if (channel.opped?)
+                if (!channel.mode.invite_only?)
+                  response_mode = IRCTypes::Mode.new
+                  response_mode.invite_only = true
+                  channel.set_mode(response_mode)
+
+                  timer.in_30_seconds do
+                    if (channel.opped?)
+                      wait_a_sec
+                      if (channel.mode.invite_only?)
+                        response_mode = IRCTypes::Mode.new
+                        response_mode.invite_only = false
+                        channel.set_mode(response_mode)
+                      end
+                    end
                   end
                 end
               end
@@ -131,20 +204,23 @@ module Axial
       end
 
       def check_revolving_door(channel, nick, reason)
-        possible_user = get_bot_or_user(nick)
-        if (!possible_user.nil?)
-          return
-        end
-
-        if (channel.opped?)
-          if (@revolving_doors.has_key?(nick.uuid))
-            ban_mask = MaskUtils.ensure_wildcard(nick.host)
-            channel.ban(ban_mask)
-            timer.in_5_minutes do
-              if (channel.opped?)
-                wait_a_sec
-                if (channel.ban_list.include?(ban_mask))
-                  channel.unban(ban_mask)
+        if (@flood_limits.has_key?(:revolving_door) && @flood_limits[:revolving_door].any?)
+          flood_limit = @flood_limits[:revolving_door].first
+          if (@flood_tracker[:revolving_door].has_key?(channel))
+            if (@flood_tracker[:revolving_door][channel].has_key?(nick.uuid))
+              revolving_door_count = @flood_tracker[:revolving_door][channel][nick.uuid].select{ |time| time >= Time.now - flood_limit[:time] }.count
+              if (revolving_door_count >= 1)
+                if (channel.opped?)
+                  ban_mask = MaskUtils.ensure_wildcard(nick.host)
+                  channel.ban(ban_mask)
+                  timer.in_5_minutes do
+                    if (channel.opped?)
+                      wait_a_sec
+                      if (channel.ban_list.include?(ban_mask))
+                        channel.unban(ban_mask)
+                      end
+                    end
+                  end
                 end
               end
             end
@@ -158,21 +234,30 @@ module Axial
           return
         end
 
-        if (!@nick_changes.has_key?(nick.uuid))
-          @nick_changes[nick.uuid] = [ Time.now ]
-        else
-          @nick_changes[nick.uuid].push(Time.now)
-          if (@nick_changes[nick.uuid].count >= @nick_flood_threshold)
-            server.channel_list.all_channels.each do |channel|
-              if (channel.opped?)
-                ban_mask = MaskUtils.ensure_wildcard(nick.host)
-                channel.ban(ban_mask)
-                channel.kick(nick, "nick flood: #{@nick_changes[nick.uuid].count} nick changes in #{@nick_flood_period} seconds")
-                timer.in_5_minutes do
+        if (!@flood_tracker[:nick_change].has_key?(nick.uuid))
+          @flood_tracker[:nick_change][nick.uuid] = []
+        end
+
+        if (@flood_limits.has_key?(:nick_change) && @flood_limits[:nick_change].any?)
+          if (!@flood_tracker[:nick_change].has_key?(nick.uuid))
+            @flood_tracker[:nick_change][nick.uuid] = [ Time.now ]
+          else
+            @flood_tracker[:nick_change][nick.uuid].push(Time.now)
+            @flood_limits[:nick_change].each do |flood_limit|
+              nick_change_count = @flood_tracker[:nick_change][nick.uuid].select{ |time| time >= Time.now - flood_limit[:time] }.count
+              if (nick_change_count >= flood_limit[:limit])
+                channel_list.all_channels.each do |channel|
                   if (channel.opped?)
-                    wait_a_sec
-                    if (channel.ban_list.include?(ban_mask))
-                      channel.unban(ban_mask)
+                    ban_mask = MaskUtils.ensure_wildcard(nick.host)
+                    channel.ban(ban_mask)
+                    channel.kick(nick, "nick flood: #{nick_change_count} nick changes in #{flood_limit[:time]} seconds")
+                    timer.in_5_minutes do
+                      if (channel.opped?)
+                        wait_a_sec
+                        if (channel.ban_list.include?(ban_mask))
+                          channel.unban(ban_mask)
+                        end
+                      end
                     end
                   end
                 end
@@ -183,22 +268,46 @@ module Axial
       end
 
       def reset_flood_counters()
-        @nick_changes.values.each do |nick_change_times|
-          nick_change_times.delete_if{ |time| time + @nick_flood_period <= Time.now }
+        highest_text_limit = @flood_limits[:channel_text].collect{ |tracker| tracker[:time] }.max
+        @flood_tracker[:channel_text].values.each do |channel_entries|
+          channel_entries.each do |uuid, line_array|
+            line_array.delete_if{ |line| line + highest_text_limit < Time.now }
+            if (channel_entries[uuid].count.zero?)
+              channel_entries.delete(uuid)
+            end
+          end
         end
 
-        # clear revovling doors
-        @revolving_doors.delete_if{ |key, revolving_door_time| revolving_door_time + @revolving_door_period <= Time.now }
+        highest_all_text_limit = @flood_limits[:all_channel_text].collect{ |tracker| tracker[:time] }.max
+        @flood_tracker[:all_channel_text].values.each do |channel_entries|
+          channel_entries.each do |uuid, line_array|
+            line_array.delete_if{ |line| line + highest_all_text_limit < Time.now }
+            if (channel_entries[uuid].count.zero?)
+              channel_entries.delete(uuid)
+            end
+          end
+        end
 
-        # reset recent joins count for the channel
-        @recent_joins.delete_if{ |join_time| join_time + @join_flood_period <= Time.now }
+        highest_nick_change_limit = @flood_limits[:nick_change].collect{ |tracker| tracker[:time] }.max
+        @flood_tracker[:nick_change].each do |uuid, line_array|
+          line_array.delete_if{ |line| line + highest_nick_change_limit < Time.now }
+          if (@flood_tracker[:nick_change][uuid].count.zero?)
+            @flood_tracker[:nick_change].delete(uuid)
+          end
+        end
 
-        # reset global text counters for the channel
-        @global_text_counter.delete_if{ |text_time| text_time + @global_text_period <= Time.now }
+        @flood_tracker[:revolving_door].values.each do |channel_entries|
+          channel_entries.each do |uuid, line_array|
+            line_array.delete_if{ |part_time| part_time + @flood_limits[:revolving_door].first[:time] < Time.now }
+            if (channel_entries[uuid].count.zero?)
+              channel_entries.delete(uuid)
+            end
+          end
+        end
 
-        # reset text flood counters for each nick
-        @text_flood_counter.values.each do |text_flood_times|
-          text_flood_times.delete_if{ |time| time + @text_flood_period <= Time.now }
+        highest_join_limit = @flood_limits[:nick_change].collect{ |tracker| tracker[:time] }.max
+        @flood_tracker[:join].values.each do |channel_entries|
+          channel_entries.delete_if{ |join_time| join_time + highest_join_limit < Time.now }
         end
       end
 
