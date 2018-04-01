@@ -17,9 +17,15 @@ module Axial
         @prevent_modes              = [ :invite_only, :limit, :keyword, :moderated ]
         @op_deop_modes              = [ :ops, :deops ]
 
+        @ban_cleanup_timer          = nil
+
+        @maximum_ban_time           = 3600
+
         throttle                    2
 
         # general mode/user management
+        on_startup                  :start_ban_cleanup_timer
+        on_reload                   :start_ban_cleanup_timer
         on_join                     :auto_op_voice
         on_join                     :auto_ban
         on_mode @prevent_modes,     :handle_prevent_modes
@@ -79,9 +85,19 @@ module Axial
         end
       end
 
-      def remove_old_irc_bans(channel)
-        # TODO: timer to remove hour-old bans
-        # (Time.now - Time.at(1521931658))
+      def cleanup_old_bans()
+        channel_list.all_channels.each do |channel|
+          if (channel.opped?)
+            response_mode = IRCTypes::Mode.new
+            bans_to_remove = channel.ban_list.all_bans.select { |ban| ban.set_at + @maximum_ban_time <= Time.now }
+            bans_to_remove.each do |ban|
+              response_mode.unban(ban.mask)
+            end
+            if (response_mode.any?)
+              channel.set_mode(response_mode)
+            end
+          end
+        end
       end
 
       def check_channel_bans(channel)
@@ -392,6 +408,22 @@ module Axial
 
       def bot_or_director?(user)
         return (!user.nil? && (user.bot? || user.director?))
+      end
+
+      def stop_ban_cleanup_timer()
+        LOGGER.debug("stopping ban cleanup timer")
+        timer.delete(@ban_cleanup_timer)
+      end
+
+      def start_ban_cleanup_timer()
+        LOGGER.debug("starting ban cleanup timer")
+        @ban_cleanup_timer = timer.every_minute(self, :cleanup_old_bans)
+      end
+
+      def before_reload()
+        super
+        LOGGER.info("#{self.class}: stopping RSS ingest before addons are reloaded")
+        stop_ban_cleanup_timer
       end
     end
   end
