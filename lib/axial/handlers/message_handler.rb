@@ -21,7 +21,16 @@ module Axial
           @bot.channel_handler.handle_channel_notice(channel, nick, text)
         else
           nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-          handle_private_notice(nick, text)
+          if (text =~ /\x01(\S+)(.*)\x01{0,1}/)
+            ctcp_command, ctcp_args = Regexp.last_match.captures
+            ctcp_command.gsub!(/\x01/, '')
+            ctcp_command.strip!
+            ctcp_args.gsub!(/\x01/, '')
+            ctcp_args.strip!
+            @server_interface.handle_ctcp_reply(nick, ctcp_command, ctcp_args)
+          else
+            handle_private_notice(nick, text)
+          end
         end
       end
 
@@ -38,8 +47,17 @@ module Axial
       end
 
       def handle_private_message(nick, text)
-        @bot.bind_handler.dispatch_privmsg_binds(nick, text)
-        LOGGER.info("#{nick.name} PRIVMSG: #{text}")
+        if (text =~ /\x01(\S+)(.*)\x01{0,1}/)
+          ctcp_command, ctcp_args = Regexp.last_match.captures
+          ctcp_command.gsub!(/\x01/, '')
+          ctcp_command.strip!
+          ctcp_args.gsub!(/\x01/, '')
+          ctcp_args.strip!
+          @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
+        else
+         @bot.bind_handler.dispatch_privmsg_binds(nick, text)
+         LOGGER.info("#{nick.name} PRIVMSG: #{text}")
+        end
       end
 
       def handle_private_notice(nick, text)

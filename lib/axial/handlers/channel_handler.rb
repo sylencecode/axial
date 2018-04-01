@@ -509,7 +509,6 @@ module Axial
         end
       end
 
-
       def handle_channel_action(channel, nick, unstripped_text)
         text = unstripped_text.strip
         LOGGER.debug("ACTION #{channel.name}: * #{nick.name} #{text}")
@@ -539,6 +538,13 @@ module Axial
         case text
           when /^\x01ACTION/i
             handle_channel_action(channel, nick, text)
+          when /\x01(\S+)(.*)\x01{0,1}/
+            ctcp_command, ctcp_args = Regexp.last_match.captures
+            ctcp_command.gsub!(/\x01/, '')
+            ctcp_command.strip!
+            ctcp_args.gsub!(/\x01/, '')
+            ctcp_args.strip!
+            @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
           else
             LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
             @bot.bind_handler.dispatch_channel_binds(channel, nick, text)

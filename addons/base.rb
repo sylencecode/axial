@@ -11,10 +11,17 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
+        throttle 10
+
         on_channel   '?help',   :send_help
         on_channel  '?about',   :send_help
         on_channel '?reload',   :handle_channel_reload
+        on_channel    '?lag',   :ctcp_ping_user
         on_dcc      'reload',   :handle_dcc_reload
+      end
+
+      def ctcp_ping_user(channel, nick, command)
+        server.send_ctcp(nick, 'PING', Time.now.to_i.to_s)
       end
 
       def handle_dcc_reload(dcc, command)
