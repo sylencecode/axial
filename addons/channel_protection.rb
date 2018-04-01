@@ -87,6 +87,7 @@ module Axial
       def cleanup_old_bans()
         channel_list.all_channels.each do |channel|
           if (channel.opped?)
+            wait_a_sec
             response_mode = IRCTypes::Mode.new
             bans_to_remove = channel.ban_list.all_bans.select { |ban| ban.set_at + @maximum_ban_time <= Time.now }
             bans_to_remove.each do |ban|
