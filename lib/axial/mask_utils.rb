@@ -69,6 +69,45 @@ module Axial
       return host
     end
 
+    def self.masks_overlap?(left_mask, right_mask)
+      left_mask = ensure_wildcard(left_mask)
+      if (left_mask =~ /(\S+)!(\S+)@(\S+)/)
+        left_nick, left_ident, left_host = Regexp.last_match.captures
+      end
+
+      right_mask  = ensure_wildcard(right_mask)
+      if (right_mask =~ /(\S+)!(\S+)@(\S+)/)
+        right_nick, right_ident, right_host = Regexp.last_match.captures
+      end
+
+      if (left_nick == '*' || right_nick == '*')
+        left_nick = '*'
+        right_nick = '*'
+      end
+
+      if (left_ident == '*' || right_ident == '*')
+        left_ident = '*'
+        right_ident = '*'
+      end
+      
+      if (left_host == '*' || right_host == '*')
+        left_host = '*'
+        right_host = '*'
+      end
+
+      left_mask = "#{left_nick}!#{left_ident}@#{left_host}"
+      right_mask = "#{right_nick}!#{right_ident}@#{right_host}"
+      left_regexp = get_mask_regexp(left_mask)
+      right_regexp = get_mask_regexp(right_mask)
+      match = false
+      if (right_regexp.match(left_mask))
+        match = true
+      elsif (left_regexp.match(right_mask))
+        match = true
+      end
+      return match
+    end
+
     def self.masks_match?(left_mask, right_mask)
       left_mask = ensure_wildcard(left_mask)
       left_regexp = get_mask_regexp(left_mask)
