@@ -208,11 +208,18 @@ module Axial
         channel = channel_list.get_silent(channel_name)
         if (!channel.nil?)
           if (channel.opped?)
+            response_mode = IRCTypes::Mode.new
             channel.ban_list.all_bans.each do |ban|
-              if (MaskUtils.masks_match?(ban, bot_nick.uhost))
-                channel.message("checking #{ban}")
+              if (MaskUtils.masks_match?(ban.mask, bot_nick.uhost))
+                response_mode.unban(ban.mask)
               end
             end
+
+            if (response_mode.any?)
+              channel.set_mode(response_mode)
+            end
+
+            channel.invite(bot_nick.name)
           end
         end
       end
