@@ -91,9 +91,9 @@ module Axial
             nick, ident, host = Regexp.last_match.captures
             @bot.server_handler.dispatch_whois_uhost(nick, ident, host)
           when Server::ANY_NUMERIC
-            LOGGER.warn("[#{Regexp.last_match[1]}] #{Regexp.last_match[2]}")
+            LOGGER.debug("[#{Regexp.last_match[1]}] #{Regexp.last_match[2]}")
           else
-            LOGGER.warn("Unhandled server message: #{text}")
+            LOGGER.debug("Unhandled server message: #{text}")
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

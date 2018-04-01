@@ -34,7 +34,7 @@ module Axial
       end
 
       def handle_topic_change(channel, nick, topic)
-        channel.message("new topic from #{nick.name}: #{topic}")
+        LOGGER.debug("new topic from #{nick.name}: #{topic}")
       end
 
       def ctcp_ping_user(channel, nick, command)
