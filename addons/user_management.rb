@@ -25,6 +25,9 @@ module Axial
         on_dcc       'addmask',   :handle_dcc_add_mask
 
         on_channel_sync           :handle_channel_sync
+
+        on_reload                 :update_user_list
+        on_reload                 :update_ban_list
         on_startup                :update_user_list
         on_startup                :update_ban_list
       end
