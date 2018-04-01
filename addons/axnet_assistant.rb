@@ -132,8 +132,8 @@ module Axial
         possible_user = get_bot_or_user(nick)
         if (bot_or_director?(possible_user))
           clear_pending(channel_name, :invite)
-          if (!server.trying_to_join.has_key?(channel.name.downcase))
-            server.trying_to_join[channel.name.downcase] = ''
+          if (!server.trying_to_join.has_key?(channel_name.downcase))
+            server.trying_to_join[channel_name.downcase] = ''
           end
           server.join_channel(channel_name)
         end

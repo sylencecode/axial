@@ -199,7 +199,7 @@ module Axial
               possible_user = get_bot_or_user(subject_nick)
               if (possible_user.nil? || !possible_user.op?)
                 if (!bot_or_director?(user))
-                  if (!subject_nick.opped_on?(channel))
+                  if (subject_nick.opped_on?(channel))
                     response_mode.deop(subject_nick)
                   end
                 end
