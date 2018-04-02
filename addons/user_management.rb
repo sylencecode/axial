@@ -42,6 +42,132 @@ module Axial
         on_startup                            :update_ban_list
       end
 
+      def add_user(source, user, nick, command)
+        if (user.nil? || !user.manager?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+        if (command.args.strip =~ /(\S+)\s+(\S+)/)
+          subject_nickname = Regexp.last_match[1]
+          subject_mask = Regexp.last_match[2]
+        else
+          reply(source, nick, "try #{command.command} <nick> <mask>")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (!subject_model.nil?)
+          reply(source, nick, "user #{subject_model.pretty_name} already exists.")
+          return
+        end
+
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        subject_models = Models::Mask.get_users_from_mask(subject_mask)
+        if (subject_models.count > 0)
+          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
+          return
+        end
+
+        subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+        update_user_list
+        reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}'.")
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def delete_user(source, user, nick, command)
+        if (user.nil? || !user.manager?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+        subject_nickname = command.args.split(' ').first
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname} does not exist.")
+          return
+        end
+
+        subject_role = subject_model.role
+        if (subject_role == 'manager' && !user.director?) 
+          reply(source, nick, "sorry, only directors can delete managers.")
+          return
+        end
+
+        if (subject_role == 'director')
+          if (!user.director? || user.id != 1) 
+            reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
+            return
+          end
+        end
+
+        if (subject_model.director? && user.id != 1)
+          reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
+          return
+        end
+
+        unknown_user = Models::User[name: 'unknown']
+        if (!unknown_user.nil?)
+          unknown_user_id = unknown_user.id
+        else
+          unknown_user_id = 0
+        end
+
+        if (!DB_CONNECTION[:things].nil?)
+          if (unknown_user_id.zero?)
+            DB_CONNECTION[:things].where(user_id: subject_model.id).delete
+          else
+            DB_CONNECTION[:things].where(user_id: subject_model.id).update(user_id: unknown_user_id)
+          end
+        end
+
+
+        if (!DB_CONNECTION[:rss_feeds].nil?)
+          if (unknown_user_id.zero?)
+            DB_CONNECTION[:rss_feeds].where(user_id: subject_model.id).delete
+          else
+            DB_CONNECTION[:rss_feeds].where(user_id: subject_model.id).update(user_id: unknown_user_id)
+          end
+        end
+
+        if (!DB_CONNECTION[:bans].nil?)
+          if (unknown_user_id.zero?)
+            DB_CONNECTION[:bans].where(user_id: subject_model.id).delete
+          else
+            DB_CONNECTION[:bans].where(user_id: subject_model.id).update(user_id: unknown_user_id)
+          end
+        end
+
+        if (!DB_CONNECTION[:seens].nil?)
+          DB_CONNECTION[:seens].where(user_id: subject_model.id).delete
+        end
+
+        if (!DB_CONNECTION[:masks].nil?)
+          DB_CONNECTION[:masks].where(user_id: subject_model.id).delete
+        end
+
+        deleted_user_name = subject_model.pretty_name
+        subject_model.destroy
+        update_user_list
+        reply(source, nick, "user '#{deleted_user_name}' deleted.")
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def delete_mask(source, user, nick, command)
         if (user.nil? || !user.manager?)
           if (source.is_a?(IRCTypes::DCC))
@@ -210,7 +336,9 @@ module Axial
           return
         end
 
-        user_model = Models::User[name: command.args.downcase]
+        subject_nickname = command.args.split(' ').first
+
+        user_model = Models::User.get_from_nickname(subject_nickname)
         if (user_model.nil?)
           dcc.message("no user named '#{command.args}' was found.")
           return
@@ -251,7 +379,11 @@ module Axial
           end
         else
           dcc.message('')
-          dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+          if (user_model.seen.nil?)
+            dcc.message("status unknown.")
+          else
+            dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+          end
         end
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -275,6 +407,10 @@ module Axial
         mask_length = 0
 
         Models::User.all.each do |user_model|
+          if (user_model.name == "unknown")
+            next
+          end
+
           user = {}
           user[:pretty_name] = user_model.pretty_name
           if (user[:pretty_name].length > pretty_name_length)
@@ -286,7 +422,12 @@ module Axial
             role_length = user[:role].length
           end
 
-          user[:seen] = TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s + ' ago'
+          if (user_model.seen.nil?)
+            user[:seen] = "never"
+          else
+            user[:seen] = TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s + ' ago'
+          end
+
           if (user[:seen].length > seen_length)
             seen_length = user[:seen].length
           end
@@ -297,6 +438,9 @@ module Axial
               mask_length = mask.mask.length
             end
             user[:masks].push(mask.mask)
+          end
+          if (user[:masks].empty?)
+            user[:masks].push('none')
           end
           users.push(user)
         end
@@ -526,46 +670,6 @@ module Axial
           subject_model.update(role: subject_role)
           update_user_list
           channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role of #{subject_role}.")
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
-        end
-      end
-
-      def channel_add_user(channel, nick, command)
-        begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.manager?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-            return
-          end
-          if (command.args.strip =~ /(\S+)\s+(\S+)/)
-            subject_nickname = Regexp.last_match[1]
-            subject_mask = Regexp.last_match[2]
-          else
-            channel.message("#{nick.name}: try ?adduser <nick> <mask>")
-            return
-          end
-
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (!subject_model.nil?)
-            channel.message("#{nick.name}: user #{subject_model.pretty_nick} already exists.")
-            return
-          end
-
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          subject_models = Models::Mask.get_users_from_mask(subject_mask)
-          if (subject_models.count > 0)
-            channel.message("#{nick.name}: Mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
-            return
-          end
-
-          subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
-          update_user_list
-          channel.message("#{nick.name}: User #{subject_model.pretty_name} created with mask '#{subject_mask}'.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
