@@ -543,7 +543,8 @@ module Axial
 
       def before_reload()
         super
-        UserManagement.instance_methods(false).each do |method_symbol|
+        self.class.instance_methods(false).each do |method_symbol|
+          LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
           instance_eval("undef #{method_symbol}")
         end
       end

@@ -239,8 +239,12 @@ module Axial
 
       def before_reload()
         super
-        LOGGER.warn("#{self.class}: shutting down axnet slave connector")
+        LOGGER.info("#{self.class}: shutting down axnet slave connector")
         stop_slave_thread
+        self.class.instance_methods(false).each do |method_symbol|
+          LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
+          instance_eval("undef #{method_symbol}")
+        end
       end
     end
   end
