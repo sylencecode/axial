@@ -11,19 +11,19 @@ channels:
   - name: '#lulz'
     password: ''
 addons:
-    #  - AxnetAssistant
-    #  - AxnetMaster
+  - AxnetAssistant
+  - AxnetMaster
   - Base
-    #   - ChannelProtection
+  - ChannelProtection
   - DCCHandler
-    #   - FloodProtection
-    #   - GoogleSearch
-    #   - LearnerOfThings
-    #   - RSSSubscriber
-    #   - Seen
-    #   - Translation
+  - FloodProtection
+  - GoogleSearch
+  - LearnerOfThings
+  - RSSSubscriber
+  - Seen
+  - Translation
   - UserManagement
-    #   - Weather
-    #   - WhoFrom
-    #   - Wikipedia
-    #   - YouTubeSniffer
+  - Weather
+  - WhoFrom
+  - Wikipedia
+  - YouTubeSniffer

@@ -27,7 +27,7 @@ module Axial
         @bot.local_cn                     = get_local_cn
         @bot_user                         = Axnet::User.new
 
-        if (axnet.master)
+        if (axnet.master?)
           raise(AddonError, "attempted to load both the axnet master and slave addons")
         end
 
