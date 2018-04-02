@@ -130,8 +130,8 @@ module Axial
         axnet.send(command.args)
       end
 
-      def send_help(dcc)
-        dcc.message("try axnet reload or axnet list")
+      def send_help(dcc, command)
+        dcc.message("try #{command.command} reload or #{command.command} list")
       end
 
       def receive_pong(handler, text)
@@ -141,7 +141,7 @@ module Axial
       def handle_axnet_command(dcc, command)
         begin
           if (command.args.strip.empty?)
-            send_help(dcc)
+            send_help(dcc, command)
             return
           end
 
@@ -151,7 +151,7 @@ module Axial
             when /^reload$/i, /^stop\s+/i
               reload_axnet(dcc)
             else
-              send_help(dcc)
+              send_help(dcc, command)
           end
         rescue Exception => ex
           dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")

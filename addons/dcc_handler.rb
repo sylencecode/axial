@@ -15,7 +15,53 @@ module Axial
 
         @port         = 54321
 
-        on_privmsg    'chatto',     :send_dcc_chat_offer
+        on_dcc          'help',   :dcc_help
+        on_dcc        'reload',   :reload_addons
+
+        on_privmsg      'chat',   :send_dcc_chat_offer
+      end
+
+      def dcc_help(dcc, command)
+        dcc.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        if (@bot.addons.count > 0)
+          @bot.addons.each do |addon|
+            channel_listeners = addon[:object].listeners.select{ |listener| listener[:type] == :dcc && listener[:command].is_a?(String) }
+            listener_string = ""
+            if (channel_listeners.count > 0)
+              commands = channel_listeners.collect{ |bind| @bot.dcc_command_character + bind[:command] }
+              dcc.message("+ #{addon[:name]}: #{commands.sort.join(', ')}")
+            end
+          end
+        else
+          dcc.message("no addons loaded.")
+        end
+      end
+
+      def reload_addons(dcc, command)
+        if (!dcc.user.director?)
+          dcc.message(Constants::ACCESS_DENIED)
+          return
+        end
+
+        if (@bot.addons.count == 0)
+          dcc.message("no addons loaded.")
+        else
+          LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
+          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect{ |addon| addon[:name] }
+          dcc.message("unloading addons: #{addon_names.join(', ')}")
+          @bot.git_pull
+          @bot.reload_addons
+          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect{ |addon| addon[:name] }
+          dcc.message("loaded addons: #{addon_names.join(', ')}")
+        end
+      rescue Exception => ex
+        dcc.message("addon reload error: #{ex.class}: #{ex.message}")
+        LOGGER.error("addon reload error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def send_dcc_chat_offer(nick, command)

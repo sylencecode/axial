@@ -177,9 +177,25 @@ module Axial
       @listeners.push(type: :join, method: method)
     end
 
-    def on_dcc(command, method)
-      LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :dcc, command: command, method: method)
+    def on_dcc(command, *args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_dcc called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (command.is_a?(Regexp))
+        @listeners.push(type: :dcc, command: command, method: method)
+      elsif (command.is_a?(String))
+        if (args.any?)
+          @listeners.push(type: :dcc, command: command, method: method, args: args)
+          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+        else
+          @listeners.push(type: :dcc, command: command, method: method)
+          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+        end
+      end
     end
 
     def on_self_join(method)
@@ -192,13 +208,26 @@ module Axial
       @listeners.push(type: :channel_any, method: method)
     end
 
-    def on_channel(command, method)
+    def on_channel(command, *args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
       if (command.is_a?(Regexp))
         LOGGER.debug("channel expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
-      else
-        LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+        @listeners.push(type: :channel, command: command, method: method)
+      elsif (command.is_a?(String))
+        if (args.any?)
+          @listeners.push(type: :channel, command: command, method: method.to_sym, args: args)
+          LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+        else
+          @listeners.push(type: :channel, command: command, method: method.to_sym)
+          LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+        end
       end
-      @listeners.push(type: :channel, command: command, method: method)
     end
 
     def on_channel_leftover(text, method)

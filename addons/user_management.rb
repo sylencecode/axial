@@ -14,17 +14,20 @@ module Axial
         @version = '1.1.0'
         @valid_roles = %w(director manager op friend)
 
-        on_channel  'addmask',    :handle_channel_add_mask
-        on_channel  'adduser',    :add_user
-        on_channel 'getmasks',    :get_masks
-        on_channel  'setrole',    :set_role
-        on_channel      'ban',    :handle_channel_ban
-        on_channel    'unban',    :handle_channel_unban
-        on_dcc           'ban',   :handle_dcc_ban
-        on_dcc         'unban',   :handle_dcc_unban
-        on_dcc       'addmask',   :handle_dcc_add_mask
+        on_channel   'addmask',   :dcc_channel_wrapper, :add_mask
+        on_channel   'adduser',   :channel_wrap_add_user
+        on_channel   'setrole',   :channel_wrap_set_role
+        on_channel       'ban',   :channel_wrap_ban
+        on_channel     'unban',   :channel_wrap_unban
 
-        on_channel_sync           :handle_channel_sync
+        on_dcc       'addmask',   :dcc_channel_wrapper, :add_mask
+        on_dcc       'adduser',   :dcc_wrap_add_user
+        on_dcc       'setrole',   :dcc_wrap_set_role
+        on_dcc           'ban',   :dcc_wrap_ban
+        on_dcc         'unban',   :dcc_wrap_unban
+
+        on_dcc          'bans',   :dcc_ban_list
+        on_dcc         'whois',   :dcc_whois
 
         on_reload                 :update_user_list
         on_reload                 :update_ban_list
@@ -32,24 +35,58 @@ module Axial
         on_startup                :update_ban_list
       end
 
-      def handle_dcc_ban(dcc, command)
-        ban_mask(dcc, dcc.user, command)
+      def dcc_channel_wrapper(*args)
+        source = args.shift
+        if (source.is_a?(IRCTypes::Channel))
+          nick = args.shift
+          command = args.shift
+          method = args.shift
+          user = user_list.get_from_nick_object(nick)
+        elsif (source.is_a?(IRCTypes::DCC))
+          nick = IRCTypes::Nick.new(nil)
+          nick.name = source.user.pretty_name
+          command = args.shift
+          method = args.shift
+          user = source.user
+        end
+        self.send(method, source, user, nick, command)
       end
 
-      def handle_dcc_add_mask(dcc, command)
-        add_mask(dcc, dcc.user, command)
-      end
-
-      def handle_channel_add_mask(channel, nick, command)
-        user = user_list.get_from_nick_object(nick)
+      def add_mask(source, user, nick, command)
         if (user.nil? || !user.manager?)
-          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-        else
+          return
+        end
+
+        source.message("hello #{nick.name}, you are a #{user.pretty_name} #{user.role} and that was #{command.inspect}")
+      end
+
+      def channel_wrap_add_mask(channel, nick, command)
+        user = user_list.get_from_nick_object(nick)
+        if (!user.nil? && !user.manager?)
           add_mask(channel, user, command)
         end
       end
 
-      def handle_channel_ban(channel, nick, command)
+      def dcc_wrap_add_mask(dcc, command)
+        add_mask(dcc, dcc.user, command)
+      end
+
+      def dcc_ban_list(dcc, command)
+        if (!dcc.user.op?)
+          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+          return
+        end
+      end
+      
+      def dcc_whois(dcc, command)
+        dcc.message("who is #{command.args} indeed")
+      end
+
+      def dcc_wrap_ban(dcc, command)
+        ban_mask(dcc, dcc.user, command)
+      end
+
+      def channel_wrap_ban(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
@@ -58,11 +95,11 @@ module Axial
         end
       end
 
-      def handle_dcc_unban(dcc, command)
+      def dcc_unban(dcc, command)
         unban_mask(dcc, dcc.user, command)
       end
 
-      def handle_channel_unban(channel, nick, command)
+      def channel_unban(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (user.nil? || !user.op?)
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
@@ -74,8 +111,6 @@ module Axial
       def ban_mask(sender, user, command)
         if (command.args.strip =~ /(\S+)(.*)/)
           mask, reason = Regexp.last_match.captures
-        else
-          sender.message("try #{command.command} <mask> <reason>")
         end
 
         if (mask.nil? || mask.strip.empty?)
@@ -175,17 +210,7 @@ module Axial
         end
       end
 
-      def handle_channel_sync(channel)
-        channel.nick_list.all_nicks.each do |nick|
-          user_model = Models::User.get_from_nick_object(nick)
-          if (!user_model.nil?)
-#            channel.message("#{nick.name} is here and is user #{user_model.pretty_name}")
-            # check for bans
-          end
-        end
-      end
-
-      def get_masks(channel, nick, command)
+      def channel_get_masks(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
           if (user_model.nil? || !user_model.manager?)
@@ -217,7 +242,7 @@ module Axial
         # needs to check if any other nicks have a mask and delete them
       end
 
-      def add_mask(sender, nick, command)
+      def channel_add_mask(sender, nick, command)
         begin
           if (command.args.strip =~ /(\S+)\s+(\S+)/)
             subject_nickname = Regexp.last_match[1]
@@ -252,7 +277,7 @@ module Axial
         end
       end
 
-      def set_role(channel, nick, command)
+      def channel_set_role(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
           if (user_model.nil? || !user_model.manager?)
@@ -313,7 +338,7 @@ module Axial
         end
       end
 
-      def add_user(channel, nick, command)
+      def channel_add_user(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
           if (user_model.nil? || !user_model.manager?)

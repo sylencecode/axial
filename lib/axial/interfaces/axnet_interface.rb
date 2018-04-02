@@ -72,10 +72,12 @@ module Axial
       end
 
       def send(text)
-        if (@transmitter_object.respond_to?(@transmitter_method))
-          @transmitter_object.public_send(@transmitter_method, text)
-        else
-          raise(AxnetError, "there are no valid axnet transmitters registered")
+        if (!@transmitter_object.nil?)
+          if (@transmitter_object.respond_to?(@transmitter_method))
+            @transmitter_object.public_send(@transmitter_method, text)
+          else
+            raise(AxnetError, "there are no valid axnet transmitters registered")
+          end
         end
       end
 

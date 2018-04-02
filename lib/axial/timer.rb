@@ -74,9 +74,9 @@ module Axial
       end
       @last = Time.now
     rescue Exception => ex
-      puts "Timer error: #{ex.class}: #{ex.message}"
+      LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       ex.backtrace.each do |i|
-        puts i
+        LOGGER.error(i)
       end
     end
   end
