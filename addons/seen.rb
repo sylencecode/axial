@@ -45,7 +45,11 @@ module Axial
             channel.message("#{nick.name}: I don't know anything about #{subject_name}.")
           else
             seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
-            msg = "#{nick.name}: I saw #{subject_name} #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
+            if (subject_model.seen.status =~ /^for the first time/i)
+              msg = "#{nick.name}: I haven't actually seen #{subject_name} yet, but their account was created #{seen_at.approximate_to_s} ago."
+            else
+              msg = "#{nick.name}: I saw #{subject_name} #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
+            end
             channel.message(msg)
           end
         else # nick is currently on channel
