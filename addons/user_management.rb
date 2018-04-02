@@ -18,6 +18,7 @@ module Axial
 
         on_channel               'addmask',   :dcc_channel_wrapper, :add_mask
         on_channel               'adduser',   :dcc_channel_wrapper, :add_user
+        on_channel    'delmask|deletemask',   :dcc_channel_wrapper, :delete_mask
         on_channel    'deluser|deleteuser',   :dcc_channel_wrapper, :delete_user
         on_channel               'setrole',   :dcc_channel_wrapper, :set_role
         on_channel                   'ban',   :dcc_channel_wrapper, :ban
@@ -25,6 +26,7 @@ module Axial
 
         on_dcc                   'addmask',   :dcc_channel_wrapper, :add_mask
         on_dcc                   'adduser',   :dcc_channel_wrapper, :add_user
+        on_dcc        'delmask|deletemask',   :dcc_channel_wrapper, :delete_mask
         on_dcc                   'deluser',   :dcc_channel_wrapper, :delete_user
         on_dcc                   'setrole',   :dcc_channel_wrapper, :set_role
         on_dcc                       'ban',   :dcc_channel_wrapper, :ban
@@ -40,13 +42,175 @@ module Axial
         on_startup                            :update_ban_list
       end
 
+      def delete_mask(source, user, nick, command)
+        if (user.nil? || !user.manager?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+        if (command.args.strip =~ /(\S+)\s+(\S+)/)
+          subject_nickname, subject_mask = Regexp.last_match.captures
+        else
+          reply(source, nick, "try #{command.command} <nick> <mask>")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' not found.")
+          return
+        end
+
+        db_mask = subject_model.masks.select{ |mask| mask.mask.casecmp(subject_mask).zero? }.first
+        if (db_mask.nil?)
+          reply(source, nick, "#{subject_model.pretty_name} doesn't include mask '#{subject_mask}'.")
+        else
+          db_mask.destroy
+          reply(source, nick, "mask '#{subject_mask}' removed from #{subject_model.pretty_name}.")
+          update_user_list
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def add_mask(source, user, nick, command)
+        if (user.nil? || !user.manager?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+        if (command.args.strip =~ /(\S+)\s+(\S+)/)
+          subject_nickname, subject_mask = Regexp.last_match.captures
+        else
+          reply(source, nick, "try #{command.command} <nick> <mask>")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' not found.")
+          return
+        end
+
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        subject_models = Models::Mask.get_users_from_mask(subject_mask)
+        if (subject_models.count > 0)
+          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
+          return
+        end
+
+        mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
+        update_user_list
+        reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def unban(source, user, nick, command)
+        if (user.nil? || !user.op?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+        if (command.args.strip =~ /(\S+)/)
+          mask = Regexp.last_match[1]
+        else
+          reply(source, nick, "try #{command.command} <mask>")
+          return
+        end
+
+        mask = MaskUtils.ensure_wildcard(mask)
+
+        bans = ban_list.get_bans_from_mask(mask)
+        if (bans.count == 0)
+          reply(source, nick, "no bans matching '#{mask}'")
+          return
+        end
+
+        bans.each do |ban|
+          ban_model = Models::Ban[mask: ban.mask]
+          if (!ban_model.nil?)
+            ban_model.delete
+            reply(source, nick, "'#{ban.mask}' removed from banlist.")
+          else
+            reply(source, nick, "'#{ban.mask}' isn't in the database?")
+          end
+        end
+
+        update_ban_list
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+
+      def ban(source, user, nick, command)
+        if (user.nil? || !user.op?)
+          if (source.is_a?(IRCTypes::DCC))
+            reply(source, nick, Constants::ACCESS_DENIED)
+          end
+          return
+        end
+
+
+        if (command.args.strip =~ /(\S+)(.*)/)
+          mask, reason = Regexp.last_match.captures
+        end
+
+        if (mask.nil? || mask.strip.empty?)
+          reply(source, nick, "try #{command.command} <mask> <reason>")
+          return
+        elsif (reason.nil? || reason.strip.empty?)
+          reason = 'banned'
+        end
+
+        mask = MaskUtils.ensure_wildcard(mask.strip)
+        reason = reason.strip
+
+        begin
+          bans = ban_list.get_bans_from_mask(mask)
+          if (bans.count > 0)
+            reply(source, nick, "mask '#{mask}' has already been banned by mask '#{bans.collect{ |ban| ban.mask }.join(', ')}'")
+          else
+            ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
+            update_ban_list
+            reply(source, nick, "'#{ban_model.mask}' added to banlist.")
+          end
+
+          update_ban_list
+        rescue Exception => ex
+          reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
+      end
+
       def dcc_whois(dcc, command)
         if (command.args.empty?)
           dcc.message("usage: #{command.command} <username>")
           return
         end
 
-        user_model = Models::User[pretty_name: command.args]
+        user_model = Models::User[name: command.args.downcase]
         if (user_model.nil?)
           dcc.message("no user named '#{command.args}' was found.")
           return
@@ -58,10 +222,12 @@ module Axial
         on_channels = {}
 
         channel_list.all_channels.each do |channel|
-          on_channels[channel] = []
           channel.nick_list.all_nicks.each do |nick|
             possible_user = user_list.get_from_nick_object(nick)
             if (!possible_user.nil? && possible_user.id == user_model.id)
+              if (!on_channels.has_key?(channel))
+                on_channels[channel] = []
+              end
               on_channels[channel].push(nick)
             end
           end
@@ -84,7 +250,8 @@ module Axial
             dcc.message("  #{channel.name} as #{nicks.collect{ |tmp_nick| tmp_nick.name }.join(', ')}")
           end
         else
-          dcc.message("last seen: #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+          dcc.message('')
+          dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
         end
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -277,123 +444,6 @@ module Axial
         self.send(method, source, user, nick, command)
       end
 
-      def add_mask(source, user, nick, command)
-        if (user.nil? || !user.manager?)
-          return
-        end
-
-        reply(source, nick, "hello #{nick.name}, you are a #{user.pretty_name} #{user.role} and that was #{command.inspect}")
-      end
-
-      def channel_wrap_add_mask(channel, nick, command)
-        user = user_list.get_from_nick_object(nick)
-        if (!user.nil? && !user.manager?)
-          add_mask(channel, user, command)
-        end
-      end
-
-      def dcc_wrap_add_mask(dcc, command)
-        add_mask(dcc, dcc.user, command)
-      end
-
-      def dcc_wrap_ban(dcc, command)
-        ban_mask(dcc, dcc.user, command)
-      end
-
-      def channel_wrap_ban(channel, nick, command)
-        user = user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.op?)
-          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-        else
-          ban_mask(channel, user, command)
-        end
-      end
-
-      def dcc_unban(dcc, command)
-        unban_mask(dcc, dcc.user, command)
-      end
-
-      def channel_unban(channel, nick, command)
-        user = user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.op?)
-          channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-        else
-          unban_mask(channel, user, command)
-        end
-      end
-
-      def ban_mask(sender, user, command)
-        if (command.args.strip =~ /(\S+)(.*)/)
-          mask, reason = Regexp.last_match.captures
-        end
-
-        if (mask.nil? || mask.strip.empty?)
-          sender.message("try #{command.command} <mask> <reason>")
-          return
-        elsif (reason.nil? || reason.strip.empty?)
-          reason = 'banned'
-        end
-
-        mask = MaskUtils.ensure_wildcard(mask.strip)
-        reason = reason.strip
-
-        begin
-          bans = ban_list.get_bans_from_mask(mask)
-          if (bans.count > 0)
-            sender.message("mask '#{mask}' has already been banned by mask '#{bans.collect{ |ban| ban.mask }.join(', ')}'")
-          else
-            ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
-            update_ban_list
-            sender.message("'#{ban_model.mask}' added to banlist.")
-          end
-
-          update_ban_list
-        rescue Exception => ex
-          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
-        end
-      end
-
-      def unban_mask(sender, user, command)
-        if (command.args.strip =~ /(\S+)/)
-          mask = Regexp.last_match[1]
-        else
-          sender.message("try #{command.command} <mask>")
-          return
-        end
-
-        mask = MaskUtils.ensure_wildcard(mask)
-
-        begin
-          bans = ban_list.get_bans_from_mask(mask)
-          if (bans.count == 0)
-            sender.message("no bans matching '#{mask}'")
-            return
-          end
-
-          bans.each do |ban|
-            ban_model = Models::Ban[mask: ban.mask]
-            if (!ban_model.nil?)
-              ban_model.delete
-              sender.message("'#{ban.mask}' removed from banlist.")
-            else
-              sender.message("'#{ban.mask}' isn't in the database?")
-            end
-          end
-
-          update_ban_list
-        rescue Exception => ex
-          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
-        end
-      end
-
       def update_user_list()
         new_user_list = Axnet::UserList.new
         Models::User.all.each do |user_model|
@@ -421,73 +471,6 @@ module Axial
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
-        end
-      end
-
-      def channel_get_masks(channel, nick, command)
-        begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.manager?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-            return
-          end
-          if (command.args.strip =~ /(\S+)/)
-            subject_nickname = Regexp.last_match[1]
-          else
-            channel.message("#{nick.name}: try ?getmasks <nick>")
-            return
-          end
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            channel.message("#{nick.name}: user '#{subject_nickname}' not found.")
-            return
-          end
-          channel.message("Current masks for #{subject_model.pretty_name}: #{subject_model.possible_masks.join(', ')}")
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
-        end
-      end
-
-      def remove_mask(channel, nick, command)
-        # needs to check if any other nicks have a mask and delete them
-      end
-
-      def channel_add_mask(sender, nick, command)
-        begin
-          if (command.args.strip =~ /(\S+)\s+(\S+)/)
-            subject_nickname = Regexp.last_match[1]
-            subject_mask = Regexp.last_match[2]
-          else
-            sender.message("try #{command.command} <nick> <mask>")
-            return
-          end
-
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            sender.message("user '#{subject_nickname}' not found.")
-            return
-          end
-
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          subject_models = Models::Mask.get_users_from_mask(subject_mask)
-          if (subject_models.count > 0)
-            sender.message("mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
-            return
-          end
-
-          mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
-          update_user_list
-          sender.message("mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
-        rescue Exception => ex
-          sender.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
         end
       end
 
