@@ -40,6 +40,61 @@ module Axial
         on_startup                            :update_ban_list
       end
 
+      def dcc_whois(dcc, command)
+        if (command.args.empty?)
+          dcc.message("usage: #{command.command} <username>")
+          return
+        end
+
+        user_model = Models::User[pretty_name: command.args]
+        if (user_model.nil?)
+          dcc.message("no user named '#{command.args}' was found.")
+          return
+        end
+
+        dcc.message("user: #{user_model.pretty_name}")
+        dcc.message("role: #{user_model.role}")
+
+        on_channels = {}
+
+        channel_list.all_channels.each do |channel|
+          on_channels[channel] = []
+          channel.nick_list.all_nicks.each do |nick|
+            possible_user = user_list.get_from_nick_object(nick)
+            if (!possible_user.nil? && possible_user.id == user_model.id)
+              on_channels[channel].push(nick)
+            end
+          end
+        end
+
+        if (dcc.user.op?)
+          dcc.message('')
+          dcc.message("associated masks:")
+          dcc.message('')
+          user_model.masks.each do |mask|
+            dcc.message("  #{mask.mask}")
+          end
+        end
+
+        if (on_channels.any?)
+          dcc.message('')
+          dcc.message("currently active on:")
+          dcc.message('')
+          on_channels.each do |channel, nicks|
+            dcc.message("  #{channel.name} as #{nicks.collect{ |tmp_nick| tmp_nick.name }.join(', ')}")
+          end
+        else
+          dcc.message("last seen: #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+        end
+      rescue Exception => ex
+        dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+
       def dcc_user_list(dcc, command)
         if (!dcc.user.op?)
           dcc.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
@@ -239,10 +294,6 @@ module Axial
 
       def dcc_wrap_add_mask(dcc, command)
         add_mask(dcc, dcc.user, command)
-      end
-
-      def dcc_whois(dcc, command)
-        dcc.message("who is #{command.args} indeed")
       end
 
       def dcc_wrap_ban(dcc, command)
