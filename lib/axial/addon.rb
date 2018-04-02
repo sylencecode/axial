@@ -61,64 +61,204 @@ module Axial
       @last = Time.now - @throttle_secs
     end
 
-    def on_nick_change(method)
+    def on_nick_change(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :nick_change, method: method, args: args)
+      else
+        @listeners.push(type: :nick_change, method: method)
+      end
+
       LOGGER.debug("nick changes will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :nick_change, method: method)
     end
 
-    def on_startup(method)
+    def on_startup(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :startup, method: method, args: args)
+      else
+        @listeners.push(type: :startup, method: method)
+      end
       LOGGER.debug("startup will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :startup, method: method)
     end
 
-    def on_axnet_connect(method)
+    def on_axnet_connect(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :axnet_connect, method: method, args: args)
+      else
+        @listeners.push(type: :axnet_connect, method: method)
+      end
       LOGGER.debug("new axnet connections will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :axnet_connect, method: method)
     end
 
-    def on_axnet_disconnect(method)
+    def on_axnet_disconnect(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :axnet_disconnect, method: method, args: args)
+      else
+        @listeners.push(type: :axnet_disconnect, method: method)
+      end
       LOGGER.debug("axnet disconnects will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :axnet_disconnect, method: method)
     end
 
-    def on_ban_list(method)
+    def on_ban_list(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :ban_list, method: method, args: args)
+      else
+        @listeners.push(type: :ban_list, method: method)
+      end
       LOGGER.debug("banlist update invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :ban_list, method: method)
     end
 
-    def on_user_list(method)
+    def on_user_list(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :user_list, method: method, args: args)
+      else
+        @listeners.push(type: :user_list, method: method)
+      end
+
       LOGGER.debug("userlist update will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :user_list, method: method)
     end
 
-    def on_channel_full(method)
+    def on_channel_full(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_full, method: method, args: args)
+      else
+        @listeners.push(type: :channel_full, method: method)
+      end
+
       LOGGER.debug("channel is full (#471) errors will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :channel_full, method: method)
     end
 
-    def on_invite(method)
+    def on_invite(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :invited_to_channel, method: method, args: args)
+      else
+        @listeners.push(type: :invited_to_channel, method: method)
+      end
+
       LOGGER.debug("channel invitations will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :invited_to_channel, method: method)
     end
 
-    def on_banned_from_channel(method)
+    def on_banned_from_channel(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :banned_from_channel, method: method, args: args)
+      else
+        @listeners.push(type: :banned_from_channel, method: method)
+      end
+
       LOGGER.debug("banned from channel (#474) will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :banned_from_channel, method: method)
     end
 
-    def on_channel_keyword(method)
+    def on_channel_keyword(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_keyword, method: method, args: args)
+      else
+        @listeners.push(type: :channel_keyword, method: method)
+      end
+
       LOGGER.debug("channel keyword (#475) will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :channel_keyword, method: method)
     end
 
-    def on_channel_invite_only(method)
+    def on_channel_invite_only(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_invite_only, method: method, args: args)
+      else
+        @listeners.push(type: :channel_invite_only, method: method)
+      end
+
       LOGGER.debug("invite only (#473) will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :channel_invite_only, method: method)
     end
 
-    def on_reload(method)
+    def on_reload(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :reload, method: method, args: args)
+      else
+        @listeners.push(type: :reload, method: method)
+      end
+
       LOGGER.debug("addon reload will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :reload, method: method)
     end
 
     def on_mode(*in_args)
@@ -137,44 +277,140 @@ module Axial
       sleep(random_sleep)
     end
 
-    def on_irc_ban_list_end(method)
+    def on_irc_ban_list_end(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :irc_ban_list_end, method: method, args: args)
+      else
+        @listeners.push(type: :irc_ban_list_end, method: method)
+      end
+
       LOGGER.debug("IRC banlist end (368) will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :irc_ban_list_end, method: method)
     end
 
-    def on_kick(method)
+    def on_kick(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :kick, method: method, args: args)
+      else
+        @listeners.push(type: :kick, method: method)
+      end
+
       LOGGER.debug("channel kick will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :kick, method: method)
     end
 
-    def on_self_kick(method)
+    def on_self_kick(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :self_kick, method: method, args: args)
+      else
+        @listeners.push(type: :self_kick, method: method)
+      end
+
       LOGGER.debug("getting kicked will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :self_kick, method: method)
     end
 
-    def on_part(method)
+    def on_part(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :part, method: method, args: args)
+      else
+        @listeners.push(type: :part, method: method)
+      end
+
       LOGGER.debug("channel part will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :part, method: method)
     end
 
-    def on_quit(method)
+    def on_quit(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :quit, method: method, args: args)
+      else
+        @listeners.push(type: :quit, method: method)
+      end
+
       LOGGER.debug("IRC quit will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :quit, method: method)
     end
 
-    def on_topic(method)
+    def on_topic(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :topic_change, method: method, args: args)
+      else
+        @listeners.push(type: :topic_change, method: method)
+      end
+
       LOGGER.debug("channel topic changes will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :topic_change, method: method)
     end
 
-    def on_channel_sync(method)
+    def on_channel_sync(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_sync, method: method, args: args)
+      else
+        @listeners.push(type: :channel_sync, method: method)
+      end
+
       LOGGER.debug("channel sync will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :channel_sync, method: method)
     end
 
-    def on_join(method)
+    def on_join(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :join, method: method, args: args)
+      else
+        @listeners.push(type: :join, method: method)
+      end
+
       LOGGER.debug("channel join will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :join, method: method)
     end
 
     def on_dcc(command, *args)
@@ -186,30 +422,56 @@ module Axial
       method = args.shift
 
       if (command.is_a?(Regexp))
-        @listeners.push(type: :dcc, command: command, method: method)
+        if (args.any?)
+          @listeners.push(type: :dcc, command: command, method: method, args: args)
+        else
+          @listeners.push(type: :dcc, command: command, method: method)
+        end
       elsif (command.is_a?(String))
         if (args.any?)
           command.split('|').each do |command|
             @listeners.push(type: :dcc, command: command, method: method, args: args)
-            LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
           end
         else
           command.split('|').each do |command|
             @listeners.push(type: :dcc, command: command, method: method)
-            LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
           end
         end
+        LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
       end
     end
 
-    def on_self_join(method)
+    def on_self_join(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :self_join, method: method, args: args)
+      else
+        @listeners.push(type: :self_join, method: method)
+      end
       LOGGER.debug("channel self-join will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :self_join, method: method)
     end
 
-    def on_channel_any(method)
+    def on_channel_any(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_any, method: method, args: args)
+      else
+        @listeners.push(type: :channel_any, method: method)
+      end
+
       LOGGER.debug("all channel messages will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :channel_any, method: method)
     end
 
     def on_channel(command, *args)
@@ -221,44 +483,96 @@ module Axial
       method = args.shift
 
       if (command.is_a?(Regexp))
+        if (args.any?)
+          @listeners.push(type: :channel, command: command, method: method, args: args)
+        else
+          @listeners.push(type: :channel, command: command, method: method)
+        end
         LOGGER.debug("channel expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
-        @listeners.push(type: :channel, command: command, method: method)
       elsif (command.is_a?(String))
         if (args.any?)
           command.split('|').each do |command|
-            @listeners.push(type: :channel, command: command, method: method.to_sym, args: args)
-            LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+            @listeners.push(type: :channel, command: command, method: method, args: args)
           end
         else
           command.split('|').each do |command|
-            @listeners.push(type: :channel, command: command, method: method.to_sym)
-            LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+            @listeners.push(type: :channel, command: command, method: method)
           end
         end
+        LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
       end
     end
 
-    def on_channel_leftover(text, method)
+    def on_channel_leftover(text, *args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :channel_leftover, text: text, method: method, args: args)
+      else
+        @listeners.push(type: :channel_leftover, text: text, method: method)
+      end
+
       if (text.is_a?(Regexp))
         LOGGER.debug("channel leftover expression '#{text.source}' will invoke method '#{self.class}.#{method}'")
       else
         LOGGER.debug("channel leftover text '#{text}' will invoke method '#{self.class}.#{method}'")
       end
-      @listeners.push(type: :channel_leftover, text: text, method: method)
     end
 
-    def on_axnet(command, method)
+    def on_axnet(command, *args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @listeners.push(type: :axnet, command: command, method: method, args: args)
+      else
+        @listeners.push(type: :axnet, command: command, method: method)
+      end
+
       if (command.is_a?(Regexp))
         LOGGER.debug("axnet text pattern '#{command.source}' will invoke method '#{self.class}.#{method}'")
       else
         LOGGER.debug("axnet command '#{command}' will invoke method '#{self.class}.#{method}'")
       end
-      @listeners.push(type: :axnet, command: command, method: method)
     end
 
-    def on_privmsg(command, method)
+    def on_privmsg(command, *args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (command.is_a?(Regexp))
+        if (args.any?)
+          @listeners.push(type: :privmsg, command: command, method: method, args: args)
+        else
+          @listeners.push(type: :privmsg, command: command, method: method)
+        end
+        LOGGER.debug("private message expression expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
+      elsif (command.is_a?(String))
+        if (args.any?)
+          command.split('|').each do |command|
+            @listeners.push(type: :privmsg, command: command, method: method, args: args)
+          end
+        else
+          command.split('|').each do |command|
+            @listeners.push(type: :privmsg, command: command, method: method)
+          end
+        end
+        LOGGER.debug("private message command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+      end
       LOGGER.debug("private message '#{command}' will invoke method '#{self.class}.#{method}")
-      @listeners.push(type: :privmsg, command: command, method: method)
     end
 
     def before_reload()

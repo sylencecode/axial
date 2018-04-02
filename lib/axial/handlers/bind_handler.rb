@@ -15,7 +15,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], handler)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], handler, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], handler)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -39,7 +43,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], handler)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], handler, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], handler)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -63,7 +71,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel_name)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel_name)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -87,7 +99,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel_name)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel_name)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -111,7 +127,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel_name)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel_name)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -135,7 +155,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], nick, channel_name)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel_name)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -159,7 +183,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel, nick, topic)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, nick, topic, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, nick, topic)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -183,7 +211,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel_name)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel_name)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -208,7 +240,11 @@ module Axial
             begin
               if (bind[:modes].include?(:all) || (bind[:modes] & mode.channel_modes).any?)
                 if (bind[:object].respond_to?(bind[:method]))
-                  bind[:object].public_send(bind[:method], channel, nick, mode)
+                  if (bind.has_key?(:args) && bind[:args].any?)
+                    bind[:object].public_send(bind[:method], channel, nick, mode, *bind[:args])
+                  else
+                    bind[:object].public_send(bind[:method], channel, nick, mode)
+                  end
                 else
                   LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                 end
@@ -233,7 +269,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], nick, reason)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], nick, reason, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], nick, reason)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -257,7 +297,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel, kicker_nick, reason)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, kicker_nick, reason, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, kicker_nick, reason)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -276,7 +320,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel, kicker_nick, kicked_nick, reason)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, kicker_nick, kicked_nick, reason, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, kicker_nick, kicked_nick, reason)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -295,7 +343,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel, nick, reason)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, nick, reason, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, nick, reason)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -319,7 +371,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method])
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -343,7 +399,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method])
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -367,7 +427,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method])
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -391,7 +455,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method])
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method])
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -415,7 +483,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], old_nick, new_nick)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], old_nick, new_nick, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], old_nick, new_nick)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -439,7 +511,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -463,7 +539,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -487,7 +567,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel, nick)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, nick, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, nick)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -511,7 +595,11 @@ module Axial
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))
-                bind[:object].public_send(bind[:method], channel)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel)
+                end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
               end
@@ -545,7 +633,11 @@ module Axial
               bind[:object].last = Time.now
               Thread.new do
                 begin
-                  bind[:object].public_send(bind[:method], socket_handler, command_object)
+                  if (bind.has_key?(:args) && bind[:args].any?)
+                    bind[:object].public_send(bind[:method], socket_handler, command_object, *bind[:args])
+                  else
+                    bind[:object].public_send(bind[:method], socket_handler, command_object)
+                  end
                 rescue Exception => ex
                   LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
                   ex.backtrace.each do |i|
@@ -562,7 +654,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], socket_handler, command_object)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], socket_handler, command_object, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], socket_handler, command_object)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -581,7 +677,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], socket_handler, command_object)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], socket_handler, command_object, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], socket_handler, command_object)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -737,7 +837,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], channel, nick, text)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], channel, nick, text, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], channel, nick, text)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -782,7 +886,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], nick, command_object)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], nick, command_object, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], nick, command_object)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -802,7 +910,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], nick, command_object)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], nick, command_object, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], nick, command_object)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
@@ -821,7 +933,11 @@ module Axial
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
-                    bind[:object].public_send(bind[:method], nick, text)
+                    if (bind.has_key?(:args) && bind[:args].any?)
+                      bind[:object].public_send(bind[:method], nick, text, *bind[:args])
+                    else
+                      bind[:object].public_send(bind[:method], nick, text)
+                    end
                   else
                     LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
                   end
