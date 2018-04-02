@@ -1,3 +1,4 @@
+require 'bcrypt'
 require 'axial/addon'
 require 'axial/colors'
 require 'axial/timespan'
@@ -16,30 +17,37 @@ module Axial
         @version = '1.1.0'
         @valid_roles = %w(director manager op friend)
 
-        on_channel               'addmask',   :dcc_channel_wrapper, :add_mask
-        on_channel               'adduser',   :dcc_channel_wrapper, :add_user
-        on_channel    'delmask|deletemask',   :dcc_channel_wrapper, :delete_mask
-        on_channel    'deluser|deleteuser',   :dcc_channel_wrapper, :delete_user
-        on_channel               'setrole',   :dcc_channel_wrapper, :set_role
-        on_channel                   'ban',   :dcc_channel_wrapper, :ban
-        on_channel                 'unban',   :dcc_channel_wrapper, :unban
+        on_channel               'addmask',   :dcc_wrapper, :add_mask
+        on_channel               'adduser',   :dcc_wrapper, :add_user
+        on_channel    'delmask|deletemask',   :dcc_wrapper, :delete_mask
+        on_channel    'deluser|deleteuser',   :dcc_wrapper, :delete_user
+        on_channel               'setrole',   :dcc_wrapper, :set_role
+        on_channel                   'ban',   :dcc_wrapper, :ban
+        on_channel                 'unban',   :dcc_wrapper, :unban
 
-        on_dcc                   'addmask',   :dcc_channel_wrapper, :add_mask
-        on_dcc                   'adduser',   :dcc_channel_wrapper, :add_user
-        on_dcc        'delmask|deletemask',   :dcc_channel_wrapper, :delete_mask
-        on_dcc                   'deluser',   :dcc_channel_wrapper, :delete_user
-        on_dcc                   'setrole',   :dcc_channel_wrapper, :set_role
-        on_dcc                       'ban',   :dcc_channel_wrapper, :ban
-        on_dcc                     'unban',   :dcc_channel_wrapper, :unban
+        on_privmsg              'password',   :dcc_wrapper, :set_password
+
+        on_dcc                   'addmask',   :dcc_wrapper, :add_mask
+        on_dcc                   'adduser',   :dcc_wrapper, :add_user
+        on_dcc        'delmask|deletemask',   :dcc_wrapper, :delete_mask
+        on_dcc                   'deluser',   :dcc_wrapper, :delete_user
+        on_dcc                   'setrole',   :dcc_wrapper, :set_role
+        on_dcc                       'ban',   :dcc_wrapper, :ban
+        on_dcc                     'unban',   :dcc_wrapper, :unban
 
         on_dcc              'banlist|bans',   :dcc_ban_list
         on_dcc            'userlist|users',   :dcc_user_list
         on_dcc                     'whois',   :dcc_whois
+        on_dcc                  'password',   :dcc_wrapper, :set_password
 
         on_reload                             :update_user_list
         on_reload                             :update_ban_list
         on_startup                            :update_user_list
         on_startup                            :update_ban_list
+      end
+
+      def set_password(source, user, nick, command)
+        reply(source, nick, "Got you: #{command.inspect}")
       end
 
       def add_user(source, user, nick, command)
@@ -576,15 +584,20 @@ module Axial
       def reply(source, nick, text)
         if (source.is_a?(IRCTypes::Channel))
           source.message("#{nick.name}: #{text}")
-        elsif (source.is_a?(IRCTypes::DCC))
+        else
           source.message(text)
         end
       end
 
-      def dcc_channel_wrapper(*args)
+      def dcc_wrapper(*args)
         source = args.shift
         if (source.is_a?(IRCTypes::Channel))
           nick = args.shift
+          command = args.shift
+          method = args.shift
+          user = user_list.get_from_nick_object(nick)
+        elsif (source.is_a?(IRCTypes::Nick))
+          nick = source
           command = args.shift
           method = args.shift
           user = user_list.get_from_nick_object(nick)

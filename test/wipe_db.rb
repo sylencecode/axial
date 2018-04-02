@@ -16,6 +16,13 @@ require_relative '../lib/axial/models/init.rb'
  
  DB = Sequel.connect(DB_OPTIONS)
 
+ DB.alter_table(:users) do
+   add_column :password, String, size: 64
+   add_column :created, DateTime, default: Time.now
+   add_column :note, String, size: 255
+   rename_column :role, :role_name
+ end
+
 #raise "Sure you wanna?"
 #exit 1
 
@@ -28,14 +35,14 @@ require_relative '../lib/axial/models/init.rb'
 #  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
 #end
 
-DB.drop_table?(:bans)
-DB.create_table :bans do
-  primary_key :id
-  foreign_key :user_id, :users
-  String :mask, size: 255
-  String :reason, size: 255
-  DateTime :set_at, default: Time.now
-end
+#DB.drop_table?(:bans)
+#DB.create_table :bans do
+#  primary_key :id
+#  foreign_key :user_id, :users
+#  String :mask, size: 255
+#  String :reason, size: 255
+#  DateTime :set_at, default: Time.now
+# end
 
 exit 1
 
