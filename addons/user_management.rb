@@ -379,8 +379,8 @@ module Axial
           end
         else
           dcc.message('')
-          if (user_model.seen.nil?)
-            dcc.message("status unknown.")
+          if (user_model.seen.nil? || user_model.seen.status =~ /for the first time/)
+            dcc.message("never seen before.")
           else
             dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
           end
@@ -422,7 +422,25 @@ module Axial
             role_length = user[:role].length
           end
 
-          if (user_model.seen.nil?)
+          on_channels = {}
+  
+          channel_list.all_channels.each do |channel|
+            channel.nick_list.all_nicks.each do |nick|
+              possible_user = user_list.get_from_nick_object(nick)
+              if (!possible_user.nil? && possible_user.id == user_model.id)
+                if (!on_channels.has_key?(channel))
+                  on_channels[channel] = []
+                end
+                on_channels[channel].push(nick)
+              end
+            end
+          end
+
+          if (on_channels.any?)
+            user[:seen] = "active (#{on_channels.keys.collect{ |channel| channel.name }.join(', ')})"
+          elsif (user_model.seen.nil?)
+            user[:seen] = "never"
+          elsif (user_model.seen.status =~ /for the first time/)
             user[:seen] = "never"
           else
             user[:seen] = TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s + ' ago'
@@ -459,30 +477,22 @@ module Axial
         else
           dcc.message("current user list".center(top_bar.length))
           dcc.message(top_bar)
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'username'.center(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'role'.center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{'masks'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+          dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'username'.center(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'role'.center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{'masks'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
-          users.select{ |tmp_user| tmp_user[:role].downcase == 'director' }.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            user[:masks].each do |mask|
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            end
-          end
-          users.select{ |tmp_user| tmp_user[:role].downcase == 'manager' }.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            user[:masks].each do |mask|
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            end
-          end
-          users.select{ |tmp_user| tmp_user[:role].downcase == 'op' }.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            user[:masks].each do |mask|
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            end
-          end
-          users.select{ |tmp_user| tmp_user[:role].downcase == 'friend' }.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-            user[:masks].each do |mask|
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+          %w(director manager op friend).each do |role|
+            users.select{ |tmp_user| tmp_user[:role].downcase == role}.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
+              puts user[:seen].inspect
+              if (user[:seen] =~ /^active/)
+                seen_color = Colors.green
+              elsif (user[:seen] == 'never')
+                seen_color = Colors.red
+              else
+                seen_color = ''
+              end
+              dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{seen_color}#{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+              user[:masks].each do |mask|
+                dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+              end
             end
           end
           dcc.message(bottom_bar)
