@@ -189,11 +189,15 @@ module Axial
         @listeners.push(type: :dcc, command: command, method: method)
       elsif (command.is_a?(String))
         if (args.any?)
-          @listeners.push(type: :dcc, command: command, method: method, args: args)
-          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+          command.split('|').each do |command|
+            @listeners.push(type: :dcc, command: command, method: method, args: args)
+            LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+          end
         else
-          @listeners.push(type: :dcc, command: command, method: method)
-          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+          command.split('|').each do |command|
+            @listeners.push(type: :dcc, command: command, method: method)
+            LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+          end
         end
       end
     end
@@ -221,11 +225,15 @@ module Axial
         @listeners.push(type: :channel, command: command, method: method)
       elsif (command.is_a?(String))
         if (args.any?)
-          @listeners.push(type: :channel, command: command, method: method.to_sym, args: args)
-          LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+          command.split('|').each do |command|
+            @listeners.push(type: :channel, command: command, method: method.to_sym, args: args)
+            LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}' with arguments #{args.inspect}")
+          end
         else
-          @listeners.push(type: :channel, command: command, method: method.to_sym)
-          LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+          command.split('|').each do |command|
+            @listeners.push(type: :channel, command: command, method: method.to_sym)
+            LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+          end
         end
       end
     end
