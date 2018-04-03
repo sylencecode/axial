@@ -38,7 +38,7 @@ module Axial
       end
 
       def reload_addons(dcc, command)
-        if (!dcc.user.director?)
+        if (!dcc.user.role.director?)
           dcc.message(Constants::ACCESS_DENIED)
           return
         end
@@ -68,7 +68,7 @@ module Axial
         local_ip    = Resolv.getaddress(Socket.gethostname)
 
         user = user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.director?)
+        if (user.nil? || !user.role.director?)
           return
         end
 

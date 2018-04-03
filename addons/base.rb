@@ -60,7 +60,7 @@ module Axial
 
       def reload_addons(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.director?)
+        if (user.nil? || !user.role.director?)
           return
         end
 

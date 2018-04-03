@@ -38,7 +38,7 @@ module Axial
       end
 
       def after_initialize()
-        @role = Role.new(@role_name)
+        @role = Role.new(self.role_name)
       end
 
       def role=(role)

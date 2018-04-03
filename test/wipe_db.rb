@@ -17,7 +17,7 @@ require_relative '../lib/axial/models/init.rb'
  DB = Sequel.connect(DB_OPTIONS)
 
  DB.alter_table(:users) do
-   add_column :password, String, size: 64
+   add_column :password, String, size: 128
    add_column :created, DateTime, default: Time.now
    add_column :note, String, size: 255
    rename_column :role, :role_name

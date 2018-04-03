@@ -47,7 +47,7 @@ module Axial
 
       def pong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
-        if (!user.nil? && user.director?)
+        if (!user.nil? && user.role.director?)
           channel.message("pong")
         end
       end

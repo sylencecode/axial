@@ -48,6 +48,12 @@ module Axial
 
       def set_password(source, user, nick, command)
         reply(source, nick, "Got you: #{command.inspect}")
+        reply(source, nick, "you are one of the #{user.role.plural_name}")
+        if (command.args.empty?)
+          reply(source, nick, "no password")
+        else
+          reply(source, nick, "your password '#{command.args}' would be: #{BCrypt::Password.create(command.args)}")
+        end
       end
 
       def add_user(source, user, nick, command)
@@ -112,13 +118,13 @@ module Axial
         end
 
         if (subject_role == 'director')
-          if (!user.director? || user.id != 1) 
+          if (!user.role.director? || user.id != 1) 
             reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
             return
           end
         end
 
-        if (subject_model.director? && user.id != 1)
+        if (subject_model.role.director? && user.id != 1)
           reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
           return
         end
@@ -652,12 +658,13 @@ module Axial
             subject_nickname = Regexp.last_match[1]
             subject_role_name = Regexp.last_match[2].downcase
           else
-            channel.message("#{nick.name}: try ?setrole <user> <#{@valid_role_names.join('|')}>")
+            channel.message("#{nick.name}: try ?setrole <user> <#{Role.numerics.keys.collect{ |role_name| role_name.to_s }.join('|')}>")
             return
           end
 
-          if (!@valid_role_names.include?(subject_role_name))
-            channel.message("#{nick.name}: roles must be one of: #{@valid_role_names.join(', ')}")
+
+          if (!Role.numerics.has_key?(subject_role_name.to_sym))
+            channel.message("#{nick.name}: try ?setrole <user> <#{Role.numerics.keys.collect{ |role_name| role_name.to_s }.join('|')}>")
             return
           end
 
@@ -672,19 +679,19 @@ module Axial
             return
           end
 
-          if (subject_role_name == 'manager' && !user_model.director?)
+          if (subject_role_name == 'manager' && !user_model.role.director?)
             channel.message("#{nick.name}: sorry, only directors can assign new managers.")
             return
           end
 
           if (subject_role_name == 'director')
-            if (!user_model.director? || user_model.id != 1) 
+            if (!user_model.role.director? || user_model.id != 1) 
               channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
               return
             end
           end
 
-          if (subject_model.director? && user_model.id != 1)
+          if (subject_model.role.director? && user_model.id != 1)
             channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
             return
           end
