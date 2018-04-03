@@ -8,7 +8,7 @@ module Axial
     attr_accessor   :last
 
     def initialize(bot)
-      @listeners = []
+      @listeners        = []
       @name             = 'unnamed addon'
       @author           = 'unknown author'
       @version          = 'uknown version'

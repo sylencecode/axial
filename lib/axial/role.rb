@@ -1,6 +1,6 @@
 module Axial
   class Role
-    @numerics = { root: 5, director: 4, manager: 3, op: 2, friend: 1}
+    @numerics = { root: 5, director: 4, manager: 3, op: 2, friend: 1 }
     attr_reader :numeric, :name
 
     def self.numerics()
@@ -52,10 +52,21 @@ module Axial
       end
     end
 
+    def plural_name()
+      case @name
+        when 'root'
+          return 'root users'
+        else
+          return "#{@name}s"
+      end
+    end
+
     def method_missing(method, *args, &block)
       case method
         when :root?, :director?, :manager?, :op?, :friend?
-          return @name == method.to_s.gsub(/\?$/, '')
+          return self >= method.to_s.gsub(/\?$/, '').to_sym
+        when :bot?
+          return name == 'bot'
         else
           super
       end

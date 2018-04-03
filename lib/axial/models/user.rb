@@ -82,50 +82,6 @@ module Axial
         return user_model
       end
 
-      def director?()
-        if (role_name.casecmp('director').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def manager?()
-        if (role_name.casecmp('director').zero?)
-          return true
-        elsif (role_name.casecmp('manager').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def op?()
-        if (role_name.casecmp('director').zero?)
-          return true
-        elsif (role_name.casecmp('manager').zero?)
-          return true
-        elsif (role_name.casecmp('op').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def friend?()
-        if (role_name.casecmp('director').zero?)
-          return true
-        elsif (role_name.casecmp('manager').zero?)
-          return true
-        elsif (role_name.casecmp('op').zero?)
-          return true
-        elsif (role_name.casecmp('friend').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
       def self.get_from_nickname(nickname)
         return self[name: nickname.downcase]
       end

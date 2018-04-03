@@ -47,7 +47,7 @@ module Axial
       def handle_kick(channel, kicker_nick, kicked_nick, reason)
         user = get_bot_or_user(kicker_nick)
         possible_user = get_bot_or_user(kicked_nick)
-        if (!possible_user.nil? && possible_user.op?)
+        if (!possible_user.nil? && possible_user.role.op?)
           if (!bot_or_director?(user))
             if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
               # immediate
@@ -138,11 +138,11 @@ module Axial
           possible_user = get_bot_or_user(subject_nick)
           if (possible_user.nil?)
             next
-          elsif (possible_user.op?)
+          elsif (possible_user.role.op?)
             if (!subject_nick.opped_on?(channel))
               response_mode.op(subject_nick.name)
             end
-          elsif (possible_user.friend?)
+          elsif (possible_user.role.friend?)
             if (!subject_nick.voiced_on?(channel))
               response_mode.voice(subject_nick.name)
             end
@@ -217,7 +217,7 @@ module Axial
             else
               subject_nick = channel.nick_list.get(op)
               possible_user = get_bot_or_user(subject_nick)
-              if (possible_user.nil? || !possible_user.op?)
+              if (possible_user.nil? || !possible_user.role.op?)
                 if (!bot_or_director?(user))
                   if (subject_nick.opped_on?(channel))
                     response_mode.deop(subject_nick)
@@ -236,7 +236,7 @@ module Axial
               # re-op users and penalize offender unless deopped by a director or bot
               subject_nick = channel.nick_list.get(deop)
               possible_user = get_bot_or_user(subject_nick)
-              if (!possible_user.nil? && possible_user.op?)
+              if (!possible_user.nil? && possible_user.role.op?)
                 if (!bot_or_director?(user))
                   if (!subject_nick.opped_on?(channel))
                     response_mode.op(subject_nick.name)
@@ -315,12 +315,12 @@ module Axial
         wait_a_sec
         user = get_bot_or_user_mask(nick.uhost)
         if (!user.nil?)
-          if (user.op?)
+          if (user.role.op?)
             if (!nick.opped_on?(channel))
               channel.op(nick)
               LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
-          elsif (user.friend?)
+          elsif (user.role.friend?)
             if (!nick.voiced_on?(channel))
               channel.voice(nick)
               LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
@@ -407,7 +407,7 @@ module Axial
       end
 
       def bot_or_director?(user)
-        return (!user.nil? && (user.bot? || user.director?))
+        return (!user.nil? && (user.role.bot? || user.role.director?))
       end
 
       def stop_ban_cleanup_timer()

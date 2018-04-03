@@ -319,7 +319,7 @@ module Axial
       end
 
       def bot_or_director?(user)
-        return (!user.nil? && (user.bot? || user.director?))
+        return (!user.nil? && (user.role.bot? || user.role.director?))
       end
 
       def before_reload()

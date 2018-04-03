@@ -51,7 +51,7 @@ module Axial
       end
 
       def add_user(source, user, nick, command)
-        if (user.nil? || !user.manager?)
+        if (user.nil? || !user.role.manager?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -91,7 +91,7 @@ module Axial
       end
 
       def delete_user(source, user, nick, command)
-        if (user.nil? || !user.manager?)
+        if (user.nil? || !user.role.manager?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -106,9 +106,8 @@ module Axial
           return
         end
 
-        subject_role = subject_model.role
-        if (subject_role == 'manager' && !user.director?) 
-          reply(source, nick, "sorry, only directors can delete managers.")
+        if (subject_model.role < user.role)
+          reply(source, nick, "sorry, #{user.role.plural_name} are not allowed to delete #{subject_model.role.plural_name}.")
           return
         end
 
@@ -177,7 +176,7 @@ module Axial
       end
 
       def delete_mask(source, user, nick, command)
-        if (user.nil? || !user.manager?)
+        if (user.nil? || !user.role.manager?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -214,7 +213,7 @@ module Axial
       end
 
       def add_mask(source, user, nick, command)
-        if (user.nil? || !user.manager?)
+        if (user.nil? || !user.role.manager?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -253,7 +252,7 @@ module Axial
       end
 
       def unban(source, user, nick, command)
-        if (user.nil? || !user.op?)
+        if (user.nil? || !user.role.op?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -296,7 +295,7 @@ module Axial
 
 
       def ban(source, user, nick, command)
-        if (user.nil? || !user.op?)
+        if (user.nil? || !user.role.op?)
           if (source.is_a?(IRCTypes::DCC))
             reply(source, nick, Constants::ACCESS_DENIED)
           end
@@ -369,7 +368,7 @@ module Axial
           end
         end
 
-        if (dcc.user.op?)
+        if (dcc.user.role.op?)
           dcc.message('')
           dcc.message("associated masks:")
           dcc.message('')
@@ -387,7 +386,7 @@ module Axial
           end
         else
           dcc.message('')
-          if (user_model.seen.nil? || user_model.seen.status =~ /for the first time/)
+          if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
             dcc.message("never seen before.")
           else
             dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
@@ -403,7 +402,7 @@ module Axial
 
 
       def dcc_user_list(dcc, command)
-        if (!dcc.user.op?)
+        if (!dcc.user.role.op?)
           dcc.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
         end
@@ -448,7 +447,7 @@ module Axial
             user[:seen] = "active (#{on_channels.keys.collect{ |channel| channel.name }.join(', ')})"
           elsif (user_model.seen.nil?)
             user[:seen] = "never"
-          elsif (user_model.seen.status =~ /for the first time/)
+          elsif (user_model.seen.status =~ /^for the first time/i)
             user[:seen] = "never"
           else
             user[:seen] = TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s + ' ago'
@@ -514,7 +513,7 @@ module Axial
       end
 
       def dcc_ban_list(dcc, command)
-        if (!dcc.user.op?)
+        if (!dcc.user.role.op?)
           dcc.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
         end
@@ -644,7 +643,7 @@ module Axial
       def channel_set_role(channel, nick, command)
         begin
           user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.manager?)
+          if (user_model.nil? || !user_model.role.manager?)
             channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
             return
           end

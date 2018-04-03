@@ -1,12 +1,15 @@
+require 'axial/role'
+
 module Axial
   module Axnet
     class User
-      attr_accessor :id, :name, :pretty_name, :masks, :role_name
+      attr_accessor :id, :name, :pretty_name, :masks, :role_name, :role
       def initialize()
         @id = nil
         @name = nil
         @pretty_name = nil
         @masks = []
+        @role = nil
         @role_name = nil
       end
 
@@ -19,6 +22,8 @@ module Axial
           user.masks.push(mask.mask)
         end
         user.role_name = user_model.role_name
+        user.role = Role.new(user_model.role_name)
+
         user.id = user_model.id
         return user
       end
@@ -32,58 +37,6 @@ module Axial
           end
         end
         return match
-      end
-
-      def bot?()
-        if (@role_name.casecmp('bot').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def director?()
-        if (@role_name.casecmp('director').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def manager?()
-        if (@role_name.casecmp('director').zero?)
-          return true
-        elsif (@role_name.casecmp('manager').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def op?()
-        if (@role_name.casecmp('director').zero?)
-          return true
-        elsif (@role_name.casecmp('manager').zero?)
-          return true
-        elsif (@role_name.casecmp('op').zero?)
-          return true
-        else
-          return false
-        end
-      end
-
-      def friend?()
-        if (@role_name.casecmp('director').zero?)
-          return true
-        elsif (@role_name.casecmp('manager').zero?)
-          return true
-        elsif (@role_name.casecmp('op').zero?)
-          return true
-        elsif (@role_name.casecmp('friend').zero?)
-          return true
-        else
-          return false
-        end
       end
     end
   end
