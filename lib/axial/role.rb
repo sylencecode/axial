@@ -64,7 +64,11 @@ module Axial
     def method_missing(method, *args, &block)
       case method
         when :root?, :director?, :manager?, :op?, :friend?
-          return self >= method.to_s.gsub(/\?$/, '').to_sym
+          if (self.name == 'bot')
+            return false
+          else
+            return self >= method.to_s.gsub(/\?$/, '').to_sym
+          end
         when :bot?
           return name == 'bot'
         else
