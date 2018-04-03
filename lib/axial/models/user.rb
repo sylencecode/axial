@@ -1,5 +1,6 @@
 gem 'sequel'
 require 'sequel'
+require 'axial/role'
 require 'axial/irc_types/nick'
 require 'axial/mask_utils'
 require 'axial/models/init'
@@ -20,6 +21,7 @@ module Axial
     # class User
     #  set_dataset :nicks
     class User < Sequel::Model
+      attr_reader :role
 
       one_to_many :masks
       one_to_many :things
@@ -35,9 +37,22 @@ module Axial
         res
       end
 
+      def after_initialize()
+        @role = Role.new(@role_name)
+      end
+
+      def role=(role)
+        if (!role.is_a?(Role))
+          raise(UserObjectError, "#{self.class}.role= called with a type other than Axial::Role")
+        end
+
+        @role = role
+        self.update(role_name: role.name)
+      end
+
       def self.get_from_nick_object(nick)
         if (!nick.kind_of?(IRCTypes::Nick))
-          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick.")
+          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick")
         end
 
         user_model = self[name: nick.name.downcase]
@@ -68,7 +83,7 @@ module Axial
       end
 
       def director?()
-        if (role.casecmp('director').zero?)
+        if (role_name.casecmp('director').zero?)
           return true
         else
           return false
@@ -76,9 +91,9 @@ module Axial
       end
 
       def manager?()
-        if (role.casecmp('director').zero?)
+        if (role_name.casecmp('director').zero?)
           return true
-        elsif (role.casecmp('manager').zero?)
+        elsif (role_name.casecmp('manager').zero?)
           return true
         else
           return false
@@ -86,11 +101,11 @@ module Axial
       end
 
       def op?()
-        if (role.casecmp('director').zero?)
+        if (role_name.casecmp('director').zero?)
           return true
-        elsif (role.casecmp('manager').zero?)
+        elsif (role_name.casecmp('manager').zero?)
           return true
-        elsif (role.casecmp('op').zero?)
+        elsif (role_name.casecmp('op').zero?)
           return true
         else
           return false
@@ -98,13 +113,13 @@ module Axial
       end
 
       def friend?()
-        if (role.casecmp('director').zero?)
+        if (role_name.casecmp('director').zero?)
           return true
-        elsif (role.casecmp('manager').zero?)
+        elsif (role_name.casecmp('manager').zero?)
           return true
-        elsif (role.casecmp('op').zero?)
+        elsif (role_name.casecmp('op').zero?)
           return true
-        elsif (role.casecmp('friend').zero?)
+        elsif (role_name.casecmp('friend').zero?)
           return true
         else
           return false

@@ -1,13 +1,13 @@
 module Axial
   module Axnet
     class User
-      attr_accessor :id, :name, :pretty_name, :masks, :role
+      attr_accessor :id, :name, :pretty_name, :masks, :role_name
       def initialize()
         @id = nil
         @name = nil
         @pretty_name = nil
         @masks = []
-        @role = nil
+        @role_name = nil
       end
 
       def self.from_model(user_model)
@@ -18,7 +18,7 @@ module Axial
         user_model.masks.each do |mask|
           user.masks.push(mask.mask)
         end
-        user.role = user_model.role
+        user.role_name = user_model.role_name
         user.id = user_model.id
         return user
       end
@@ -35,7 +35,7 @@ module Axial
       end
 
       def bot?()
-        if (@role.casecmp('bot').zero?)
+        if (@role_name.casecmp('bot').zero?)
           return true
         else
           return false
@@ -43,7 +43,7 @@ module Axial
       end
 
       def director?()
-        if (@role.casecmp('director').zero?)
+        if (@role_name.casecmp('director').zero?)
           return true
         else
           return false
@@ -51,9 +51,9 @@ module Axial
       end
 
       def manager?()
-        if (@role.casecmp('director').zero?)
+        if (@role_name.casecmp('director').zero?)
           return true
-        elsif (@role.casecmp('manager').zero?)
+        elsif (@role_name.casecmp('manager').zero?)
           return true
         else
           return false
@@ -61,11 +61,11 @@ module Axial
       end
 
       def op?()
-        if (@role.casecmp('director').zero?)
+        if (@role_name.casecmp('director').zero?)
           return true
-        elsif (@role.casecmp('manager').zero?)
+        elsif (@role_name.casecmp('manager').zero?)
           return true
-        elsif (@role.casecmp('op').zero?)
+        elsif (@role_name.casecmp('op').zero?)
           return true
         else
           return false
@@ -73,13 +73,13 @@ module Axial
       end
 
       def friend?()
-        if (@role.casecmp('director').zero?)
+        if (@role_name.casecmp('director').zero?)
           return true
-        elsif (@role.casecmp('manager').zero?)
+        elsif (@role_name.casecmp('manager').zero?)
           return true
-        elsif (@role.casecmp('op').zero?)
+        elsif (@role_name.casecmp('op').zero?)
           return true
-        elsif (@role.casecmp('friend').zero?)
+        elsif (@role_name.casecmp('friend').zero?)
           return true
         else
           return false

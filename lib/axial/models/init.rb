@@ -21,3 +21,5 @@ if (ENV.has_key?('USE_SQLITE') && ENV['USE_SQLITE'].casecmp('true').zero?)
 else
   DB_CONNECTION = Sequel.connect(DB_OPTIONS)
 end
+
+Sequel::Model.plugin :after_initialize

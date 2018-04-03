@@ -51,7 +51,7 @@ DB.create_table :users do
   foreign_key :user_id, :users, unique: true
   String :name, size: 32, unique: true
   String :pretty_name, size: 32
-  String :role, size: 16, default: 'friend'
+  String :role_name, size: 16, default: 'friend'
 end
 
 DB.create_table :seens do
@@ -102,4 +102,4 @@ require 'axial/models/user.rb'
 require 'axial/models/mask.rb'
 
 Models::User.create_from_nickname_mask('sylence', '*sylence@*.sylence.org')
-Models::User[name: 'sylence'].update(role: 'director')
+Models::User[name: 'sylence'].update(role_name: 'director')

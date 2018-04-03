@@ -651,14 +651,14 @@ module Axial
 
           if (command.args.strip =~ /(\S+)\s+(\S+)/)
             subject_nickname = Regexp.last_match[1]
-            subject_role = Regexp.last_match[2].downcase
+            subject_role_name = Regexp.last_match[2].downcase
           else
-            channel.message("#{nick.name}: try ?setrole <user> <#{@valid_roles.join('|')}>")
+            channel.message("#{nick.name}: try ?setrole <user> <#{@valid_role_names.join('|')}>")
             return
           end
 
-          if (!@valid_roles.include?(subject_role))
-            channel.message("#{nick.name}: roles must be one of: #{@valid_roles.join(', ')}")
+          if (!@valid_role_names.include?(subject_role_name))
+            channel.message("#{nick.name}: roles must be one of: #{@valid_role_names.join(', ')}")
             return
           end
 
@@ -673,12 +673,12 @@ module Axial
             return
           end
 
-          if (subject_role == 'manager' && !user_model.director?) 
+          if (subject_role_name == 'manager' && !user_model.director?)
             channel.message("#{nick.name}: sorry, only directors can assign new managers.")
             return
           end
 
-          if (subject_role == 'director')
+          if (subject_role_name == 'director')
             if (!user_model.director? || user_model.id != 1) 
               channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
               return
@@ -690,9 +690,9 @@ module Axial
             return
           end
 
-          subject_model.update(role: subject_role)
+          subject_model.update(role_name: subject_role_name)
           update_user_list
-          channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role of #{subject_role}.")
+          channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role_name of #{subject_role_name}.")
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
           LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
