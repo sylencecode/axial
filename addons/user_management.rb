@@ -27,13 +27,13 @@ module Axial
 
         on_privmsg              'password',   :dcc_wrapper, :set_password
 
-        on_dcc                   'addmask',   :dcc_wrapper, :add_mask
-        on_dcc                   'adduser',   :dcc_wrapper, :add_user
-        on_dcc        'delmask|deletemask',   :dcc_wrapper, :delete_mask
-        on_dcc                   'deluser',   :dcc_wrapper, :delete_user
+        on_dcc             'addmask|+mask',   :dcc_wrapper, :add_mask
+        on_dcc             'adduser|+user',   :dcc_wrapper, :add_user
+        on_dcc  'delmask|deletemask|-mask',   :dcc_wrapper, :delete_mask
+        on_dcc  'deluser|deleteuser|-user',   :dcc_wrapper, :delete_user
         on_dcc                   'setrole',   :dcc_wrapper, :set_role
-        on_dcc                       'ban',   :dcc_wrapper, :ban
-        on_dcc                     'unban',   :dcc_wrapper, :unban
+        on_dcc                  'ban|+ban',   :dcc_wrapper, :ban
+        on_dcc                'unban|-ban',   :dcc_wrapper, :unban
 
         on_dcc              'banlist|bans',   :dcc_ban_list
         on_dcc            'userlist|users',   :dcc_user_list
