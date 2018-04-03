@@ -136,6 +136,7 @@ module Axial
         response_mode = IRCTypes::Mode.new
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = get_bot_or_user(subject_nick)
+          puts possible_user.inspect
           if (possible_user.nil?)
             next
           elsif (possible_user.role.op?)

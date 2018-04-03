@@ -63,7 +63,8 @@ module Axial
       def auth_to_axnet()
         @bot_user.name          = @bot.local_cn
         @bot_user.pretty_name   = @bot.local_cn
-        @bot_user.role_name          = 'bot'
+        @bot_user.role_name     = 'bot'
+        @bot_user.role          = Role.new('bot')
         @bot_user.id            = 0
 
         if (!myself.uhost.empty?)
