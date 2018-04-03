@@ -24,6 +24,8 @@ module Axial
         @connections              = @dcc_state.connections
         @monitor                  = @dcc_state.monitor
 
+        @silent_commands = %w(quit help)
+
         on_dcc          'help',   :dcc_help
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who
@@ -50,15 +52,19 @@ module Axial
 
       def dcc_quit(dcc, command)
         dcc.message("goodbye.")
-        dcc.stats = closed
+        dcc.stats = :closed
         socket.close
       end
 
       def dcc_who(dcc, command)
         dcc.message("online users:")
-        @state_data.each do |remote_uuid, state_data|
+        @connections.each do |uuid, state_data|
           remote_dcc = state_data[:dcc]
-          dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
+          if (dcc.user.role.director?)
+            dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
+          else
+            dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name}")
+          end
         end
       end
 
@@ -132,7 +138,7 @@ module Axial
 
             attempts = 0
             dcc.message("hello #{dcc.user.pretty_name}, please enter your password.")
-            auth_timeout_timer = timer.in_5_seconds do
+            auth_timeout_timer = timer.in_15_seconds do
               dcc.message("timeout.")
               dcc.close
             end
@@ -146,6 +152,7 @@ module Axial
                   dcc.message("welcome.")
                   dcc.status = :open
                   timer.delete(auth_timeout_timer)
+                  @dcc_state.broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged in.")
                   LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
                 else
                   if (attempts == 3)
@@ -157,14 +164,17 @@ module Axial
                   end
                 end
               else
-                if (bind_handler.dispatch_dcc_binds(dcc, text))
-                  @dcc_state.broadcast("--> [#{dcc.user.pretty_name}] #{text}", :director)
-                  LOGGER.info("dcc command: #{dcc.user.pretty_name} --> #{text}")
+                dispatched_commands = bind_handler.dispatch_dcc_binds(dcc, text)
+                if (dispatched_commands)
+                  if (text != "#{@bot.dcc_command_character}quit")
+                    @dcc_state.broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} executed command: #{text}", :director)
+                    LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
+                  end
                 else
                   if (text.start_with?(@bot.dcc_command_character))
                     dcc.message("command not found. try #{@bot.dcc_command_character}help.")
                   else
-                    @dcc_state.broadcast("<#{dcc.user.pretty_name}> #{text}")
+                    @dcc_state.broadcast("#{Colors.gray}<#{Colors.cyan}#{dcc.user.pretty_name}#{Colors.gray}>#{Colors.reset} #{text}")
                   end
                 end
               end
@@ -177,12 +187,14 @@ module Axial
             if (!dcc.nil?)
               case dcc.status
                when :closed
+                 @dcc_state.broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
                  LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
                when :authenticating
                  LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
                when :failed
                  LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
                else
+                 @dcc_state.broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
                  LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
              end
             else
