@@ -4,49 +4,51 @@ $LOAD_PATH.unshift('../lib')
 
 gem 'sequel'
 require 'sequel'
+
+# raise "Sure you wanna?"
+
+ENV['USE_SQLITE'] = 'true'
+
+# DB_OPTIONS = {
+#   adapter: 'postgres',
+#   host: ENV['AXIAL_DB_HOST'],
+#   database: ENV['AXIAL_DB_NAME'],
+#   user: ENV['AXIAL_DB_USER'],
+#   password: ENV['AXIAL_DB_PASSWORD']
+# }
+
 require_relative '../lib/axial/models/init.rb'
- DB_OPTIONS = {
-   adapter: 'postgres',
-   host: ENV['AXIAL_DB_HOST'],
-   database: ENV['AXIAL_DB_NAME'],
-   user: ENV['AXIAL_DB_USER'],
-   password: ENV['AXIAL_DB_PASSWORD']
- }
- 
- 
- DB = Sequel.connect(DB_OPTIONS)
+require_relative '../lib/axial/models/user.rb'
+require_relative '../lib/axial/models/mask.rb'
 
- DB.alter_table(:users) do
-   add_column :password, String, size: 128
-   add_column :created, DateTime, default: Time.now
-   add_column :note, String, size: 255
-   rename_column :role, :role_name
- end
-
-#raise "Sure you wanna?"
-#exit 1
-
-#ENV['USE_SQLITE'] = 'true'
-#DB = Sequel.sqlite('../test.db')
-
-#if (DB.adapter_scheme == :postgres)
-#  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users, cacade: true)
-#else
-#  DB.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
-#end
-
-#DB.drop_table?(:bans)
-#DB.create_table :bans do
-#  primary_key :id
-#  foreign_key :user_id, :users
-#  String :mask, size: 255
-#  String :reason, size: 255
-#  DateTime :set_at, default: Time.now
+# DB_CONNECTION.alter_table(:users) do
+#   add_column :password, String, size: 128
+#   add_column :created, DateTime, default: Time.now
+#   add_column :note, String, size: 255
+#   rename_column :role, :role_name
 # end
+
+Axial::Models::User[name: 'sylence'].update(role_name: 'root')
 
 exit 1
 
-DB.create_table :users do
+
+#if (DB_CONNECTION.adapter_scheme == :postgres)
+#  DB_CONNECTION.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users, cacade: true)
+#else
+#  DB_CONNECTION.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
+#end
+
+DB_CONNECTION.drop_table?(:bans)
+DB_CONNECTION.create_table :bans do
+  primary_key :id
+  foreign_key :user_id, :users
+  String :mask, size: 255
+  String :reason, size: 255
+  DateTime :set_at, default: Time.now
+ end
+
+DB_CONNECTION.create_table :users do
   primary_key :id
   foreign_key :user_id, :users, unique: true
   String :name, size: 32, unique: true
@@ -54,20 +56,20 @@ DB.create_table :users do
   String :role_name, size: 16, default: 'friend'
 end
 
-DB.create_table :seens do
+DB_CONNECTION.create_table :seens do
   primary_key :id
   foreign_key :user_id, :users, unique: true
   String :status, size: 255
   DateTime :last, default: Time.now
 end
 
-DB.create_table :masks do
+DB_CONNECTION.create_table :masks do
   primary_key :id
   foreign_key :user_id, :users
   String :mask, size: 128, unique: true
 end
 
-DB.create_table :rss_feeds do
+DB_CONNECTION.create_table :rss_feeds do
   primary_key :id
   foreign_key :user_id, :users, null: false
   String      :url, size: 128, null: false
@@ -80,7 +82,7 @@ DB.create_table :rss_feeds do
   Boolean     :enabled, default: false
 end
 
-DB.create_table :things do
+DB_CONNECTION.create_table :things do
   primary_key :id
   foreign_key :user_id, :users
   String :thing, size: 64, unique: true
@@ -89,7 +91,7 @@ DB.create_table :things do
   DateTime :learned_at, default: Time.now
 end
 
-DB.create_table :bans do
+DB_CONNECTION.create_table :bans do
   primary_key :id
   foreign_key :user_id, :users, unique: true
   String :mask, size: 255
@@ -97,7 +99,6 @@ DB.create_table :bans do
   DateTime :set_at, default: Time.now
 end
 
-#DB.create_join_table(user_id: :users, mask_id: :masks)
 require 'axial/models/user.rb'
 require 'axial/models/mask.rb'
 

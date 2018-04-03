@@ -17,7 +17,8 @@ DB_OPTIONS = {
 }.freeze
 
 if (ENV.has_key?('USE_SQLITE') && ENV['USE_SQLITE'].casecmp('true').zero?)
-  DB_CONNECTION = Sequel.sqlite('./test.db')
+  sqlite_db = File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..')), 'test.db')
+  DB_CONNECTION = Sequel.sqlite(sqlite_db)
 else
   DB_CONNECTION = Sequel.connect(DB_OPTIONS)
 end
