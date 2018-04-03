@@ -961,14 +961,14 @@ module Axial
         end
       end
 
-      def dispatch_dcc_binds(user, socket, text)
+      def dispatch_dcc_binds(dcc, text)
+        found = false
         @binds.select{ |bind| bind[:type] == :dcc }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end
           end
-          dcc = IRCTypes::DCC.from_socket(@bot.server_interface, socket, user)
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(@bot.dcc_command_character) + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
@@ -978,6 +978,9 @@ module Axial
             base_regexp = Regexp.new(base_match, true)
             if (text =~ args_regexp)
               bind[:object].last = Time.now
+              if (!found)
+                found = true
+              end
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
               Thread.new do
@@ -1001,6 +1004,9 @@ module Axial
               break
             elsif (text =~ base_regexp)
               bind[:object].last = Time.now
+              if (!found)
+                found = true
+              end
               command = Regexp.last_match[1]
               args = ""
               command_object = IRCTypes::Command.new(command, args)
@@ -1026,6 +1032,7 @@ module Axial
             LOGGER.error("#{self.class}: unsure how to handle bind #{bind.command} to #{bind.method}, it isn't a string or regexp.")
           end
         end
+        return found
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

@@ -39,6 +39,7 @@ module Axial
         on_dcc            'userlist|users',   :dcc_user_list
         on_dcc                     'whois',   :dcc_whois
         on_dcc                  'password',   :dcc_wrapper, :set_password
+        on_dcc 'check', :dcc_wrapper, :check_password
 
         on_reload                             :update_user_list
         on_reload                             :update_ban_list
@@ -47,12 +48,27 @@ module Axial
       end
 
       def set_password(source, user, nick, command)
-        reply(source, nick, "Got you: #{command.inspect}")
-        reply(source, nick, "you are one of the #{user.role.plural_name}")
+        user_model = Models::User[id: user.id]
         if (command.args.empty?)
           reply(source, nick, "no password")
         else
-          reply(source, nick, "your password '#{command.args}' would be: #{BCrypt::Password.create(command.args)}")
+          new_password = BCrypt::Password.create(command.args)
+          reply(source, nick, "your password '#{command.args}' would be: #{new_password}")
+          user_model.update(password: new_password)
+        end
+      end
+
+      def check_password(source, user, nick, command)
+        user_model = Models::User[id: user.id]
+        if (user_model.password.nil? || user_model.password.empty?)
+          reply(source, nick, "no password set.")
+        else
+          crypted = BCrypt::Password.new(user_model.password)
+          if (crypted == command.args)
+            reply(source, nick, "good password")
+          else
+            reply(source, nick, "bad password")
+          end
         end
       end
 
