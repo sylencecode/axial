@@ -70,7 +70,7 @@ module Axial
       end
 
       def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
-        user = Models::Mask.get_user_from_mask(kicked_nick.uhost)
+        user = Models::User.get_from_nick_object(kicked_nick)
         if (!user.nil?)
           status = "getting kicked from #{channel.name} by #{kicker_nick.name} (#{reason})"
           Models::Seen.upsert(user, Time.now, status)
@@ -85,7 +85,7 @@ module Axial
       end
 
       def update_seen_join(channel, nick)
-        user = Models::Mask.get_user_from_mask(nick.uhost)
+        user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           status = "joining #{channel.name}"
           Models::Seen.upsert(user, Time.now, status)
@@ -100,7 +100,7 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
-        user = Models::Mask.get_user_from_mask(nick.uhost)
+        user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
             status = "leaving #{channel.name}"
@@ -119,7 +119,7 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        user = Models::Mask.get_user_from_mask(nick.uhost)
+        user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
             status = "quitting IRC"

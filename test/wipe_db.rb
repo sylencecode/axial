@@ -53,7 +53,7 @@ DB_CONNECTION.create_table :users do
   foreign_key :user_id, :users, unique: true
   String :name, size: 32, unique: true
   String :pretty_name, size: 32
-  String :role_name, size: 16, default: 'friend'
+  String :role_name, size: 16, default: 'basic'
 end
 
 DB_CONNECTION.create_table :seens do

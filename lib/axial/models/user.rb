@@ -29,12 +29,66 @@ module Axial
       one_to_many :bans
       one_to_one  :seen
 
-      def possible_masks()
-        res = []
-        masks.each do |result|
-          res.push(result.mask)
+      def self.get_users_from_overlap(in_mask)
+        possible_users = []
+        Models::User.all.each do |user_model|
+          user_model.masks.each do |mask|
+            if (MaskUtils.masks_overlap?(mask.mask, in_mask))
+              if (!possible_users.include?(user_model))
+                possible_users.push(user_model)
+              end
+            end
+          end
         end
-        res
+        return possible_users
+      end
+
+      def self.get_users_from_mask(in_mask)
+        possible_users = []
+        Models::User.all.each do |user_model|
+          user_model.masks.each do |mask|
+            if (MaskUtils.masks_match?(mask.mask, in_mask))
+              if (!possible_users.include?(user_model))
+                possible_users.push(user_model)
+              end
+            end
+          end
+        end
+        return possible_users
+        possible_users = []
+      end
+
+      def self.get_user_from_mask(in_mask)
+        possible_users = get_users_from_mask(in_mask)
+        if (possible_users.count > 1)
+          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name }.join(', ')}")
+        end
+        return possible_users.first
+      end
+    
+
+      def set_password(plaintext_password)
+        encrypted_password = BCrypt::Password.create(plaintext_password)
+        self.update(password: encrypted_password)
+      end
+
+      def password?(plaintext_password)
+        encrypted_password = BCrypt::Password.new(self.password)
+        return (encrypted_password == plaintext_password)
+      end
+
+      def password_set?()
+        return (!self.password.nil? && !self.password.empty?)
+      end
+
+      def get_masks_from_overlap(in_mask)
+        matches = []
+        self.masks.each do |mask|
+          if (MaskUtils.masks_overlap?(mask.mask, in_mask))
+            matches.push(mask)
+          end
+        end
+        return matches
       end
 
       def after_initialize()

@@ -1,8 +1,9 @@
 module Axial
   module IRCTypes
     class DCCState
-      @monitor      = Monitor.new
-      @connections  = {}
+      @monitor        = Monitor.new
+      @port_monitor   = Monitor.new
+      @connections    = {}
 
       def self.connections()
         return @connections
@@ -10,6 +11,10 @@ module Axial
 
       def self.monitor()
         return @monitor
+      end
+
+      def self.port_monitor()
+        return @port_monitor
       end
 
       def self.broadcast(text, role = :friend)

@@ -55,8 +55,10 @@ module Axial
           ctcp_args.strip!
           @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
         else
-         @bot.bind_handler.dispatch_privmsg_binds(nick, text)
-         LOGGER.info("#{nick.name} PRIVMSG: #{text}")
+          dispatched_commands = @bot.bind_handler.dispatch_privmsg_binds(nick, text)
+          if (!dispatched_commands)
+            LOGGER.info("#{nick.name} PRIVMSG: #{text}")
+          end
         end
       end
 

@@ -1,6 +1,7 @@
 require 'bcrypt'
 require 'axial/addon'
 require 'axial/colors'
+require 'axial/constants'
 require 'axial/timespan'
 require 'axial/models/user'
 require 'axial/models/mask'
@@ -12,10 +13,9 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'user management'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
-        @valid_roles = %w(director manager op friend)
+        @name                                 = 'user management'
+        @author                               = 'sylence <sylence@sylence.org>'
+        @version                              = '1.1.0'
 
         on_channel               'addmask',   :dcc_wrapper, :add_mask
         on_channel               'adduser',   :dcc_wrapper, :add_user
@@ -24,8 +24,12 @@ module Axial
         on_channel               'setrole',   :dcc_wrapper, :set_role
         on_channel                   'ban',   :dcc_wrapper, :ban
         on_channel                 'unban',   :dcc_wrapper, :unban
+        on_channel           'who|whofrom',   :dcc_wrapper, :who_from
+        on_channel                  'note',   :dcc_wrapper, :set_note
 
-        on_privmsg              'password',   :dcc_wrapper, :set_password
+        on_privmsg         'pass|password',   :dcc_wrapper, :set_password
+        on_privmsg   'setpass|setpassword',   :dcc_wrapper, :set_other_user_password
+        on_privmsg                  'note',   :dcc_wrapper, :set_note
 
         on_dcc             'addmask|+mask',   :dcc_wrapper, :add_mask
         on_dcc             'adduser|+user',   :dcc_wrapper, :add_user
@@ -34,76 +38,229 @@ module Axial
         on_dcc                   'setrole',   :dcc_wrapper, :set_role
         on_dcc                  'ban|+ban',   :dcc_wrapper, :ban
         on_dcc                'unban|-ban',   :dcc_wrapper, :unban
+        on_dcc                   'whofrom',   :dcc_wrapper, :who_from
+        on_dcc       'setpass|setpassword',   :dcc_wrapper, :dcc_set_user_password
+        on_dcc                      'note',   :dcc_wrapper, :set_note
 
         on_dcc              'banlist|bans',   :dcc_ban_list
         on_dcc            'userlist|users',   :dcc_user_list
         on_dcc                     'whois',   :dcc_whois
         on_dcc                  'password',   :dcc_wrapper, :set_password
-        on_dcc 'check', :dcc_wrapper, :check_password
 
         on_reload                             :update_user_list
         on_reload                             :update_ban_list
         on_startup                            :update_user_list
         on_startup                            :update_ban_list
+
+        @foreign_tables = {
+          DB_CONNECTION[:rss_feeds]           => { model: Models::RSSFeed,  set_unknown: true },
+          DB_CONNECTION[:things]              => { model: Models::Thing,    set_unknown: true },
+          DB_CONNECTION[:bans]                => { model: Models::Ban,      set_unknown: true },
+          DB_CONNECTION[:seens]               => { model: Models::Seen,     set_unknown: false },
+          DB_CONNECTION[:masks]               => { model: Models::Mask,     set_unknown: false }
+        }
+      end
+
+      def access_denied(source, nick)
+        if (source.is_a?(IRCTypes::DCC))
+          reply(source, nick, Constants::ACCESS_DENIED)
+        end
+      end
+
+      def who_from(source, user, nick, command)
+        subject_mask = command.first_argument
+        if (user.nil? || !user.role.manager?)
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <mask>")
+        else
+          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect{ |user| user.pretty_name }.join(', ')
+          if (users.any?)
+            reply(source, nick, "possible users for '#{subject_mask}': #{possible_user_names}")
+          else
+            reply(source, nick, "no users matching '#{in_mask}'.")
+          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def complex_password?(source, nick, password)
+        complex_password = false
+        if (password.length < 8)
+          reply(source, nick, "password too short. please use at least 8 characters.")
+        else
+          points = 0
+
+          if (password.scan(/[a-z]/).any?)
+            points += 1
+          end
+
+          if (password.scan(/[A-Z]/).any?)
+            points += 1
+          end
+
+          if (password.scan(/[0-9]/).any?)
+            points += 1
+          end
+
+          special_characters = Regexp.new('[' + Regexp.escape('!@#$%^&*()_+-=[]{}\\|\'",.<>/?;:') + ']')
+          if (password.scan(special_characters).any?)
+            points += 1
+          end
+
+          if (points < 3)
+            reply(source, nick, "password is too simple. please include at least 3 of the 4 following: lowercase letters, uppercase letters, numbers, and/or special characters.")
+          else
+            complex_password = true
+          end
+        end
+        return complex_password
+      end
+
+      def set_note(source, user, nick, command)
+        subject_nickname, note = command.one_plus
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (subject_nickname.empty?)
+          reply(source, nick, "usage: #{command.command} <user> <note> (an empty note will erase the user's note)")
+        else
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (can_modify?(source, user, nick, subject_nickname, subject_model, true, true))
+            if (note.empty?)
+              subject_model.update(note: '')
+              reply(source, nick, "erased note for #{subject_model.pretty_name}.")
+            else
+              subject_model.update(note: note)
+              reply(source, nick, "updated note for #{subject_model.pretty_name}.")
+            end
+          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def set_other_user_password(source, user, nick, command)
+        subject_nickname, new_password = command.two_arguments
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (new_password.empty?)
+          reply(source, nick, "usage: #{command.command} <user> <new_password>")
+        else
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (can_modify?(source, user, nick, subject_nickname, subject_model))
+            if (new_password.empty?)
+              if (complex_password?(source, nick, new_password))
+                user_model.set_password(new_password)
+                update_user_list
+                reply(source, nick, "password for #{subject_model.pretty_name} changed.")
+              end
+            else
+              reply(source, nick, "usage: #{command.command} <old_password> <new_password>")
+            end
+          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
       end
 
       def set_password(source, user, nick, command)
         user_model = Models::User[id: user.id]
-        if (command.args.empty?)
-          reply(source, nick, "no password")
+        old_password, new_password = command.two_arguments
+        if (new_password.empty?)
+          if (user_model.password.nil? || user_model.password.empty?)
+            if (complex_password?(source, nick, new_password))
+              user_model.set_password(new_password)
+              reply(source, nick, "password set.")
+              update_user_list
+            end
+          else
+            reply(source, nick, "usage: #{command.command} <old_password> <new_password>")
+          end
         else
-          new_password = BCrypt::Password.create(command.args)
-          reply(source, nick, "your password '#{command.args}' would be: #{new_password}")
-          user_model.update(password: new_password)
+          if (user_model.password?(old_password))
+            if (complex_password?(source, nick, new_password))
+              user_model.set_password(new_password)
+              reply(source, nick, "password changed.")
+              update_user_list
+            end
+          else
+            reply(source, nick, "old password is incorrect.")
+          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
-      def check_password(source, user, nick, command)
-        user_model = Models::User[id: user.id]
-        if (user_model.password.nil? || user_model.password.empty?)
-          reply(source, nick, "no password set.")
-        else
-          crypted = BCrypt::Password.new(user_model.password)
-          if (crypted == command.args)
-            reply(source, nick, "good password")
-          else
-            reply(source, nick, "bad password")
+      def output_mask_user_conflicts(source, nick, subject_mask, conflicts)
+        counter = 0
+        conflicts.each do |subject_model, masks|
+          counter += 1
+          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name} (#{masks.collect{ |mask| mask.mask }.join(', ')})")
+          if (counter == 3)
+            if (!source.is_a?(IRCTypes::DCC))
+              reply(source, nick, "... and #{conflicts.count - 3} more. review the rest via dcc or provide a more specific mask.")
+              break
+            end
           end
         end
+      end
+
+      def get_mask_user_conflicts(subject_mask)
+        conflicting_masks = {}
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        subject_models = Models::User.get_users_from_mask(subject_mask)
+
+        if (subject_models.any?)
+          subject_models.each do |subject_model|
+            conflicting_masks[subject_model] = []
+            masks = subject_model.get_masks_from_overlap(subject_mask)
+            masks.each do |mask|
+              conflicting_masks[subject_model].push(mask)
+            end
+          end
+        end
+        return conflicting_masks
       end
 
       def add_user(source, user, nick, command)
-        if (user.nil? || !user.role.manager?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
-          end
-          return
-        end
-
-        if (command.args.strip =~ /(\S+)\s+(\S+)/)
-          subject_nickname = Regexp.last_match[1]
-          subject_mask = Regexp.last_match[2]
+        subject_nickname, subject_mask = command.two_arguments
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <username> <mask>")
         else
-          reply(source, nick, "try #{command.command} <nick> <mask>")
-          return
-        end
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (!subject_model.nil?)
+            reply(source, nick, "user #{subject_model.pretty_name} already exists.")
+            return
+          end
 
-        subject_model = Models::User.get_from_nickname(subject_nickname)
-        if (!subject_model.nil?)
-          reply(source, nick, "user #{subject_model.pretty_name} already exists.")
-          return
+          conflicts = get_mask_user_conflicts(subject_mask)
+          if (conflicts.any?)
+            output_mask_user_conflicts(source, nick, subject_mask, conflicts)
+          else
+            subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+            update_user_list
+            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}' and role 'basic'.")
+          end
         end
-
-        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-        subject_models = Models::Mask.get_users_from_mask(subject_mask)
-        if (subject_models.count > 0)
-          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
-          return
-        end
-
-        subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
-        update_user_list
-        reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}'.")
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -112,119 +269,120 @@ module Axial
         end
       end
 
-      def delete_user(source, user, nick, command)
-        if (user.nil? || !user.role.manager?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
+      def update_foreign_tables(subject_model) 
+        @foreign_tables.each do |table, model_params|
+          if (!table.nil?)
+            if (model_params[:set_unknown])
+              model_params[:model].delete_or_unknown(subject_model.id)
+            else
+              table.where(user_id: subject_model.id).delete
+            end
           end
-          return
         end
+      end
 
-        subject_nickname = command.args.split(' ').first
-
-        subject_model = Models::User.get_from_nickname(subject_nickname)
+      def can_modify?(source, user, nick, subject_nickname, subject_model, can_change_self = false, can_root_change_root = false)
+        can_modify = false
         if (subject_model.nil?)
-          reply(source, nick, "user '#{subject_nickname} does not exist.")
-          return
-        end
-
-        if (subject_model.role < user.role)
-          reply(source, nick, "sorry, #{user.role.plural_name} are not allowed to delete #{subject_model.role.plural_name}.")
-          return
-        end
-
-        if (subject_role == 'director')
-          if (!user.role.director? || user.id != 1) 
-            reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
-            return
+          reply(source, nick, "user '#{subject_nickname}' does not exist.")
+        elsif (subject_model.name.casecmp('unknown').zero?)
+          reply(source, nick, "the reserved 'unknown' user cannot be modified within the #{Constants::AXIAL_NAME} runtime.")
+        elsif (user.id == subject_model.id)
+          if (can_change_self)
+            can_modify = true
+          else
+            reply(source, nick, "you may not modify your own attributes.")
           end
-        end
-
-        if (subject_model.role.director? && user.id != 1)
-          reply(source, nick, "sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
-          return
-        end
-
-        unknown_user = Models::User[name: 'unknown']
-        if (!unknown_user.nil?)
-          unknown_user_id = unknown_user.id
+        elsif (subject_model.role.root?)
+          if (can_root_change_root)
+            can_modify = true
+          else
+            reply(source, nick, "#{subject_model.role.plural_name_with_color} cannot be modified within the #{Constants::AXIAL_NAME} runtime.")
+          end
+        elsif (subject_model.role == user.role)
+          reply(source, nick, "#{user.role.plural_name_with_color} are not allowed to modify other #{subject_model.role.plural_name}.")
+        elsif (user.role < subject_model.role)
+          reply(source, nick, "#{user.role.plural_name_with_color} are not allowed to modify #{subject_model.role.plural_name}.")
         else
-          unknown_user_id = 0
+          can_modify = true
         end
+        return can_modify
+      end
 
-        if (!DB_CONNECTION[:things].nil?)
-          if (unknown_user_id.zero?)
-            DB_CONNECTION[:things].where(user_id: subject_model.id).delete
-          else
-            DB_CONNECTION[:things].where(user_id: subject_model.id).update(user_id: unknown_user_id)
+      def db_delete_user(subject_model)
+        deleted_user_name = nil
+        if (!subject_model.nil?)
+          deleted_user_name = subject_model.pretty_name
+          subject_model.destroy
+          update_user_list
+        end
+        return deleted_user_name
+      end
+
+      def delete_user(source, user, nick, command)
+        subject_nickname = command.first_argument
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (subject_nickname.empty?)
+          reply(source, nick, "usage: #{command.command} <username>")
+        else
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (can_modify?(source, user, nick, subject_nickname, subject_model))
+            update_foreign_tables(subject_model)
+            deleted_user_name = db_delete_user(subject_model)
+            reply(source, nick, "user '#{deleted_user_name}' deleted.")
           end
         end
-
-
-        if (!DB_CONNECTION[:rss_feeds].nil?)
-          if (unknown_user_id.zero?)
-            DB_CONNECTION[:rss_feeds].where(user_id: subject_model.id).delete
-          else
-            DB_CONNECTION[:rss_feeds].where(user_id: subject_model.id).update(user_id: unknown_user_id)
-          end
-        end
-
-        if (!DB_CONNECTION[:bans].nil?)
-          if (unknown_user_id.zero?)
-            DB_CONNECTION[:bans].where(user_id: subject_model.id).delete
-          else
-            DB_CONNECTION[:bans].where(user_id: subject_model.id).update(user_id: unknown_user_id)
-          end
-        end
-
-        if (!DB_CONNECTION[:seens].nil?)
-          DB_CONNECTION[:seens].where(user_id: subject_model.id).delete
-        end
-
-        if (!DB_CONNECTION[:masks].nil?)
-          DB_CONNECTION[:masks].where(user_id: subject_model.id).delete
-        end
-
-        deleted_user_name = subject_model.pretty_name
-        subject_model.destroy
-        update_user_list
-        reply(source, nick, "user '#{deleted_user_name}' deleted.")
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
+        end
+      end
+
+      def db_destroy_collection(collection)
+        collection.each do |model|
+          model.destroy
         end
       end
 
       def delete_mask(source, user, nick, command)
-        if (user.nil? || !user.role.manager?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
+        force = false
+        subject_nickname, subject_mask, force_command = command.three_arguments
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <username> <mask> [-force]")
+        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
+          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
+        else
+          if (force_command.casecmp('-force').zero? && user.role.manager?)
+            force = true
           end
-          return
-        end
-
-        if (command.args.strip =~ /(\S+)\s+(\S+)/)
-          subject_nickname, subject_mask = Regexp.last_match.captures
-        else
-          reply(source, nick, "try #{command.command} <nick> <mask>")
-          return
-        end
-
-        subject_model = Models::User.get_from_nickname(subject_nickname)
-        if (subject_model.nil?)
-          reply(source, nick, "user '#{subject_nickname}' not found.")
-          return
-        end
-
-        db_mask = subject_model.masks.select{ |mask| mask.mask.casecmp(subject_mask).zero? }.first
-        if (db_mask.nil?)
-          reply(source, nick, "#{subject_model.pretty_name} doesn't include mask '#{subject_mask}'.")
-        else
-          db_mask.destroy
-          reply(source, nick, "mask '#{subject_mask}' removed from #{subject_model.pretty_name}.")
-          update_user_list
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (subject_model.nil?)
+            reply(source, nick, "user '#{subject_nickname}' not found.")
+          else
+            if (can_modify?(source, user, nick, subject_nickname, subject_model))
+              mask_models = subject_model.get_masks_from_overlap(subject_mask)
+              if (mask_models.empty?)
+                reply(source, nick, "'#{subject_model.pretty_name}' doesn't include mask '#{subject_mask}'.")
+              elsif (mask_models.count == 1)
+                old_mask = mask_models.first.mask
+                db_destroy_collection(mask_models)
+                update_user_list
+                reply(source, nick, "mask '#{old_mask}' removed from #{subject_model.pretty_name}.")
+              elsif (mask_models.count > 1 && !force)
+                output_mask_conflicts(source, user, nick, mask_models, subject_mask)
+              else
+                db_destroy_collection(mask_models)
+                update_user_list
+                reply(source, nick, "#{mask_models.count} masks matching '#{subject_mask}' were removed from #{subject_model.pretty_name}.")
+              end
+            end
+          end
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -235,78 +393,29 @@ module Axial
       end
 
       def add_mask(source, user, nick, command)
-        if (user.nil? || !user.role.manager?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
-          end
-          return
-        end
-
-        if (command.args.strip =~ /(\S+)\s+(\S+)/)
-          subject_nickname, subject_mask = Regexp.last_match.captures
-        else
-          reply(source, nick, "try #{command.command} <nick> <mask>")
-          return
-        end
-
-        subject_model = Models::User.get_from_nickname(subject_nickname)
-        if (subject_model.nil?)
-          reply(source, nick, "user '#{subject_nickname}' not found.")
-          return
-        end
-
-        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-        subject_models = Models::Mask.get_users_from_mask(subject_mask)
-        if (subject_models.count > 0)
-          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_models.collect{ |user| user.pretty_name }.join(', ')}")
-          return
-        end
-
-        mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
-        update_user_list
-        reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
-      rescue Exception => ex
-        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def unban(source, user, nick, command)
+        subject_nickname, subject_mask = command.two_arguments
         if (user.nil? || !user.role.op?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
-          end
-          return
-        end
-
-        if (command.args.strip =~ /(\S+)/)
-          mask = Regexp.last_match[1]
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <username> <mask>")
         else
-          reply(source, nick, "try #{command.command} <mask>")
-          return
-        end
-
-        mask = MaskUtils.ensure_wildcard(mask)
-
-        bans = ban_list.get_bans_from_mask(mask)
-        if (bans.count == 0)
-          reply(source, nick, "no bans matching '#{mask}'")
-          return
-        end
-
-        bans.each do |ban|
-          ban_model = Models::Ban[mask: ban.mask]
-          if (!ban_model.nil?)
-            ban_model.delete
-            reply(source, nick, "'#{ban.mask}' removed from banlist.")
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          subject_model = Models::User.get_from_nickname(subject_nickname)
+          if (subject_model.nil?)
+            reply(source, nick, "user '#{subject_nickname}' not found.")
           else
-            reply(source, nick, "'#{ban.mask}' isn't in the database?")
+            if (can_modify?(source, user, nick, subject_nickname, subject_model))
+              conflicts = get_mask_user_conflicts(subject_mask)
+              if (conflicts.any?)
+                output_mask_user_conflicts(source, nick, subject_mask, conflicts)
+              else
+                mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
+                update_user_list
+                reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
+              end
+            end
           end
         end
-
-        update_ban_list
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -315,47 +424,142 @@ module Axial
         end
       end
 
+      def output_mask_conflicts(source, user, nick, subject_collection, subject_mask)
+        counter = 0
+        subject_collection.each do |mask_model|
+          counter += 1
+          reply(source, nick, "mask '#{subject_mask}' overlaps with: #{mask_model.mask})")
+          if (counter == 3)
+            if (!source.is_a?(IRCTypes::DCC))
+              reply(source, nick, "... and #{mask_models.count - 3} more. review the rest via dcc or provide a more specific mask.")
+              if (user.role.manager?)
+                reply(source, nick, "alternatively, use the -force switch to remove all bans overlapping '#{subject_mask}'.")
+              end
+              break
+            end
+          end
+        end
+        if (subject_collection.count > 1 && user.role.manager?)
+          reply(source, nick, "provide a more specific mask or use the -force switch to remove all bans overlapping '#{subject_mask}'.")
+        end
+      end
+
+      def can_unban?(source, user, nick, subject_mask, ban_model)
+        can_unban = false
+        if (ban_model.nil?)
+          reply(source, nick, "ban '#{subject_mask}' does not exist.")
+        elsif (user.role >= :op && ban_model.user.role <= :op)
+          can_unban = true
+        elsif (user.role < ban_model.user.role)
+          reply(source, nick, "#{user.role.plural_name_with_color} are not allowed to modify bans set by #{subject_model.role.plural_name}.")
+        else
+          can_unban = true
+        end
+        return can_unban
+      end
+      
+      def unban(source, user, nick, command)
+        force = false
+        subject_mask, force_command = command.two_arguments
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <mask> [-force]")
+        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
+          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
+        elsif (force_command.casecmp('-force').zero? && user.role.manager?)
+          force = true
+        else
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
+          if (can_unban?(source, user, nick, ban_model))
+            if (ban_models.empty?)
+              reply(source, nick, "no bans found matching '#{subject_mask}'.")
+            elsif (ban_models.count > 1 && !force)
+              output_mask_conflicts(source, user, nick, ban_models, subject_mask)
+            else
+              db_destroy_collection(ban_models)
+              ban_list
+              if (ban_models.count == 1)
+                reply(source, nick, "ban '#{subject_mask}' removed from ban list.")
+              else
+                reply(source, nick, "#{ban_models.count} bans matching '#{subject_ban}' were removed from #{subject_model.pretty_name}.")
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def can_ban?(source, user, nick, subject_mask)
+        can_ban = false
+        possible_users = Models::User.get_users_from_overlap(subject_mask)
+        if (possible_users.empty?)
+          can_ban = true
+        else
+          protected_user_names = []
+          possible_users.sort_by{ |user| user.role.numeric }.reverse.each do |possible_user|
+            # roles are sorted highest to lowest for this comparison loop
+            if (user.role <= possible_user.role)
+              protected_user_names.push(possible_user.pretty_name)
+            elsif (!force)
+              protected_user_names.push(possible_user.pretty_name)
+            end
+          end
+          if (protected_user_names.empty?)
+            can_ban = true
+          else
+            if (force)
+              reply(source, nick, "forcing a ban of mask '#{subject_mask}' would still ban protected users: #{protected_user_names.join(', ')}. use a more specific mask.")
+            else
+              reply(source, nick, "mask '#{subject_mask}' would ban users: #{protected_user_names.join(', ')}. either use a more specific mask or apply the -force switch.")
+            end
+          end
+        end
+        return can_ban
+      end
 
       def ban(source, user, nick, command)
+        force = false
+        subject_mask, force_command = command.two_arguments
         if (user.nil? || !user.role.op?)
-          if (source.is_a?(IRCTypes::DCC))
-            reply(source, nick, Constants::ACCESS_DENIED)
+          access_denied(source, nick)
+        elsif (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <mask> [-force]")
+        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
+          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
+        elsif (force_command.casecmp('-force').zero? && user.role.manager?)
+          force = true
+        else
+          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
+          if (can_ban?(source, user, nick, subject_mask))
+            if (ban_models.count.positive? && !force)
+              output_mask_conflicts(source, user, nick, ban_models, subject_mask)
+            else
+              if (ban_models.count.positive?)
+                db_destroy_collection(ban_models)
+              end
+              ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
+              update_ban_list
+              if (ban_models.count == 1)
+                reply(source, nick, "ban '#{ban_model.mask}' added to ban list.")
+              else
+                reply(source, nick, "#{ban_models.count} bans matching '#{subject_ban}' were replaced by '#{ban_mask.mask}'.")
+              end
+            end
           end
-          return
         end
-
-
-        if (command.args.strip =~ /(\S+)(.*)/)
-          mask, reason = Regexp.last_match.captures
-        end
-
-        if (mask.nil? || mask.strip.empty?)
-          reply(source, nick, "try #{command.command} <mask> <reason>")
-          return
-        elsif (reason.nil? || reason.strip.empty?)
-          reason = 'banned'
-        end
-
-        mask = MaskUtils.ensure_wildcard(mask.strip)
-        reason = reason.strip
-
-        begin
-          bans = ban_list.get_bans_from_mask(mask)
-          if (bans.count > 0)
-            reply(source, nick, "mask '#{mask}' has already been banned by mask '#{bans.collect{ |ban| ban.mask }.join(', ')}'")
-          else
-            ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
-            update_ban_list
-            reply(source, nick, "'#{ban_model.mask}' added to banlist.")
-          end
-
-          update_ban_list
-        rescue Exception => ex
-          reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -374,7 +578,7 @@ module Axial
         end
 
         dcc.message("user: #{user_model.pretty_name}")
-        dcc.message("role: #{user_model.role}")
+        dcc.message("role: #{user_model.role.name_with_color}")
 
         on_channels = {}
 
@@ -414,6 +618,11 @@ module Axial
             dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
           end
         end
+
+        if (!user_model.note.nil? && !user_model.note.empty?)
+          dcc.message('')
+          dcc.message("note: #{user_model.note}")
+        end
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -433,7 +642,7 @@ module Axial
         pretty_name_length = 0
         role_length = 0
         seen_length = 0
-        mask_length = 0
+        note_length = 0
 
         Models::User.all.each do |user_model|
           if (user_model.name == "unknown")
@@ -446,9 +655,20 @@ module Axial
             pretty_name_length = user[:pretty_name].length
           end
 
-          user[:role] = user_model.role
+          user[:role] = user_model.role.name
+          user[:role_color] = user_model.role.color
           if (user[:role].length > role_length)
             role_length = user[:role].length
+          end
+
+          if (user_model.note.nil?)
+            user[:note] = ''
+          else
+            user[:note] = user_model.note
+          end
+
+          if (user[:note].length > note_length)
+            note_length = user[:note].length
           end
 
           on_channels = {}
@@ -479,49 +699,45 @@ module Axial
             seen_length = user[:seen].length
           end
 
-          user[:masks] = []
-          user_model.masks.each do |mask|
-            if (mask.mask.length > mask_length)
-              mask_length = mask.mask.length
-            end
-            user[:masks].push(mask.mask)
-          end
-          if (user[:masks].empty?)
-            user[:masks].push('none')
-          end
           users.push(user)
         end
 
         pretty_name_length += 4
         role_length += 2
-        seen_length += 4
-        mask_length += 2
+        if (seen_length < 8)
+          seen_length = 8
+        else
+          seen_length += 2
+        end
+        if (note_length < 8)
+          note_length = 8
+        else
+          note_length += 2
+        end
 
-        top_bar = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (mask_length + 2)}.#{Colors.reset}"
-        middle_bar = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (mask_length + 2)}|#{Colors.reset}"
-        bottom_bar = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (mask_length + 2)}'#{Colors.reset}"
+        top_bar = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
+        middle_bar = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
+        bottom_bar = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
 
         if (users.empty?)
           dcc.message("user list is empty.")
         else
+          dcc.message('')
           dcc.message("current user list".center(top_bar.length))
           dcc.message(top_bar)
-          dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'username'.center(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'role'.center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{'masks'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+          dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
-          %w(director manager op friend).each do |role|
+          %w(root director manager op friend basic).each do |role|
             users.select{ |tmp_user| tmp_user[:role].downcase == role}.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
-              puts user[:seen].inspect
-              if (user[:seen] =~ /^active/)
-                seen_color = Colors.green
-              elsif (user[:seen] == 'never')
-                seen_color = Colors.red
-              else
-                seen_color = ''
+              case user[:seen]
+                when /^active/
+                  seen_color = Colors.green
+                when 'never'
+                  seen_color = Colors.red
+                else
+                  seen_color = ''
               end
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.blue}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{seen_color}#{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{Colors.darkcyan}#{user[:masks].shift.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-              user[:masks].each do |mask|
-                dcc.message("#{Colors.gray}|#{Colors.reset} #{' '.ljust(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{' '.center(role_length)} #{Colors.gray}|#{Colors.reset} #{' '.rjust(seen_length)} #{Colors.gray}|#{Colors.reset}#{Colors.darkcyan} #{mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
-              end
+              dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:role_color]}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{seen_color}#{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:note].ljust(note_length)} #{Colors.gray}|#{Colors.reset}")
             end
           end
           dcc.message(bottom_bar)
@@ -552,8 +768,6 @@ module Axial
           if (ban[:mask].length > mask_length)
             mask_length = ban[:mask].length
           end
-
-         # ban[:set_at] = ban_model.set_at.utc.strftime("%m/%d/%Y")
 
           ban[:set_at] = TimeSpan.new(Time.now, ban_model.set_at).approximate_to_s + ' ago'
           if (ban[:set_at].length > set_at_length)
@@ -662,65 +876,40 @@ module Axial
         end
       end
 
-      def channel_set_role(channel, nick, command)
-        begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil? || !user_model.role.manager?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
-            return
-          end
-
-          if (command.args.strip =~ /(\S+)\s+(\S+)/)
-            subject_nickname = Regexp.last_match[1]
-            subject_role_name = Regexp.last_match[2].downcase
+      def set_role(source, user, nick, command)
+        subject_nickname, new_role_name = command.two_arguments
+        new_role_name = new_role_name.downcase
+        if (user.nil? || !user.role.op?)
+          access_denied(source, nick)
+        elsif (new_role_name.empty?)
+          reply(source, nick, "usage: #{command.command} <username> <#{Role.basic.name_with_color}|#{Role.friend.name_with_color}|#{Role.op.name_with_color}|#{Role.manager.name_with_color}|#{Role.director.name_with_color}>")
+        else
+          new_role = Role.from_possible_name(new_role_name)
+          if (new_role.nil?)
+            reply(source, nick, "'#{subject_nickname}' is not a valid role name.")
           else
-            channel.message("#{nick.name}: try ?setrole <user> <#{Role.numerics.keys.collect{ |role_name| role_name.to_s }.join('|')}>")
-            return
-          end
-
-
-          if (!Role.numerics.has_key?(subject_role_name.to_sym))
-            channel.message("#{nick.name}: try ?setrole <user> <#{Role.numerics.keys.collect{ |role_name| role_name.to_s }.join('|')}>")
-            return
-          end
-
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            channel.message("#{nick.name}: user '#{subject_nickname}' not found.")
-            return
-          end
-
-          if (user_model.id == subject_model.id)
-            channel.message("#{nick.name}: sorry, you can't modify yourself.")
-            return
-          end
-
-          if (subject_role_name == 'manager' && !user_model.role.director?)
-            channel.message("#{nick.name}: sorry, only directors can assign new managers.")
-            return
-          end
-
-          if (subject_role_name == 'director')
-            if (!user_model.role.director? || user_model.id != 1) 
-              channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can assign new directors.")
-              return
+            subject_model = Models::User.get_from_nickname(subject_nickname)
+            if (subject_model.nil?)
+              reply(source, nick, "user '#{subject_nickname}' not found.")
+            else
+              if (can_modify?(source, user, nick, subject_nickname, subject_model))
+                if (subject_model.role == new_role)
+                  reply(source, nick, "#{subject_model.pretty_name} has already been assigned the role of #{subject_model.role.name}.")
+                else
+                  old_role = subject_model.role
+                  subject_model.update(role_name: new_role.name)
+                  update_user_list
+                  reply(source, nick, "user '#{subject_model.pretty_name}' has been assigned the role of #{new_role.name_with_color}. (was: #{old_role.name_with_color})")
+                end
+              end
             end
           end
-
-          if (subject_model.role.director? && user_model.id != 1)
-            channel.message("#{nick.name}: sorry, only #{Models::User[id: 1].pretty_name} can modify users who are directors.")
-            return
-          end
-
-          subject_model.update(role_name: subject_role_name)
-          update_user_list
-          channel.message("#{nick.name}: User '#{subject_model.pretty_name}' has been assigned the role_name of #{subject_role_name}.")
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 

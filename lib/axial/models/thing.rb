@@ -11,6 +11,23 @@ module Axial
     class Thing < Sequel::Model
       many_to_one :user
 
+      def self.delete_or_unknown(user_id)
+        unknown_user = Models::User[name: 'unknown']
+        if (!unknown_user.nil?)
+          unknown_user_id = unknown_user.id
+        else
+          unknown_user_id = 0
+        end
+
+        if (!DB_CONNECTION[:things].nil?)
+          if (unknown_user_id.zero?)
+            DB_CONNECTION[:things].where(user_id: user_id).delete
+          else
+            DB_CONNECTION[:things].where(user_id: user_id).update(user_id: unknown_user_id)
+          end
+        end
+      end
+
       def self.upsert(thing, explanation, user_model)
         if (!user_model.kind_of?(Models::User))
           raise(UserObjectError, "#{self.class}.upsert requires a Models::User object")
