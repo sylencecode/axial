@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH.unshift('../lib')
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '../lib'))
 
 gem 'sequel'
 require 'sequel'
 
 # raise "Sure you wanna?"
 
-ENV['USE_SQLITE'] = 'true'
+# ENV['USE_SQLITE'] = 'true'
 
 # DB_OPTIONS = {
 #   adapter: 'postgres',
@@ -21,14 +21,15 @@ require_relative '../lib/axial/models/init.rb'
 require_relative '../lib/axial/models/user.rb'
 require_relative '../lib/axial/models/mask.rb'
 
-# DB_CONNECTION.alter_table(:users) do
+ DB_CONNECTION.alter_table(:users) do
+   add_column :created_by, String, size: 32, default: 'unknown'
 #   add_column :password, String, size: 128
 #   add_column :created, DateTime, default: Time.now
 #   add_column :note, String, size: 255
 #   rename_column :role, :role_name
-# end
+ end
 
-Axial::Models::User[name: 'sylence'].update(role_name: 'root')
+# Axial::Models::User[name: 'sylence'].update(role_name: 'root')
 
 exit 1
 
@@ -102,5 +103,5 @@ end
 require 'axial/models/user.rb'
 require 'axial/models/mask.rb'
 
-Models::User.create_from_nickname_mask('sylence', '*sylence@*.sylence.org')
+Models::User.create_from_nickname_mask('sylence', 'sylence', '*sylence@*.sylence.org')
 Models::User[name: 'sylence'].update(role_name: 'root')

@@ -256,7 +256,7 @@ module Axial
           if (conflicts.any?)
             output_mask_user_conflicts(source, nick, subject_mask, conflicts)
           else
-            subject_model = Models::User.create_from_nickname_mask(subject_nickname, subject_mask)
+            subject_model = Models::User.create_from_nickname_mask(user.pretty_name, subject_nickname, subject_mask)
             update_user_list
             reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}' and role 'basic'.")
           end
@@ -579,6 +579,7 @@ module Axial
 
         dcc.message("user: #{user_model.pretty_name}")
         dcc.message("role: #{user_model.role.name_with_color}")
+        dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")}")
 
         on_channels = {}
 
@@ -640,6 +641,7 @@ module Axial
 
         users = []
         pretty_name_length = 0
+        created_length = 0
         role_length = 0
         seen_length = 0
         note_length = 0
@@ -650,6 +652,12 @@ module Axial
           end
 
           user = {}
+
+          user[:created] = user_model.created.strftime("%m/%d/%Y")
+          if (user[:created].length > created_length)
+            created_length = user[:created].length
+          end
+
           user[:pretty_name] = user_model.pretty_name
           if (user[:pretty_name].length > pretty_name_length)
             pretty_name_length = user[:pretty_name].length
@@ -702,6 +710,7 @@ module Axial
           users.push(user)
         end
 
+        created_length += 2
         pretty_name_length += 4
         role_length += 2
         if (seen_length < 8)
@@ -715,9 +724,9 @@ module Axial
           note_length += 2
         end
 
-        top_bar = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
-        middle_bar = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
-        bottom_bar = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
+        top_bar     = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (created_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
+        middle_bar  = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (created_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
+        bottom_bar  = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (created_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
 
         if (users.empty?)
           dcc.message("user list is empty.")
@@ -725,10 +734,10 @@ module Axial
           dcc.message('')
           dcc.message("current user list".center(top_bar.length))
           dcc.message(top_bar)
-          dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
+          dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'created'.center(created_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
           %w(root director manager op friend basic).each do |role|
-            users.select{ |tmp_user| tmp_user[:role].downcase == role}.sort_by{ |tmp_user| tmp_user[:pretty_name] }.each do |user|
+            users.select{ |tmp_user| tmp_user[:role].downcase == role}.sort_by{ |tmp_user| tmp_user[:created] }.each do |user|
               case user[:seen]
                 when /^active/
                   seen_color = Colors.green
@@ -737,7 +746,7 @@ module Axial
                 else
                   seen_color = ''
               end
-              dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:role_color]}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{seen_color}#{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:note].ljust(note_length)} #{Colors.gray}|#{Colors.reset}")
+              dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{user[:pretty_name].ljust(pretty_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:role_color]}#{user[:role].center(role_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:created].ljust(created_length)} #{Colors.gray}|#{Colors.reset} #{seen_color}#{user[:seen].rjust(seen_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{user[:note].ljust(note_length)} #{Colors.gray}|#{Colors.reset}")
             end
           end
           dcc.message(bottom_bar)

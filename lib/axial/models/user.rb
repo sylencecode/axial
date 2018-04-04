@@ -127,9 +127,9 @@ module Axial
         return match
       end
 
-      def self.create_from_nickname_mask(nickname, mask)
+      def self.create_from_nickname_mask(created_by, nickname, mask)
         mask = MaskUtils.ensure_wildcard(mask)
-        user_model = User.create(name: nickname.downcase, pretty_name: nickname)
+        user_model = User.create(name: nickname.downcase, pretty_name: nickname, created_by: created_by)
         user_model.seen = Seen.create(user_id: user_model.id, status: 'for the first time', last: Time.now)
         mask_model = Models::Mask.create(mask: mask, user_id: user_model.id)
         user_model.add_mask(mask_model)
