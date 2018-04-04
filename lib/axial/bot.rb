@@ -13,6 +13,7 @@ require 'axial/handlers/message_handler'
 require 'axial/handlers/server_handler'
 require 'axial/handlers/bind_handler'
 require 'axial/handlers/patterns'
+require 'axial/handlers/dcc_state'
 require 'axial/dispatchers/server_message_dispatcher'
 require 'axial/interfaces/server_interface'
 require 'string/underscore'
@@ -22,7 +23,7 @@ module Axial
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
                   :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
-                  :dcc_command_character
+                  :dcc_command_character, :dcc_state
 
     attr_accessor :real_nick, :local_cn
     @class_instance = nil
@@ -80,6 +81,7 @@ module Axial
       @channel_handler            = Handlers::ChannelHandler.new(self)
       @bind_handler               = Handlers::BindHandler.new(self)
       @timer                      = Handlers::TimerHandler.new
+      @dcc_state                  = Handlers::DCCState
 
       @timer.start
     end

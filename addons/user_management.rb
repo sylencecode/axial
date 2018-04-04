@@ -210,7 +210,7 @@ module Axial
         user_model = Models::User[id: user.id]
         if (user_model.password.nil? || user_model.password.empty?)
           new_password = command.first_argument
-          if (new_password?.empty?)
+          if (new_password.empty?)
             reply(source, nick, "usage: #{command.command} <new_password>")
           else
             if (complex_password?(source, nick, new_password))

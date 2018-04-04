@@ -23,7 +23,7 @@ module Axial
 
         @ports_in_use             = []
 
-        @dcc_state                = IRCTypes::DCCState
+        @dcc_state                = @bot.dcc_state
         @connections              = @dcc_state.connections
         @monitor                  = @dcc_state.monitor
         @port_monitor             = @dcc_state.port_monitor

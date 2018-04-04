@@ -1,5 +1,7 @@
+require 'axial/colors'
+
 module Axial
-  module IRCTypes
+  module Handlers
     class DCCState
       @monitor        = Monitor.new
       @port_monitor   = Monitor.new
