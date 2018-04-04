@@ -69,8 +69,8 @@ module Axial
 
       def dcc_quit(dcc, command)
         dcc.message("goodbye.")
-        dcc.stats = :closed
-        socket.close
+        dcc.status = :closed
+        dcc.close
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -82,11 +82,7 @@ module Axial
         dcc.message("online users:")
         @connections.each do |uuid, state_data|
           remote_dcc = state_data[:dcc]
-          if (dcc.user.role.director?)
-            dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
-          else
-            dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name}")
-          end
+          dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name_with_color} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -192,7 +188,7 @@ module Axial
               end
     
               attempts = 0
-              dcc.message("hello #{dcc.user.pretty_name}, please enter your password.")
+              dcc.message("hello #{dcc.user.pretty_name_with_color}, please enter your password.")
               auth_timeout_timer = timer.in_15_seconds do
                 dcc.message("timeout.")
                 dcc.close
@@ -228,12 +224,12 @@ module Axial
                     if (text.start_with?(@bot.dcc_command_character))
                       dcc.message("command not found. try #{@bot.dcc_command_character}help")
                     else
-                      @dcc_state.broadcast("#{Colors.gray}<#{Colors.cyan}#{dcc.user.pretty_name}#{Colors.gray}>#{Colors.reset} #{text}")
+                      @dcc_state.broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
                     end
                   end
                 end
               end
-              LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
+              LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip}).")
               @monitor.synchronize do
                 @connections.delete(uuid)
               end

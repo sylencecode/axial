@@ -29,6 +29,10 @@ module Axial
       one_to_many :bans
       one_to_one  :seen
 
+      def pretty_name_with_color()
+        return "#{self.role.color}#{self.pretty_name}#{Colors.reset}"
+      end
+
       def self.get_users_from_overlap(in_mask)
         possible_users = []
         Models::User.all.each do |user_model|

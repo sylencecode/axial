@@ -1,4 +1,5 @@
 require 'axial/role'
+require 'axial/colors'
 
 module Axial
   module Axnet
@@ -28,6 +29,10 @@ module Axial
 
       def set_password(encrypted_password)
         @password = encrypted_password
+      end
+
+      def pretty_name_with_color()
+        return "#{@role.color}#{@pretty_name}#{Colors.reset}"
       end
 
       def self.from_model(user_model)
