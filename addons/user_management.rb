@@ -433,14 +433,14 @@ module Axial
             if (!source.is_a?(IRCTypes::DCC))
               reply(source, nick, "... and #{mask_models.count - 3} more. review the rest via dcc or provide a more specific mask.")
               if (user.role.manager?)
-                reply(source, nick, "alternatively, use the -force switch to remove all bans overlapping '#{subject_mask}'.")
+                reply(source, nick, "alternatively, use the -force switch to remove all masks overlapping '#{subject_mask}'.")
               end
               break
             end
           end
         end
         if (subject_collection.count > 1 && user.role.manager?)
-          reply(source, nick, "provide a more specific mask or use the -force switch to remove all bans overlapping '#{subject_mask}'.")
+          reply(source, nick, "provide a more specific mask or use the -force switch to remove all masks overlapping '#{subject_mask}'.")
         end
       end
 
