@@ -10,9 +10,7 @@ module Axial
         possible_bans = []
         Models::Ban.all.each do |ban_model|
           if (MaskUtils.masks_overlap?(ban_model.mask, in_mask))
-            if (!possible_bans.include?(ban_model))
-              possible_bans.push(ban_model)
-            end
+            possible_bans.push(ban_model)
           end
         end
         return possible_bans

@@ -16,8 +16,6 @@ module Axial
         KICK                  = /^:{0,1}(\S+) KICK (\S+) (\S+) :{0,1}(.*)/
         KICK_NO_REASON        = /^:{0,1}(\S+) KICK (\S+) (\S+)/
         MODE                  = /^:{0,1}(\S+) MODE (#\S+) (.*)/
-        NAMES_LIST_ENTRY      = /^:{0,1}\S+ 353 (.*)/
-        NAMES_LIST_END        = /^:{0,1}\S+ 366 (.*)/
         NICK_CHANGE           = /^:{0,1}(\S+) NICK :{0,1}(\S+)/
         NOT_OPERATOR          = /^:{0,1}\S+ 482 (\S+)/
         PART                  = /^:{0,1}(\S+) PART (\S+) :{0,1}(.*)/
@@ -29,6 +27,7 @@ module Axial
       end
 
       module Server
+        SILENCE_NUMERICS      = [ 1, 2, 3, 4, 250, 251, 254, 255, 265, 266, 312, 317, 318, 319, 338, 353, 366, 671 ]
         ANY_NUMERIC           = /^:{0,1}\S+ ([0-9][0-9][0-9]) \S+ :{0,1}(.*)/
         MOTD_BEGIN            = /^:{0,1}\S+ 375/
         MOTD_END              = /^:{0,1}\S+ 376/

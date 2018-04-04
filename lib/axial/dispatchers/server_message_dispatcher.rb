@@ -45,10 +45,6 @@ module Axial
           when Channel::MODE
             uhost, channel_name, mode = Regexp.last_match.captures
             @bot.channel_handler.dispatch_mode(uhost, channel_name, mode)
-          when Channel::NAMES_LIST_ENTRY
-            LOGGER.debug(Regexp.last_match[1])
-          when Channel::NAMES_LIST_END
-            LOGGER.debug(Regexp.last_match[1])
           when Channel::NICK_CHANGE
             uhost, new_nick = Regexp.last_match.captures
             @bot.channel_handler.dispatch_nick_change(uhost, new_nick)
@@ -91,7 +87,11 @@ module Axial
             nick, ident, host = Regexp.last_match.captures
             @bot.server_handler.dispatch_whois_uhost(nick, ident, host)
           when Server::ANY_NUMERIC
-            LOGGER.debug("[#{Regexp.last_match[1]}] #{Regexp.last_match[2]}")
+            numeric, text = Regexp.last_match.captures
+            numeric = numeric.to_i
+            if (!Server::SILENCE_NUMERICS.include?(numeric))
+              LOGGER.debug("[#{numeric}] #{text}")
+            end
           else
             LOGGER.debug("Unhandled server message: #{text}")
         end

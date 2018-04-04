@@ -354,10 +354,8 @@ module Axial
           access_denied(source, nick)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask> [-force]")
-        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
-          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
         else
-          if (force_command.casecmp('-force').zero? && user.role.manager?)
+          if (force_command.casecmp('-force').zero?)
             force = true
           end
           subject_mask = MaskUtils.ensure_wildcard(subject_mask)
@@ -439,25 +437,45 @@ module Axial
             end
           end
         end
-        if (subject_collection.count > 1 && user.role.manager?)
+        if (subject_collection.count > 1)
           reply(source, nick, "provide a more specific mask or use the -force switch to remove all masks overlapping '#{subject_mask}'.")
         end
       end
 
-      def can_unban?(source, user, nick, subject_mask, ban_model)
+
+      def can_unban?(source, user, nick, ban_models, subject_mask, force)
         can_unban = false
-        if (ban_model.nil?)
-          reply(source, nick, "ban '#{subject_mask}' does not exist.")
-        elsif (user.role >= :op && ban_model.user.role <= :op)
+        possible_bans = Models::Ban.get_bans_from_overlap(subject_mask)
+        if (possible_bans.empty?)
           can_unban = true
-        elsif (user.role < ban_model.user.role)
-          reply(source, nick, "#{user.role.plural_name_with_color} are not allowed to modify bans set by #{subject_model.role.plural_name}.")
         else
-          can_unban = true
+          restricted_ban_masks = []
+          possible_bans.sort_by{ |ban| ban.user.role.numeric }.reverse.each do |possible_ban|
+            # roles are sorted highest to lowest for this comparison loop
+            if (!user.role.root?)
+              if (user.role < possible_ban.user.role)
+                # example: ops may bans set by other ops but not managers+
+                restricted_ban_masks.push(possible_ban.mask)
+              end
+
+              # wtf here
+            elsif (!force && possible_bans.count > 1)
+              restricted_ban_masks.push(possible_ban.mask)
+            end
+          end
+          if (restricted_ban_masks.empty?)
+            can_unban = true
+          else
+            if (force)
+              reply(source, nick, "cannot force unban of mask '#{subject_mask}' on the following masks due to access controls: #{restricted_ban_masks.join(', ')}. use a more specific mask.")
+            else
+              reply(source, nick, "unbanning '#{subject_mask}' would remove multiple bans: #{restricted_ban_masks.join(', ')} - either use a more specific mask or apply the -force switch.")
+            end
+          end
         end
         return can_unban
       end
-      
+
       def unban(source, user, nick, command)
         force = false
         subject_mask, force_command = command.two_arguments
@@ -465,25 +483,22 @@ module Axial
           access_denied(source, nick)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask> [-force]")
-        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
-          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
-        elsif (force_command.casecmp('-force').zero? && user.role.manager?)
-          force = true
         else
+          if (force_command.casecmp('-force').zero?)
+            force = true
+          end
           subject_mask = MaskUtils.ensure_wildcard(subject_mask)
           ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
-          if (can_unban?(source, user, nick, ban_model))
-            if (ban_models.empty?)
-              reply(source, nick, "no bans found matching '#{subject_mask}'.")
-            elsif (ban_models.count > 1 && !force)
-              output_mask_conflicts(source, user, nick, ban_models, subject_mask)
-            else
+          if (ban_models.empty?)
+            reply(source, nick, "no bans found matching '#{subject_mask}'.")
+          else
+            if (can_unban?(source, user, nick, ban_models, subject_mask, force))
               db_destroy_collection(ban_models)
-              ban_list
+              update_ban_list
               if (ban_models.count == 1)
-                reply(source, nick, "ban '#{subject_mask}' removed from ban list.")
+                reply(source, nick, "mask '#{ban_models.first.mask}' removed from ban list.")
               else
-                reply(source, nick, "#{ban_models.count} bans matching '#{subject_ban}' were removed from #{subject_model.pretty_name}.")
+                reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were removed from ban list: #{ban_models.collect{ |ban| ban.mask }.join(', ')}")
               end
             end
           end
@@ -496,7 +511,7 @@ module Axial
         end
       end
 
-      def can_ban?(source, user, nick, subject_mask)
+      def can_ban?(source, user, nick, subject_mask, force)
         can_ban = false
         possible_users = Models::User.get_users_from_overlap(subject_mask)
         if (possible_users.empty?)
@@ -505,8 +520,11 @@ module Axial
           protected_user_names = []
           possible_users.sort_by{ |user| user.role.numeric }.reverse.each do |possible_user|
             # roles are sorted highest to lowest for this comparison loop
-            if (user.role <= possible_user.role)
-              protected_user_names.push(possible_user.pretty_name)
+            if (!user.role.root?)
+              if (user.role <= possible_user.role)
+                # example: ops cannot ban other ops, but managers+ can
+                protected_user_names.push(possible_user.pretty_name)
+              end
             elsif (!force)
               protected_user_names.push(possible_user.pretty_name)
             end
@@ -517,7 +535,7 @@ module Axial
             if (force)
               reply(source, nick, "forcing a ban of mask '#{subject_mask}' would still ban protected users: #{protected_user_names.join(', ')}. use a more specific mask.")
             else
-              reply(source, nick, "mask '#{subject_mask}' would ban users: #{protected_user_names.join(', ')}. either use a more specific mask or apply the -force switch.")
+              reply(source, nick, "mask '#{subject_mask}' would ban users: #{protected_user_names.join(', ')} - either use a more specific mask or apply the -force switch.")
             end
           end
         end
@@ -526,32 +544,37 @@ module Axial
 
       def ban(source, user, nick, command)
         force = false
-        subject_mask, force_command = command.two_arguments
+        subject_mask, reason = command.one_plus
         if (user.nil? || !user.role.op?)
           access_denied(source, nick)
         elsif (subject_mask.empty?)
-          reply(source, nick, "usage: #{command.command} <mask> [-force]")
-        elsif (force_command.casecmp('-force').zero? && !user.role.manager?)
-          reply(source, nick, "only #{Role.manager.plural_name_with_color} may use the -force switch.")
-        elsif (force_command.casecmp('-force').zero? && user.role.manager?)
-          force = true
+          reply(source, nick, "usage: #{command.command} <mask> <reason> [-force]")
         else
+          if (reason.empty?)
+            reason = 'banned.'
+          elsif (reason.casecmp('-force').zero?)
+            reason = 'banned.'
+            force = true
+          elsif (reason =~ / -force$/i)
+            reason.gsub(/ -force$/i, '')
+            force = true
+          end
+
           subject_mask = MaskUtils.ensure_wildcard(subject_mask)
           ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
-          if (can_ban?(source, user, nick, subject_mask))
-            if (ban_models.count.positive? && !force)
-              output_mask_conflicts(source, user, nick, ban_models, subject_mask)
+          if (can_ban?(source, user, nick, subject_mask, force))
+            # purposely looping twice here so that the user is not notified if the ban creation fails
+            if (ban_models.any?)
+              db_destroy_collection(ban_models)
+            end
+
+            ban_model = Models::Ban.create(mask: subject_mask, reason: reason, user_id: user.id, set_at: Time.now)
+            update_ban_list
+
+            if (ban_models.any?)
+              reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were replaced by '#{ban_mask.mask}'.")
             else
-              if (ban_models.count.positive?)
-                db_destroy_collection(ban_models)
-              end
-              ban_model = Models::Ban.create(mask: mask, reason: reason, user_id: user.id, set_at: Time.now)
-              update_ban_list
-              if (ban_models.count == 1)
-                reply(source, nick, "ban '#{ban_model.mask}' added to ban list.")
-              else
-                reply(source, nick, "#{ban_models.count} bans matching '#{subject_ban}' were replaced by '#{ban_mask.mask}'.")
-              end
+              reply(source, nick, "ban '#{ban_model.mask}' added to ban list.")
             end
           end
         end
@@ -564,65 +587,62 @@ module Axial
       end
 
       def dcc_whois(dcc, command)
-        if (command.args.empty?)
+        subject_nickname = command.first_argument
+        if (subject_nickname.empty?)
           dcc.message("usage: #{command.command} <username>")
-          return
-        end
-
-        subject_nickname = command.args.split(' ').first
-
-        user_model = Models::User.get_from_nickname(subject_nickname)
-        if (user_model.nil?)
-          dcc.message("no user named '#{command.args}' was found.")
-          return
-        end
-
-        dcc.message("user: #{user_model.pretty_name}")
-        dcc.message("role: #{user_model.role.name_with_color}")
-        dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")}")
-
-        on_channels = {}
-
-        channel_list.all_channels.each do |channel|
-          channel.nick_list.all_nicks.each do |nick|
-            possible_user = user_list.get_from_nick_object(nick)
-            if (!possible_user.nil? && possible_user.id == user_model.id)
-              if (!on_channels.has_key?(channel))
-                on_channels[channel] = []
+        else
+          user_model = Models::User.get_from_nickname(subject_nickname)
+          if (user_model.nil?)
+            dcc.message("no user named '#{command.args}' was found.")
+          else
+            dcc.message("user: #{user_model.pretty_name}")
+            dcc.message("role: #{user_model.role.name_with_color}")
+            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")}")
+    
+            on_channels = {}
+    
+            channel_list.all_channels.each do |channel|
+              channel.nick_list.all_nicks.each do |nick|
+                possible_user = user_list.get_from_nick_object(nick)
+                if (!possible_user.nil? && possible_user.id == user_model.id)
+                  if (!on_channels.has_key?(channel))
+                    on_channels[channel] = []
+                  end
+                  on_channels[channel].push(nick)
+                end
               end
-              on_channels[channel].push(nick)
+            end
+    
+            if (dcc.user.role.op?)
+              dcc.message('')
+              dcc.message("associated masks:")
+              dcc.message('')
+              user_model.masks.each do |mask|
+                dcc.message("  #{mask.mask}")
+              end
+            end
+    
+            if (on_channels.any?)
+              dcc.message('')
+              dcc.message("currently active on:")
+              dcc.message('')
+              on_channels.each do |channel, nicks|
+                dcc.message("  #{channel.name} as #{nicks.collect{ |tmp_nick| tmp_nick.name }.join(', ')}")
+              end
+            else
+              dcc.message('')
+              if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
+                dcc.message("never seen before.")
+              else
+                dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+              end
+            end
+    
+            if (!user_model.note.nil? && !user_model.note.empty?)
+              dcc.message('')
+              dcc.message("note: #{user_model.note}")
             end
           end
-        end
-
-        if (dcc.user.role.op?)
-          dcc.message('')
-          dcc.message("associated masks:")
-          dcc.message('')
-          user_model.masks.each do |mask|
-            dcc.message("  #{mask.mask}")
-          end
-        end
-
-        if (on_channels.any?)
-          dcc.message('')
-          dcc.message("currently active on:")
-          dcc.message('')
-          on_channels.each do |channel, nicks|
-            dcc.message("  #{channel.name} as #{nicks.collect{ |tmp_nick| tmp_nick.name }.join(', ')}")
-          end
-        else
-          dcc.message('')
-          if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
-            dcc.message("never seen before.")
-          else
-            dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
-          end
-        end
-
-        if (!user_model.note.nil? && !user_model.note.empty?)
-          dcc.message('')
-          dcc.message("note: #{user_model.note}")
         end
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")

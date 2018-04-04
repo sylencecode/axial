@@ -36,6 +36,14 @@ module Axial
         on_dcc          'quit',   :dcc_quit
 
         on_privmsg      'chat',   :start_dcc_loop
+        on_user_list              :check_for_user_updates
+        on_ban_list               :check_for_banned_users
+      end
+
+      def check_for_user_updates()
+      end
+
+      def check_for_banned_users()
       end
 
       def dcc_help(dcc, command)
@@ -122,7 +130,7 @@ module Axial
           return
         elsif (!user.password_set?)
           nick.message("#{user.inspect}")
-          nick.message("you do not have a password set. please set one with /msg #{myself.name} PASS <your password>. please employ secure password practices.")
+          nick.message("you do not have a password set. please set one with /msg #{myself.name} PASSWORD <password>. please employ secure password practices.")
           return
         end
         fragments = local_ip.split('.')
