@@ -6,7 +6,6 @@ require 'securerandom'
 require 'axial/addon'
 require 'axial/colors'
 require 'axial/irc_types/dcc'
-require 'axial/irc_types/dcc_state'
 
 module Axial
   module Addons
