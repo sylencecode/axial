@@ -866,7 +866,7 @@ module Axial
       end
 
       def dispatch_privmsg_binds(nick, text)
-        found = false
+        dispatched_commands = []
         @binds.select{ |bind| bind[:type] == :privmsg }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
@@ -881,7 +881,7 @@ module Axial
             args_regexp = Regexp.new(args_match, true)
             base_regexp = Regexp.new(base_match, true)
             if (text =~ args_regexp)
-              found = true
+              dispatched_commands.push(bind)
               bind[:object].last = Time.now
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
@@ -905,7 +905,7 @@ module Axial
               end
               break
             elsif (text =~ base_regexp)
-              found = true
+              dispatched_commands.push(bind)
               bind[:object].last = Time.now
               command = Regexp.last_match[1]
               args = ""
@@ -933,7 +933,7 @@ module Axial
           elsif (bind[:command].is_a?(Regexp))
             if (text =~ bind[:command])
               bind[:object].last = Time.now
-              found = true
+              dispatched_commands.push(bind)
               Thread.new do
                 begin
                   if (bind[:object].respond_to?(bind[:method]))
@@ -958,7 +958,7 @@ module Axial
             LOGGER.error("#{self.class}: unsure how to handle bind #{bind.inspect}, it isn't a string or regexp.")
           end
         end
-        return found
+        return dispatched_commands
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -967,7 +967,7 @@ module Axial
       end
 
       def dispatch_dcc_binds(dcc, text)
-        found = false
+        dispatched_commands = []
         @binds.select{ |bind| bind[:type] == :dcc }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
@@ -983,9 +983,7 @@ module Axial
             base_regexp = Regexp.new(base_match, true)
             if (text =~ args_regexp)
               bind[:object].last = Time.now
-              if (!found)
-                found = true
-              end
+              dispatched_commands.push(bind)
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
               Thread.new do
@@ -1009,9 +1007,7 @@ module Axial
               break
             elsif (text =~ base_regexp)
               bind[:object].last = Time.now
-              if (!found)
-                found = true
-              end
+              dispatched_commands.push(bind)
               command = Regexp.last_match[1]
               args = ""
               command_object = IRCTypes::Command.new(command, args)
@@ -1037,7 +1033,7 @@ module Axial
             LOGGER.error("#{self.class}: unsure how to handle bind #{bind.command} to #{bind.method}, it isn't a string or regexp.")
           end
         end
-        return found
+        return dispatched_commands
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

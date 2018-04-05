@@ -145,20 +145,20 @@ module Axial
           load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
           addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
           @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
-          addon_object.listeners.each do |listener|
-            if (listener[:type] == :mode)
-              @binds.push(type: listener[:type], object: addon_object, method: listener[:method], modes: listener[:modes])
-            elsif (listener[:type] == :channel_leftover)
-              if (listener.has_key?(:args) && listener[:args].any?)
-                @binds.push(type: listener[:type], object: addon_object, text: listener[:text], method: listener[:method], args: listener[:args])
+          addon_object.binds.each do |bind|
+            if (bind[:type] == :mode)
+              @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])
+            elsif (bind[:type] == :channel_leftover)
+              if (bind.has_key?(:args) && bind[:args].any?)
+                @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], args: bind[:args], silent: bind[:silent])
               else
-                @binds.push(type: listener[:type], object: addon_object, text: listener[:text], method: listener[:method])
+                @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], silent: bind[:silent])
               end
             else
-              if (listener.has_key?(:args) && listener[:args].any?)
-                @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method], args: listener[:args])
+              if (bind.has_key?(:args) && bind[:args].any?)
+                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
               else
-                @binds.push(type: listener[:type], object: addon_object, command: listener[:command], method: listener[:method])
+                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
               end
             end
           end

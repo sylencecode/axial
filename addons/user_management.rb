@@ -27,8 +27,8 @@ module Axial
         on_channel               'who|whofrom',   :dcc_wrapper, :who_from
         on_channel                      'note',   :dcc_wrapper, :set_note
 
-        on_privmsg             'pass|password',   :dcc_wrapper, :set_password
-        on_privmsg       'setpass|setpassword',   :dcc_wrapper, :set_other_user_password
+        on_privmsg             'pass|password',   :silent, :dcc_wrapper, :set_password
+        on_privmsg       'setpass|setpassword',   :silent, :dcc_wrapper, :set_other_user_password
         on_privmsg   'clearpass|clearpassword',   :dcc_wrapper, :clear_other_user_password
         on_privmsg                      'note',   :dcc_wrapper, :set_note
 
@@ -40,14 +40,14 @@ module Axial
         on_dcc                      'ban|+ban',   :dcc_wrapper, :ban
         on_dcc                    'unban|-ban',   :dcc_wrapper, :unban
         on_dcc                       'whofrom',   :dcc_wrapper, :who_from
-        on_dcc       'clearpass|clearpassword',   :dcc_wrapper, :clear_other_user_password
-        on_dcc           'setpass|setpassword',   :dcc_wrapper, :set_other_user_password
+        on_dcc       'clearpass|clearpassword',   :silent, :dcc_wrapper, :clear_other_user_password
+        on_dcc           'setpass|setpassword',   :silent, :dcc_wrapper, :set_other_user_password
         on_dcc                          'note',   :dcc_wrapper, :set_note
 
         on_dcc                  'banlist|bans',   :dcc_ban_list
         on_dcc                'userlist|users',   :dcc_user_list
         on_dcc                         'whois',   :dcc_whois
-        on_dcc                      'password',   :dcc_wrapper, :set_password
+        on_dcc                      'password',   :silent, :dcc_wrapper, :set_password
 
         on_reload                                 :update_user_list
         on_reload                                 :update_ban_list

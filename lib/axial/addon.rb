@@ -4,11 +4,11 @@ end
 module Axial
   # parent class for new addons
   class Addon
-    attr_reader     :listeners, :name, :version, :author, :throttle_secs
+    attr_reader     :binds, :name, :version, :author, :throttle_secs
     attr_accessor   :last
 
     def initialize(bot)
-      @listeners        = []
+      @binds            = []
       @name             = 'unnamed addon'
       @author           = 'unknown author'
       @version          = 'uknown version'
@@ -56,6 +56,10 @@ module Axial
       return @bot.timer
     end
 
+    def dcc_broadcast(text, role = :friend)
+      Handlers::DCCState.broadcast(text, role)
+    end
+
     def throttle(seconds)
       @throttle_secs = seconds
       @last = Time.now - @throttle_secs
@@ -70,9 +74,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :nick_change, method: method, args: args)
+        @binds.push(type: :nick_change, method: method, args: args)
       else
-        @listeners.push(type: :nick_change, method: method)
+        @binds.push(type: :nick_change, method: method)
       end
 
       LOGGER.debug("nick changes will invoke method '#{self.class}.#{method}'")
@@ -87,9 +91,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :startup, method: method, args: args)
+        @binds.push(type: :startup, method: method, args: args)
       else
-        @listeners.push(type: :startup, method: method)
+        @binds.push(type: :startup, method: method)
       end
       LOGGER.debug("startup will invoke method '#{self.class}.#{method}'")
     end
@@ -103,9 +107,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :axnet_connect, method: method, args: args)
+        @binds.push(type: :axnet_connect, method: method, args: args)
       else
-        @listeners.push(type: :axnet_connect, method: method)
+        @binds.push(type: :axnet_connect, method: method)
       end
       LOGGER.debug("new axnet connections will invoke method '#{self.class}.#{method}'")
     end
@@ -119,9 +123,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :axnet_disconnect, method: method, args: args)
+        @binds.push(type: :axnet_disconnect, method: method, args: args)
       else
-        @listeners.push(type: :axnet_disconnect, method: method)
+        @binds.push(type: :axnet_disconnect, method: method)
       end
       LOGGER.debug("axnet disconnects will invoke method '#{self.class}.#{method}'")
     end
@@ -135,9 +139,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :ban_list, method: method, args: args)
+        @binds.push(type: :ban_list, method: method, args: args)
       else
-        @listeners.push(type: :ban_list, method: method)
+        @binds.push(type: :ban_list, method: method)
       end
       LOGGER.debug("banlist update invoke method '#{self.class}.#{method}'")
     end
@@ -151,9 +155,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :user_list, method: method, args: args)
+        @binds.push(type: :user_list, method: method, args: args)
       else
-        @listeners.push(type: :user_list, method: method)
+        @binds.push(type: :user_list, method: method)
       end
 
       LOGGER.debug("userlist update will invoke method '#{self.class}.#{method}'")
@@ -168,9 +172,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_full, method: method, args: args)
+        @binds.push(type: :channel_full, method: method, args: args)
       else
-        @listeners.push(type: :channel_full, method: method)
+        @binds.push(type: :channel_full, method: method)
       end
 
       LOGGER.debug("channel is full (#471) errors will invoke method '#{self.class}.#{method}'")
@@ -185,9 +189,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :invited_to_channel, method: method, args: args)
+        @binds.push(type: :invited_to_channel, method: method, args: args)
       else
-        @listeners.push(type: :invited_to_channel, method: method)
+        @binds.push(type: :invited_to_channel, method: method)
       end
 
       LOGGER.debug("channel invitations will invoke method '#{self.class}.#{method}'")
@@ -202,9 +206,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :banned_from_channel, method: method, args: args)
+        @binds.push(type: :banned_from_channel, method: method, args: args)
       else
-        @listeners.push(type: :banned_from_channel, method: method)
+        @binds.push(type: :banned_from_channel, method: method)
       end
 
       LOGGER.debug("banned from channel (#474) will invoke method '#{self.class}.#{method}'")
@@ -219,9 +223,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_keyword, method: method, args: args)
+        @binds.push(type: :channel_keyword, method: method, args: args)
       else
-        @listeners.push(type: :channel_keyword, method: method)
+        @binds.push(type: :channel_keyword, method: method)
       end
 
       LOGGER.debug("channel keyword (#475) will invoke method '#{self.class}.#{method}'")
@@ -236,9 +240,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_invite_only, method: method, args: args)
+        @binds.push(type: :channel_invite_only, method: method, args: args)
       else
-        @listeners.push(type: :channel_invite_only, method: method)
+        @binds.push(type: :channel_invite_only, method: method)
       end
 
       LOGGER.debug("invite only (#473) will invoke method '#{self.class}.#{method}'")
@@ -253,9 +257,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :reload, method: method, args: args)
+        @binds.push(type: :reload, method: method, args: args)
       else
-        @listeners.push(type: :reload, method: method)
+        @binds.push(type: :reload, method: method)
       end
 
       LOGGER.debug("addon reload will invoke method '#{self.class}.#{method}'")
@@ -269,7 +273,7 @@ module Axial
       method = args.pop
       modes = args
       LOGGER.debug("channel mode change (#{modes.join(', ')}) will invoke method '#{self.class}.#{method}'")
-      @listeners.push(type: :mode, method: method, modes: modes)
+      @binds.push(type: :mode, method: method, modes: modes)
     end
 
     def wait_a_sec()
@@ -286,9 +290,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :irc_ban_list_end, method: method, args: args)
+        @binds.push(type: :irc_ban_list_end, method: method, args: args)
       else
-        @listeners.push(type: :irc_ban_list_end, method: method)
+        @binds.push(type: :irc_ban_list_end, method: method)
       end
 
       LOGGER.debug("IRC banlist end (368) will invoke method '#{self.class}.#{method}'")
@@ -303,9 +307,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :kick, method: method, args: args)
+        @binds.push(type: :kick, method: method, args: args)
       else
-        @listeners.push(type: :kick, method: method)
+        @binds.push(type: :kick, method: method)
       end
 
       LOGGER.debug("channel kick will invoke method '#{self.class}.#{method}'")
@@ -320,9 +324,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :self_kick, method: method, args: args)
+        @binds.push(type: :self_kick, method: method, args: args)
       else
-        @listeners.push(type: :self_kick, method: method)
+        @binds.push(type: :self_kick, method: method)
       end
 
       LOGGER.debug("getting kicked will invoke method '#{self.class}.#{method}'")
@@ -337,9 +341,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :part, method: method, args: args)
+        @binds.push(type: :part, method: method, args: args)
       else
-        @listeners.push(type: :part, method: method)
+        @binds.push(type: :part, method: method)
       end
 
       LOGGER.debug("channel part will invoke method '#{self.class}.#{method}'")
@@ -354,9 +358,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :quit, method: method, args: args)
+        @binds.push(type: :quit, method: method, args: args)
       else
-        @listeners.push(type: :quit, method: method)
+        @binds.push(type: :quit, method: method)
       end
 
       LOGGER.debug("IRC quit will invoke method '#{self.class}.#{method}'")
@@ -371,9 +375,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :topic_change, method: method, args: args)
+        @binds.push(type: :topic_change, method: method, args: args)
       else
-        @listeners.push(type: :topic_change, method: method)
+        @binds.push(type: :topic_change, method: method)
       end
 
       LOGGER.debug("channel topic changes will invoke method '#{self.class}.#{method}'")
@@ -388,9 +392,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_sync, method: method, args: args)
+        @binds.push(type: :channel_sync, method: method, args: args)
       else
-        @listeners.push(type: :channel_sync, method: method)
+        @binds.push(type: :channel_sync, method: method)
       end
 
       LOGGER.debug("channel sync will invoke method '#{self.class}.#{method}'")
@@ -405,9 +409,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :join, method: method, args: args)
+        @binds.push(type: :join, method: method, args: args)
       else
-        @listeners.push(type: :join, method: method)
+        @binds.push(type: :join, method: method)
       end
 
       LOGGER.debug("channel join will invoke method '#{self.class}.#{method}'")
@@ -419,25 +423,40 @@ module Axial
       end
 
       args = args.flatten
-      method = args.shift
+      if (args.first == :silent)
+        silent = true
+        args.shift
+      else
+        silent = false
+      end
+
+      if (args.empty?)
+        raise(AddonError, "#{self.class}.on_dcc called without a callback method")
+      else
+        method = args.shift
+      end
 
       if (command.is_a?(Regexp))
         if (args.any?)
-          @listeners.push(type: :dcc, command: command, method: method, args: args)
+          @binds.push(type: :dcc, command: command, method: method, args: args, silent: silent)
         else
-          @listeners.push(type: :dcc, command: command, method: method)
+          @binds.push(type: :dcc, command: command, method: method, silent: silent)
         end
       elsif (command.is_a?(String))
         if (args.any?)
           command.split('|').each do |command|
-            @listeners.push(type: :dcc, command: command, method: method, args: args)
+            @binds.push(type: :dcc, command: command, method: method, args: args, silent: silent)
           end
         else
           command.split('|').each do |command|
-            @listeners.push(type: :dcc, command: command, method: method)
+            @binds.push(type: :dcc, command: command, method: method, silent: silent)
           end
         end
-        LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+        if (silent)
+          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' (silently)")
+        else
+          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+        end
       end
     end
 
@@ -450,9 +469,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :self_join, method: method, args: args)
+        @binds.push(type: :self_join, method: method, args: args)
       else
-        @listeners.push(type: :self_join, method: method)
+        @binds.push(type: :self_join, method: method)
       end
       LOGGER.debug("channel self-join will invoke method '#{self.class}.#{method}'")
     end
@@ -466,9 +485,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_any, method: method, args: args)
+        @binds.push(type: :channel_any, method: method, args: args)
       else
-        @listeners.push(type: :channel_any, method: method)
+        @binds.push(type: :channel_any, method: method)
       end
 
       LOGGER.debug("all channel messages will invoke method '#{self.class}.#{method}'")
@@ -484,19 +503,19 @@ module Axial
 
       if (command.is_a?(Regexp))
         if (args.any?)
-          @listeners.push(type: :channel, command: command, method: method, args: args)
+          @binds.push(type: :channel, command: command, method: method, args: args)
         else
-          @listeners.push(type: :channel, command: command, method: method)
+          @binds.push(type: :channel, command: command, method: method)
         end
         LOGGER.debug("channel expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
       elsif (command.is_a?(String))
         if (args.any?)
           command.split('|').each do |command|
-            @listeners.push(type: :channel, command: command, method: method, args: args)
+            @binds.push(type: :channel, command: command, method: method, args: args)
           end
         else
           command.split('|').each do |command|
-            @listeners.push(type: :channel, command: command, method: method)
+            @binds.push(type: :channel, command: command, method: method)
           end
         end
         LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
@@ -512,9 +531,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :channel_leftover, text: text, method: method, args: args)
+        @binds.push(type: :channel_leftover, text: text, method: method, args: args)
       else
-        @listeners.push(type: :channel_leftover, text: text, method: method)
+        @binds.push(type: :channel_leftover, text: text, method: method)
       end
 
       if (text.is_a?(Regexp))
@@ -533,9 +552,9 @@ module Axial
       method = args.shift
 
       if (args.any?)
-        @listeners.push(type: :axnet, command: command, method: method, args: args)
+        @binds.push(type: :axnet, command: command, method: method, args: args)
       else
-        @listeners.push(type: :axnet, command: command, method: method)
+        @binds.push(type: :axnet, command: command, method: method)
       end
 
       if (command.is_a?(Regexp))
@@ -551,28 +570,46 @@ module Axial
       end
 
       args = args.flatten
-      method = args.shift
+      if (args.first == :silent)
+        silent = true
+        args.shift
+      else
+        silent = false
+      end
+
+      if (args.empty?)
+        raise(AddonError, "#{self.class}.on_dcc called without a callback method")
+      else
+        method = args.shift
+      end
 
       if (command.is_a?(Regexp))
         if (args.any?)
-          @listeners.push(type: :privmsg, command: command, method: method, args: args)
+          @binds.push(type: :privmsg, command: command, method: method, args: args, silent: silent)
         else
-          @listeners.push(type: :privmsg, command: command, method: method)
+          @binds.push(type: :privmsg, command: command, method: method, silent: silent)
         end
-        LOGGER.debug("private message expression expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
+        if (silent)
+          LOGGER.debug("private message expression '#{command.source}' will invoke method '#{self.class}.#{method}' (silently)")
+        else
+          LOGGER.debug("private message expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
+        end
       elsif (command.is_a?(String))
         if (args.any?)
           command.split('|').each do |command|
-            @listeners.push(type: :privmsg, command: command, method: method, args: args)
+            @binds.push(type: :privmsg, command: command, method: method, args: args, silent: silent)
           end
         else
           command.split('|').each do |command|
-            @listeners.push(type: :privmsg, command: command, method: method)
+            @binds.push(type: :privmsg, command: command, method: method, silent: silent)
           end
         end
-        LOGGER.debug("private message command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+        if (silent)
+          LOGGER.debug("private message command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}' (silently)")
+        else
+          LOGGER.debug("private message command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
+        end
       end
-      LOGGER.debug("private message '#{command}' will invoke method '#{self.class}.#{method}")
     end
 
     def before_reload()

@@ -47,13 +47,13 @@ module Axial
             if (addon[:name] == 'base')
               next
             end
-            channel_listeners = addon[:object].listeners.select{ |listener| listener[:type] == :channel && listener[:command].is_a?(String) }
-            listener_string = ""
-            if (channel_listeners.count > 0)
-              commands = channel_listeners.collect{ |bind| @bot.channel_command_character + bind[:command] }
-              listener_string = " (" + commands.sort.join(', ') + ")"
+            channel_binds = addon[:object].binds.select{ |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
+            bind_string = ""
+            if (channel_binds.count > 0)
+              commands = channel_binds.collect{ |bind| @bot.channel_command_character + bind[:command] }
+              bind_string = " (" + commands.sort.join(', ') + ")"
             end
-            channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{listener_string}")
+            channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{bind_string}")
           end
         end
       end

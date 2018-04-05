@@ -1,4 +1,5 @@
 require 'axial/irc_types/nick'
+require 'axial/colors'
 
 module Axial
   module Handlers
@@ -56,7 +57,14 @@ module Axial
           @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
         else
           dispatched_commands = @bot.bind_handler.dispatch_privmsg_binds(nick, text)
-          if (!dispatched_commands)
+          if (dispatched_commands.any?)
+            dispatched_commands.each do |dispatched_command|
+              if (!dispatched_command[:silent])
+                @bot.dcc_state.broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{nick.uhost}#{Colors.reset} executed privmsg command: #{text}", :director)
+                LOGGER.info("privmsg command: #{nick.uhost}: #{text}")
+              end
+            end
+          else
             LOGGER.info("#{nick.name} PRIVMSG: #{text}")
           end
         end

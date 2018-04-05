@@ -22,6 +22,10 @@ module Axial
         # dow, s&p, nasdaq, russell 2000
       end
 
+      def crypto_quote(channel, nick, command)
+
+      end
+
       def stock_quote(channel, nick, command)
         symbols = command.args.split(',').collect { |symbol| symbol.strip }.select{ |symbol| !symbol.nil? && !symbol.empty? }
         if (symbols.empty?)

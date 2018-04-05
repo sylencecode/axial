@@ -27,12 +27,10 @@ module Axial
         @monitor                  = @dcc_state.monitor
         @port_monitor             = @dcc_state.port_monitor
 
-        @silent_commands = %w(quit help)
-
-        on_dcc          'help',   :dcc_help
+        on_dcc          'help',   :silent, :dcc_help
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who
-        on_dcc          'quit',   :dcc_quit
+        on_dcc          'quit',   :silent, :dcc_quit
 
         on_privmsg      'chat',   :start_dcc_loop
         on_user_list              :check_for_user_updates
@@ -49,10 +47,9 @@ module Axial
         dcc.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         if (@bot.addons.count > 0)
           @bot.addons.each do |addon|
-            channel_listeners = addon[:object].listeners.select{ |listener| listener[:type] == :dcc && listener[:command].is_a?(String) }
-            listener_string = ""
-            if (channel_listeners.count > 0)
-              commands = channel_listeners.collect{ |bind| @bot.dcc_command_character + bind[:command] }
+            dcc_binds = addon[:object].binds.select{ |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
+            if (dcc_binds.count > 0)
+              commands = dcc_binds.collect{ |bind| @bot.dcc_command_character + bind[:command] }
               dcc.message("+ #{addon[:name]}: #{commands.sort.join(', ')}")
             end
           end
@@ -124,7 +121,6 @@ module Axial
         if (user.nil? || user.role < :friend)
           return
         elsif (!user.password_set?)
-          nick.message("#{user.inspect}")
           nick.message("you do not have a password set. please set one with /msg #{myself.name} PASSWORD <password>. please employ secure password practices.")
           return
         end
@@ -201,7 +197,7 @@ module Axial
                     dcc.message("welcome.")
                     dcc.status = :open
                     timer.delete(auth_timeout_timer)
-                    @dcc_state.broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged in.")
+                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged in.")
                     LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
                   else
                     if (attempts == 3)
@@ -214,16 +210,18 @@ module Axial
                   end
                 else
                   dispatched_commands = bind_handler.dispatch_dcc_binds(dcc, text)
-                  if (dispatched_commands)
-                    if (text != "#{@bot.dcc_command_character}quit")
-                      @dcc_state.broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} executed command: #{text}", :director)
-                      LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
+                  if (dispatched_commands.any?)
+                    dispatched_commands.each do |dispatched_command|
+                      if (!dispatched_command[:silent])
+                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} executed command: #{text}", :director)
+                        LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
+                      end
                     end
                   else
                     if (text.start_with?(@bot.dcc_command_character))
                       dcc.message("command not found. try #{@bot.dcc_command_character}help")
                     else
-                      @dcc_state.broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
+                      dcc_broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
                     end
                   end
                 end
@@ -235,17 +233,20 @@ module Axial
             rescue Exception => ex
               if (!dcc.nil?)
                 case dcc.status
-                 when :closed
-                   @dcc_state.broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
-                   LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
-                 when :authenticating
-                   LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
-                 when :failed
-                   LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
-                 else
-                   @dcc_state.broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
-                   LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
-               end
+                  when :closed
+                    dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+                    LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
+                  when :authenticating
+                    LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
+                  when :failed
+                    LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
+                  else
+                    dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+                    LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
+                    ex.backtrace.each do |i|
+                      LOGGER.warn(i)
+                    end
+                end
               else
                 LOGGER.error("unexpected error establishing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
                 ex.backtrace.each do |i|
