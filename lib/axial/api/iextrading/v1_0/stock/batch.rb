@@ -21,8 +21,6 @@ module Axial
                 raise(ArgumentError, "Invalid query provided to GeoNames: #{symbols.inspect}")
               end
 
-              puts symbols.flatten.select{ |symbol| !symbol.empty? }.map{ |symbol| symbol.strip }.inspect
-
               params = Hash.new
 
               headers = {
@@ -40,7 +38,6 @@ module Axial
               json = JSON.parse(response)
 
               results             = {}
-              results[:json]      = json
 
               json.each do |symbol, data|
                 result = API::IEXTrading::V10::Stock::StockResult.new
