@@ -38,7 +38,6 @@ module Axial
               rest_endpoint.query = URI.encode_www_form(params)
               response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
               json = JSON.parse(response)
-              puts JSON.pretty_generate(json)
 
               results[:json]      = json
               results             = {}
