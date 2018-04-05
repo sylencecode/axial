@@ -21,6 +21,7 @@ addons:
   - LearnerOfThings
   - RSSSubscriber
   - Seen
+  - StockQuotes
   - Translation
   - UserManagement
   - Weather

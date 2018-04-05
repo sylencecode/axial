@@ -4,7 +4,9 @@ module Axial
       module V10
         module Stock
           class StockResult
-            attr_accessor :json, :latest_price, :high, :low, :news, :peers, :change, :last_open, :last_close
+            attr_accessor   :json, :latest_price, :high, :low, :news, :peers, :change, :last_open,
+                            :last_close, :company_name
+
             def initialize()
               @json         = ''
               @latest_price = 0.0
@@ -13,6 +15,7 @@ module Axial
               @change       = 0.0
               @last_open    = 0.0
               @last_close   = 0.0
+              @company_name = ''
               @news         = {}
               @peers        = []
             end
