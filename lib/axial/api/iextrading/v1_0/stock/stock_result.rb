@@ -4,11 +4,10 @@ module Axial
       module V10
         module Stock
           class StockResult
-            attr_accessor   :json, :latest_price, :high, :low, :news, :peers, :change, :last_open,
+            attr_accessor   :latest_price, :high, :low, :news, :peers, :change, :last_open,
                             :last_close, :company_name
 
             def initialize()
-              @json         = ''
               @latest_price = 0.0
               @high         = 0.0
               @low          = 0.0

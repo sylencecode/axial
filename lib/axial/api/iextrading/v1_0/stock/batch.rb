@@ -39,12 +39,13 @@ module Axial
               response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
               json = JSON.parse(response)
               puts JSON.pretty_generate(json)
-  
-              result = API::IEXTrading::V10::Stock::StockResult.new
-              result.json = json
-              results     = {}
+
+              results[:json]      = json
+              results             = {}
 
               json.each do |symbol, data|
+                result = API::IEXTrading::V10::Stock::StockResult.new
+
                 if (data.has_key?('quote'))
                   quote = data['quote']
                   if (quote.has_key?('latestPrice'))
