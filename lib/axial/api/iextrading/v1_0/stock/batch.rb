@@ -39,8 +39,8 @@ module Axial
               response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
               json = JSON.parse(response)
 
-              results[:json]      = json
               results             = {}
+              results[:json]      = json
 
               json.each do |symbol, data|
                 result = API::IEXTrading::V10::Stock::StockResult.new
