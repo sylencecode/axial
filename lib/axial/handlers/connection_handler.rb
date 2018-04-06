@@ -115,7 +115,7 @@ module Axial
         while (raw = @conn.readline)
           dispatch(raw.chomp)
         end
-      rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, Errno::ENETDOWN => ex
+      rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, Errno::ENETDOWN, EOFError => ex
         LOGGER.error("lost server connection: #{ex.class}: #{ex.message}")
         sleep @server.timeout
         retry

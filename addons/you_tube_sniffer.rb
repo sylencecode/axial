@@ -20,7 +20,7 @@ module Axial
 
       def handle_youtube(channel, nick, text)
         youtube_id = ""
-        parsed_urls = URIUtilsUtils.extract(text)
+        parsed_urls = URIUtils.extract(text)
         if (parsed_urls.count == 0)
           return
         end
