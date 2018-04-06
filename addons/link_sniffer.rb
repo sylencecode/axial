@@ -1,6 +1,6 @@
 require 'axial/addon'
-require 'axial/api/you_tube/v3'
 require 'axial/uri_utils'
+require 'axial/api/link_preview'
 
 module Axial
   module Addons
@@ -13,52 +13,26 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
-        on_channel /https{0,1}:\/\/youtu\.be\/\S+/,          :handle_youtube
-        on_channel /https{0,1}:\/\/www\.youtube\.com\/\S+/,  :handle_youtube
-        on_channel /https{0,1}:\/\/m\.youtube\.com\/\S+/,    :handle_youtube
+        throttle 5
+
+        on_channel_leftover /https{0,1}:\/\/\S+/,   :sniff_link
       end
 
-      def handle_youtube(channel, nick, text)
-        youtube_id = ""
-        parsed_urls = URIUtilsUtils.extract(text)
-        if (parsed_urls.count == 0)
-          return
-        end
-        video_url = parsed_urls.first
-        uri = URI.parse(video_url)
-        if (uri.host =~ /youtu\.be/)
-          youtube_id = uri.path.gsub(/^\//, '')
-        elsif (uri.host =~ /youtube\.com/)
-          query = CGI.parse(uri.query)
-          if (query.has_key?('v'))
-            if (query['v'].kind_of?(Array))
-              if (query['v'].count > 0)
-                youtube_id = query['v'][0]
-              end
-            end
-          end
-        end
-
-        if (youtube_id.empty?)
-          LOGGER.warn("Youtube video not found: #{video_url}")
-          return
-        else
-          video = API::YouTube::V3.get_video(youtube_id)
-          if (video.found)
-            link = URIUtils.shorten(video_url)
-            msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-            msg += video.title
+      def sniff_link(channel, nick, text)
+        urls = URIUtils.extract(text)
+        if (urls.any?)
+          preview = API::LinkPreview.preview(urls.first)
+          if (!preview.nil? && preview.data?)
+            link = URIUtils.shorten(preview.url)
+            msg  = "#{Colors.gray}[#{Colors.green}link#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+            msg += preview.title
             msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += video.duration.short_to_s
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} views"
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += video.irc_description
+            msg += preview.short_description
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += link.to_s
             channel.message(msg)
           else
-            LOGGER.warn("Youtube video not found: #{video_url}")
+            LOGGER.warn("failed to preview #{urls.first}")
           end
         end
       rescue Exception => ex

@@ -19,6 +19,7 @@ addons:
   - FloodProtection
   - GoogleSearch
   - LearnerOfThings
+  - LinkSniffer
   - RSSSubscriber
   - Seen
   - StockQuotes
