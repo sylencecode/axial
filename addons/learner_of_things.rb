@@ -131,7 +131,7 @@ module Axial
       end
 
       def explain_on_join(channel, nick)
-        user_model = Models::Mask.get_user_from_mask(nick.uhost)
+        user_model = Models::User.get_user_from_mask(nick.uhost)
         if (!user_model.nil?)
           thing_model = Models::Thing[thing: user_model.name]
           if (!thing_model.nil?)
