@@ -11,24 +11,34 @@ module Axial
       end
 
       def include?(timer)
-        return @timers.select { |tmp_timer| tmp_timer.uuid == timer.uuid }.any?
+        if (timer.nil?)
+          return false
+        else
+          return @timers.select { |tmp_timer| tmp_timer.uuid == timer.uuid }.any?
+        end
       end
 
       def delete(dead_timer)
-        remove(dead_timer)
+        if (!dead_timer.nil?)
+          remove(dead_timer)
+        end
       end
 
       def kill(dead_timer)
-        remove(dead_timer)
+        if (!dead_timer.nil?)
+          remove(dead_timer)
+        end
       end
 
       def remove(dead_timer)
-        @timers.select { |timer| timer.uuid == dead_timer.uuid }.each do |timer|
-          if (!timer.thread.nil?)
-            timer.thread.kill
-          end
+        if (!dead_timer.nil?)
+          @timers.select { |timer| timer.uuid == dead_timer.uuid }.each do |timer|
+           if (!timer.thread.nil?)
+             timer.thread.kill
+           end
+         end
+          @timers.delete_if { |timer| timer.uuid == dead_timer.uuid }
         end
-        @timers.delete_if { |timer| timer.uuid == dead_timer.uuid }
       end
 
       def start()
