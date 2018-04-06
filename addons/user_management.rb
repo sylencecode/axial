@@ -669,8 +669,13 @@ module Axial
               dcc.message('')
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
-                  last_spoke = TimeSpan.new(nick.last_spoke[:time], Time.now)
-                  dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                  if (nick.last_spoke[:time].nil?)
+                    last_spoke = TimeSpan.new(channel.joined_at, Time.now)
+                    dcc.message("  - #{channel.name} as #{nick.name} (idle for at least #{last_spoke.approximate_to_s})")
+                  else
+                    last_spoke = TimeSpan.new(nick.last_spoke[:time], Time.now)
+                    dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                  end
                 end
               end
             else
