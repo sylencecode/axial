@@ -13,53 +13,53 @@ module Axial
       def initialize(bot)
         super
 
-        @name                                     = 'user management'
-        @author                                   = 'sylence <sylence@sylence.org>'
-        @version                                  = '1.1.0'
+        @name    = 'user management'
+        @author  = 'sylence <sylence@sylence.org>'
+        @version = '1.1.0'
 
-        on_channel                   'addmask',   :dcc_wrapper, :add_mask
-        on_channel                   'adduser',   :dcc_wrapper, :add_user
-        on_channel        'delmask|deletemask',   :dcc_wrapper, :delete_mask
-        on_channel        'deluser|deleteuser',   :dcc_wrapper, :delete_user
-        on_channel                   'setrole',   :dcc_wrapper, :set_role
-        on_channel                       'ban',   :dcc_wrapper, :ban
-        on_channel                     'unban',   :dcc_wrapper, :unban
-        on_channel               'who|whofrom',   :dcc_wrapper, :who_from
-        on_channel                      'note',   :dcc_wrapper, :set_note
+        on_channel 'addmask', :dcc_wrapper, :add_mask
+        on_channel 'adduser', :dcc_wrapper, :add_user
+        on_channel 'delmask|deletemask', :dcc_wrapper, :delete_mask
+        on_channel 'deluser|deleteuser', :dcc_wrapper, :delete_user
+        on_channel 'setrole', :dcc_wrapper, :set_role
+        on_channel 'ban', :dcc_wrapper, :ban
+        on_channel 'unban', :dcc_wrapper, :unban
+        on_channel 'who|whofrom', :dcc_wrapper, :who_from
+        on_channel 'note', :dcc_wrapper, :set_note
 
-        on_privmsg             'pass|password',   :silent, :dcc_wrapper, :set_password
-        on_privmsg       'setpass|setpassword',   :silent, :dcc_wrapper, :set_other_user_password
-        on_privmsg   'clearpass|clearpassword',   :dcc_wrapper, :clear_other_user_password
-        on_privmsg                      'note',   :dcc_wrapper, :set_note
+        on_privmsg 'pass|password', :silent, :dcc_wrapper, :set_password
+        on_privmsg 'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
+        on_privmsg 'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
+        on_privmsg 'note', :dcc_wrapper, :set_note
 
-        on_dcc                 'addmask|+mask',   :dcc_wrapper, :add_mask
-        on_dcc                 'adduser|+user',   :dcc_wrapper, :add_user
-        on_dcc      'delmask|deletemask|-mask',   :dcc_wrapper, :delete_mask
-        on_dcc      'deluser|deleteuser|-user',   :dcc_wrapper, :delete_user
-        on_dcc                       'setrole',   :dcc_wrapper, :set_role
-        on_dcc                      'ban|+ban',   :dcc_wrapper, :ban
-        on_dcc                    'unban|-ban',   :dcc_wrapper, :unban
-        on_dcc                       'whofrom',   :dcc_wrapper, :who_from
-        on_dcc       'clearpass|clearpassword',   :silent, :dcc_wrapper, :clear_other_user_password
-        on_dcc           'setpass|setpassword',   :silent, :dcc_wrapper, :set_other_user_password
-        on_dcc                          'note',   :dcc_wrapper, :set_note
+        on_dcc 'addmask|+mask', :dcc_wrapper, :add_mask
+        on_dcc 'adduser|+user', :dcc_wrapper, :add_user
+        on_dcc 'delmask|deletemask|-mask', :dcc_wrapper, :delete_mask
+        on_dcc 'deluser|deleteuser|-user', :dcc_wrapper, :delete_user
+        on_dcc 'setrole', :dcc_wrapper, :set_role
+        on_dcc 'ban|+ban', :dcc_wrapper, :ban
+        on_dcc 'unban|-ban', :dcc_wrapper, :unban
+        on_dcc 'whofrom', :dcc_wrapper, :who_from
+        on_dcc 'clearpass|clearpassword', :silent, :dcc_wrapper, :clear_other_user_password
+        on_dcc 'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
+        on_dcc 'note', :dcc_wrapper, :set_note
 
-        on_dcc                  'banlist|bans',   :dcc_ban_list
-        on_dcc                'userlist|users',   :dcc_user_list
-        on_dcc                         'whois',   :dcc_whois
-        on_dcc                      'password',   :silent, :dcc_wrapper, :set_password
+        on_dcc 'banlist|bans', :dcc_ban_list
+        on_dcc 'userlist|users', :dcc_user_list
+        on_dcc 'whois', :dcc_whois
+        on_dcc 'password', :silent, :dcc_wrapper, :set_password
 
-        on_reload                                 :update_user_list
-        on_reload                                 :update_ban_list
-        on_startup                                :update_user_list
-        on_startup                                :update_ban_list
+        on_reload :update_user_list
+        on_reload :update_ban_list
+        on_startup :update_user_list
+        on_startup :update_ban_list
 
         @foreign_tables = {
-          DB_CONNECTION[:rss_feeds]           => { model: Models::RSSFeed,  set_unknown: true },
-          DB_CONNECTION[:things]              => { model: Models::Thing,    set_unknown: true },
-          DB_CONNECTION[:bans]                => { model: Models::Ban,      set_unknown: true },
-          DB_CONNECTION[:seens]               => { model: Models::Seen,     set_unknown: false },
-          DB_CONNECTION[:masks]               => { model: Models::Mask,     set_unknown: false }
+            DB_CONNECTION[:rss_feeds] => { model: Models::RSSFeed, set_unknown: true },
+            DB_CONNECTION[:things]    => { model: Models::Thing, set_unknown: true },
+            DB_CONNECTION[:bans]      => { model: Models::Ban, set_unknown: true },
+            DB_CONNECTION[:seens]     => { model: Models::Seen, set_unknown: false },
+            DB_CONNECTION[:masks]     => { model: Models::Mask, set_unknown: false }
         }
       end
 
@@ -76,7 +76,7 @@ module Axial
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask>")
         else
-          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect{ |user| user.pretty_name }.join(', ')
+          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect { |user| user.pretty_name }.join(', ')
           if (users.any?)
             reply(source, nick, "possible users for '#{subject_mask}': #{possible_user_names}")
           else
@@ -189,12 +189,15 @@ module Axial
           if (subject_model.nil?)
             reply(source, nick, "user '#{subject_nickname}' does not exist.")
           else
-            if (can_modify?(source, user, nick, subject_nickname, subject_model))
+            if (can_modify?(source, user, nick, subject_nickname, subject_model, true, false))
               if (complex_password?(source, nick, new_password))
                 subject_model.set_password(new_password)
                 update_user_list
                 reply(source, nick, "password for #{subject_model.pretty_name} changed.")
+                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
               end
+            else
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} attempted to change password for user #{subject_model.pretty_name_with_color}.", :director)
             end
           end
         end
@@ -215,8 +218,9 @@ module Axial
           else
             if (complex_password?(source, nick, new_password))
               user_model.set_password(new_password)
-              reply(source, nick, "password set.")
               update_user_list
+              reply(source, nick, "password set.")
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has seet an initial password.", :director)
             end
           end
         else
@@ -227,11 +231,13 @@ module Axial
             if (user_model.password?(old_password))
               if (complex_password?(source, nick, new_password))
                 user_model.set_password(new_password)
-                reply(source, nick, "password changed.")
                 update_user_list
+                reply(source, nick, "password changed.")
+                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has changed his/her password.", :director)
               end
             else
               reply(source, nick, "old password is incorrect.")
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}failed password change attempt for #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
             end
           end
         end
@@ -247,7 +253,7 @@ module Axial
         counter = 0
         conflicts.each do |subject_model, masks|
           counter += 1
-          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name} (#{masks.collect{ |mask| mask.mask }.join(', ')})")
+          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name} (#{masks.collect { |mask| mask.mask }.join(', ')})")
           if (counter == 3)
             if (!source.is_a?(IRCTypes::DCC))
               reply(source, nick, "... and #{conflicts.count - 3} more. review the rest via dcc or provide a more specific mask.")
@@ -259,13 +265,13 @@ module Axial
 
       def get_mask_user_conflicts(subject_mask)
         conflicting_masks = {}
-        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-        subject_models = Models::User.get_users_from_mask(subject_mask)
+        subject_mask      = MaskUtils.ensure_wildcard(subject_mask)
+        subject_models    = Models::User.get_users_from_mask(subject_mask)
 
         if (subject_models.any?)
           subject_models.each do |subject_model|
             conflicting_masks[subject_model] = []
-            masks = subject_model.get_masks_from_overlap(subject_mask)
+            masks                            = subject_model.get_masks_from_overlap(subject_mask)
             masks.each do |mask|
               conflicting_masks[subject_model].push(mask)
             end
@@ -304,7 +310,7 @@ module Axial
         end
       end
 
-      def update_foreign_tables(subject_model) 
+      def update_foreign_tables(subject_model)
         @foreign_tables.each do |table, model_params|
           if (!table.nil?)
             if (model_params[:set_unknown])
@@ -383,7 +389,7 @@ module Axial
       end
 
       def delete_mask(source, user, nick, command)
-        force = false
+        force                                         = false
         subject_nickname, subject_mask, force_command = command.three_arguments
         if (user.nil? || !user.role.op?)
           access_denied(source, nick)
@@ -393,7 +399,7 @@ module Axial
           if (force_command.casecmp('-force').zero?)
             force = true
           end
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
           subject_model = Models::User.get_from_nickname(subject_nickname)
           if (subject_model.nil?)
             reply(source, nick, "user '#{subject_nickname}' not found.")
@@ -432,7 +438,7 @@ module Axial
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask>")
         else
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+          subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
           subject_model = Models::User.get_from_nickname(subject_nickname)
           if (subject_model.nil?)
             reply(source, nick, "user '#{subject_nickname}' not found.")
@@ -479,13 +485,13 @@ module Axial
 
 
       def can_unban?(source, user, nick, ban_models, subject_mask, force)
-        can_unban = false
+        can_unban     = false
         possible_bans = Models::Ban.get_bans_from_overlap(subject_mask)
         if (possible_bans.empty?)
           can_unban = true
         else
           restricted_ban_masks = []
-          possible_bans.sort_by{ |ban| ban.user.role.numeric }.reverse.each do |possible_ban|
+          possible_bans.sort_by { |ban| ban.user.role.numeric }.reverse.each do |possible_ban|
             # roles are sorted highest to lowest for this comparison loop
             if (!user.role.root?)
               if (user.role < possible_ban.user.role)
@@ -512,7 +518,7 @@ module Axial
       end
 
       def unban(source, user, nick, command)
-        force = false
+        force                       = false
         subject_mask, force_command = command.two_arguments
         if (user.nil? || !user.role.op?)
           access_denied(source, nick)
@@ -523,7 +529,7 @@ module Axial
             force = true
           end
           subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
+          ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
           if (ban_models.empty?)
             reply(source, nick, "no bans found matching '#{subject_mask}'.")
           else
@@ -533,7 +539,7 @@ module Axial
               if (ban_models.count == 1)
                 reply(source, nick, "mask '#{ban_models.first.mask}' removed from ban list.")
               else
-                reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were removed from ban list: #{ban_models.collect{ |ban| ban.mask }.join(', ')}")
+                reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were removed from ban list: #{ban_models.collect { |ban| ban.mask }.join(', ')}")
               end
             end
           end
@@ -547,13 +553,13 @@ module Axial
       end
 
       def can_ban?(source, user, nick, subject_mask, force)
-        can_ban = false
+        can_ban        = false
         possible_users = Models::User.get_users_from_overlap(subject_mask)
         if (possible_users.empty?)
           can_ban = true
         else
           protected_user_names = []
-          possible_users.sort_by{ |user| user.role.numeric }.reverse.each do |possible_user|
+          possible_users.sort_by { |user| user.role.numeric }.reverse.each do |possible_user|
             # roles are sorted highest to lowest for this comparison loop
             if (!user.role.root?)
               if (user.role <= possible_user.role)
@@ -578,7 +584,7 @@ module Axial
       end
 
       def ban(source, user, nick, command)
-        force = false
+        force                = false
         subject_mask, reason = command.one_plus
         if (user.nil? || !user.role.op?)
           access_denied(source, nick)
@@ -589,14 +595,14 @@ module Axial
             reason = 'banned.'
           elsif (reason.casecmp('-force').zero?)
             reason = 'banned.'
-            force = true
+            force  = true
           elsif (reason =~ / -force$/i)
             reason.gsub(/ -force$/i, '')
             force = true
           end
 
           subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          ban_models = Models::Ban.get_bans_from_overlap(subject_mask)
+          ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
           if (can_ban?(source, user, nick, subject_mask, force))
             # purposely looping twice here so that the user is not notified if the ban creation fails
             if (ban_models.any?)
@@ -633,9 +639,9 @@ module Axial
             dcc.message("user: #{user_model.pretty_name}")
             dcc.message("role: #{user_model.role.name_with_color}")
             dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")}")
-    
+
             on_channels = {}
-    
+
             channel_list.all_channels.each do |channel|
               channel.nick_list.all_nicks.each do |nick|
                 possible_user = user_list.get_from_nick_object(nick)
@@ -647,7 +653,7 @@ module Axial
                 end
               end
             end
-    
+
             if (dcc.user.role.op?)
               dcc.message('')
               dcc.message("associated masks:")
@@ -656,13 +662,16 @@ module Axial
                 dcc.message("  #{mask.mask}")
               end
             end
-    
+
             if (on_channels.any?)
               dcc.message('')
               dcc.message("currently active on:")
               dcc.message('')
               on_channels.each do |channel, nicks|
-                dcc.message("  #{channel.name} as #{nicks.collect{ |tmp_nick| tmp_nick.name }.join(', ')}")
+                nicks.each do |nick|
+                  last_spoke = TimeSpan.new(nick.last_spoke[:time], Time.now)
+                  dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                end
               end
             else
               dcc.message('')
@@ -672,10 +681,12 @@ module Axial
                 dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
               end
             end
-    
+
             if (!user_model.note.nil? && !user_model.note.empty?)
-              dcc.message('')
-              dcc.message("note: #{user_model.note}")
+              if (dcc.user.role >= user_model.role)
+                dcc.message('')
+                dcc.message("note: #{user_model.note}")
+              end
             end
           end
         end
@@ -694,48 +705,43 @@ module Axial
           return
         end
 
-        users = []
-        pretty_name_length = 0
-        created_length = 0
-        role_length = 0
-        seen_length = 0
-        note_length = 0
+        user_models        = Models::User.all
+        users              = []
+        pretty_name_length = user_models.collect { |user_model| user_model.pretty_name.length }.max + 2
+        created_length     = user_models.collect { |user_model| user_model.created.strftime("%m/%d/%Y").length }.max + 2
+        role_length        = user_models.collect { |user_model| user_model.role.name.length }.max + 2
 
-        Models::User.all.each do |user_model|
+        note_length = user_models.collect do |user_model|
+          if (user_model.note.nil?)
+            0
+          else
+            user_model.note.length
+          end
+        end.max
+
+        seen_length = 0
+
+        user_models.each do |user_model|
           if (user_model.name == "unknown")
             next
           end
 
           user = {}
 
-          user[:created] = user_model.created.strftime("%m/%d/%Y")
-          if (user[:created].length > created_length)
-            created_length = user[:created].length
-          end
-
+          user[:created]     = user_model.created.strftime("%m/%d/%Y")
           user[:pretty_name] = user_model.pretty_name
-          if (user[:pretty_name].length > pretty_name_length)
-            pretty_name_length = user[:pretty_name].length
-          end
-
-          user[:role] = user_model.role.name
-          user[:role_color] = user_model.role.color
-          if (user[:role].length > role_length)
-            role_length = user[:role].length
-          end
-
+          user[:role]        = user_model.role.name
+          user[:role_color]  = user_model.role.color
           if (user_model.note.nil?)
+            user[:note] = ''
+          elsif (dcc.user.role < user_model.role)
             user[:note] = ''
           else
             user[:note] = user_model.note
           end
 
-          if (user[:note].length > note_length)
-            note_length = user[:note].length
-          end
-
           on_channels = {}
-  
+
           channel_list.all_channels.each do |channel|
             channel.nick_list.all_nicks.each do |nick|
               possible_user = user_list.get_from_nick_object(nick)
@@ -749,7 +755,7 @@ module Axial
           end
 
           if (on_channels.any?)
-            user[:seen] = "active (#{on_channels.keys.collect{ |channel| channel.name }.join(', ')})"
+            user[:seen] = "active (#{on_channels.keys.collect { |channel| channel.name }.join(', ')})"
           elsif (user_model.seen.nil?)
             user[:seen] = "never"
           elsif (user_model.seen.status =~ /^for the first time/i)
@@ -765,9 +771,6 @@ module Axial
           users.push(user)
         end
 
-        created_length += 2
-        pretty_name_length += 4
-        role_length += 2
         if (seen_length < 8)
           seen_length = 8
         else
@@ -779,20 +782,19 @@ module Axial
           note_length += 2
         end
 
-        top_bar     = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (created_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
-        middle_bar  = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (created_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
-        bottom_bar  = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (created_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
+        top_bar    = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (created_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
+        middle_bar = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (created_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
+        bottom_bar = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (created_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
 
         if (users.empty?)
           dcc.message("user list is empty.")
         else
-          dcc.message('')
           dcc.message("current user list".center(top_bar.length))
           dcc.message(top_bar)
           dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'created'.center(created_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
           %w(root director manager op friend basic).each do |role|
-            users.select{ |tmp_user| tmp_user[:role].downcase == role}.sort_by{ |tmp_user| tmp_user[:created] }.each do |user|
+            users.select { |tmp_user| tmp_user[:role].downcase == role }.sort_by { |tmp_user| tmp_user[:created] }.each do |user|
               case user[:seen]
                 when /^active/
                   seen_color = Colors.green
@@ -820,55 +822,34 @@ module Axial
           return
         end
 
-        bans = []
-        mask_length = 0
-        set_at_length = 0
-        set_by_length = 0
-        reason_length = 0
+        ban_models    = Models::Ban.all
+        set_at_length = ban_models.collect { |ban_model| "#{TimeSpan.new(Time.now, ban_model.set_at).approximate_to_s} ago".length }.max + 2
+        mask_length   = ban_models.collect { |ban_model| ban_model.mask.length }.max + 2
+        set_by_length = ban_models.collect { |ban_model| ban_model.user.pretty_name.length }.max + 2
+        reason_length = ban_models.collect { |ban_model| ban_model.reason.length }.max + 2
 
-        Models::Ban.all.each do |ban_model|
-          ban = {}
-          ban[:mask] = ban_model.mask
-          if (ban[:mask].length > mask_length)
-            mask_length = ban[:mask].length
-          end
-
-          ban[:set_at] = TimeSpan.new(Time.now, ban_model.set_at).approximate_to_s + ' ago'
-          if (ban[:set_at].length > set_at_length)
-            set_at_length = ban[:set_at].length
-          end
-
-          ban[:set_by] = ban_model.user.pretty_name
-          if (ban[:set_by].length > set_by_length)
-            set_by_length = ban[:set_by].length
-          end
-
-          ban[:reason] = ban_model.reason
-          if (ban[:reason].length > reason_length)
-            reason_length = ban[:reason].length
-          end
-
-          bans.push(ban)
-        end
-
-        mask_length += 4
-        set_at_length += 2
-        set_by_length += 4
-        reason_length += 2
-
-        top_bar = "#{Colors.gray}.#{'-' * (mask_length + 2)}.#{'-' * (set_at_length + 2)}.#{'-' * (set_by_length + 2)}.#{'-' * (reason_length + 2)}.#{Colors.reset}"
+        top_bar    = "#{Colors.gray}.#{'-' * (mask_length + 2)}.#{'-' * (set_at_length + 2)}.#{'-' * (set_by_length + 2)}.#{'-' * (reason_length + 2)}.#{Colors.reset}"
         middle_bar = "#{Colors.gray}|#{'-' * (mask_length + 2)}+#{'-' * (set_at_length + 2)}+#{'-' * (set_by_length + 2)}+#{'-' * (reason_length + 2)}|#{Colors.reset}"
         bottom_bar = "#{Colors.gray}`#{'-' * (mask_length + 2)}'#{'-' * (set_at_length + 2)}'#{'-' * (set_by_length + 2)}'#{'-' * (reason_length + 2)}'#{Colors.reset}"
 
-        if (bans.empty?)
+        if (ban_models.empty?)
           dcc.message("ban list is empty.")
         else
           dcc.message("current ban list".center(top_bar.length))
           dcc.message(top_bar)
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.blue}#{'mask'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{'created'.center(set_at_length)} #{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{'set by'.center(set_by_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}#{Colors.red} #{'reason'.center(reason_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+          msg  = "#{Colors.gray}|#{Colors.reset} #{Colors.blue}#{'mask'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} "
+          msg += "#{'created'.center(set_at_length)} #{Colors.gray}|#{Colors.reset} "
+          msg += "#{Colors.cyan}#{'set by'.center(set_by_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} "
+          msg += "#{Colors.red}#{'reason'.center(reason_length)}#{Colors.reset} "
+          msg += "#{Colors.gray}|#{Colors.reset}"
+          dcc.message(msg)
           dcc.message(middle_bar)
-          bans.each do |ban|
-            dcc.message("#{Colors.gray}|#{Colors.reset} #{Colors.blue}#{ban[:mask].ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{ban[:set_at].rjust(set_at_length)} #{Colors.gray}|#{Colors.reset} #{Colors.cyan}#{ban[:set_by].ljust(set_by_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}#{Colors.red} #{ban[:reason].ljust(reason_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}")
+          ban_models.each do |ban_model|
+            msg  = "#{Colors.gray}|#{Colors.reset} #{Colors.blue}#{ban_model.mask.ljust(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} "
+            msg += "#{TimeSpan.new(Time.now, ban_model.set_at).approximate_to_s} ago".rjust(set_at_length) + " #{Colors.gray}|#{Colors.reset} "
+            msg += "#{ban_model.user.role.color}#{ban_model.user.pretty_name.ljust(set_by_length)} #{Colors.gray}|#{Colors.reset} "
+            msg += "#{Colors.red}#{ban_model.reason.ljust(reason_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset}"
+            dcc.message(msg)
           end
           dcc.message(bottom_bar)
         end
@@ -891,21 +872,21 @@ module Axial
       def dcc_wrapper(*args)
         source = args.shift
         if (source.is_a?(IRCTypes::Channel))
-          nick = args.shift
+          nick    = args.shift
           command = args.shift
-          method = args.shift
-          user = user_list.get_from_nick_object(nick)
+          method  = args.shift
+          user    = user_list.get_from_nick_object(nick)
         elsif (source.is_a?(IRCTypes::Nick))
-          nick = source
+          nick    = source
           command = args.shift
-          method = args.shift
-          user = user_list.get_from_nick_object(nick)
+          method  = args.shift
+          user    = user_list.get_from_nick_object(nick)
         elsif (source.is_a?(IRCTypes::DCC))
-          nick = IRCTypes::Nick.new(nil)
+          nick      = IRCTypes::Nick.new(nil)
           nick.name = source.user.pretty_name
-          command = args.shift
-          method = args.shift
-          user = source.user
+          command   = args.shift
+          method    = args.shift
+          user      = source.user
         end
         self.send(method, source, user, nick, command)
       end
@@ -942,7 +923,7 @@ module Axial
 
       def set_role(source, user, nick, command)
         subject_nickname, new_role_name = command.two_arguments
-        new_role_name = new_role_name.downcase
+        new_role_name                   = new_role_name.downcase
         if (user.nil? || !user.role.op?)
           access_denied(source, nick)
         elsif (new_role_name.empty?)

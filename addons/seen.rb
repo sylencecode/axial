@@ -36,6 +36,9 @@ module Axial
         elsif (subject_name.casecmp(nick.name.downcase).zero?)
           channel.message("#{nick.name}: are you still trying to find yourself?")
           return
+        elsif (subject_name.casecmp(myself.name.downcase).zero?)
+          channel.message("#{nick.name}: you're looking right at me.")
+          return
         end
 
         who = channel.nick_list.get_silent(subject_name)
@@ -55,10 +58,10 @@ module Axial
         else # nick is currently on channel
           if (who.last_spoke.empty?) # but hasn't said anything
             joined_at = TimeSpan.new(channel.joined_at, Time.now)
-            channel.message("#{nick.name}: #{who.name} is on #{channel.name} but hasn't spoken since I joined #{joined_at.approximate_to_s} ago.")
+            channel.message("#{nick.name}: #{who.name} is here now but has been idle since I joined #{joined_at.approximate_to_s} ago.")
           else # on channel, and has said something recently
             last_spoke = TimeSpan.new(who.last_spoke[:time], Time.now)
-            channel.message("#{nick.name}: #{who.name} is on #{channel.name} and spoke #{last_spoke.approximate_to_s} ago: <#{who.name}> #{who.last_spoke[:text]}")
+            channel.message("#{nick.name}: #{who.name} is here now and has been idle for #{last_spoke.approximate_to_s}. Last message: <#{who.name}> #{who.last_spoke[:text]}")
           end
         end
       rescue Exception => ex

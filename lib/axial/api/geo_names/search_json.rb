@@ -15,7 +15,7 @@ module Axial
     
         def self.search(in_query)
           if (!in_query.kind_of?(String) || in_query.strip.empty?)
-            raise(ArgumentError, "Invalid query provided to GeoNames: #{in_query.inspect}")
+            raise(ArgumentError, "Invalid query provided to #{self.class}: #{in_query.inspect}")
           end
   
           query = in_query.strip

@@ -2,7 +2,7 @@
 $stdout.sync = true
 $stderr.sync = true
 
-if (ENV['RMINE_SESSION'] == "true")
+if (ENV['REMOTE_DEBUG'] == "true")
   my_axial_pid      = Process.pid
   my_rubymine_pid = %x(ps -h -x -o ppid -q #{Process.pid}).split(/n/).first.to_i
   my_sshd_pid =     %x(ps -h -x -o ppid -q #{my_rubymine_pid}).split(/n/).first.to_i

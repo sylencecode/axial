@@ -198,8 +198,10 @@ module Axial
     end
 
     def git_pull()
-      repo_object = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
-      repo_object.pull
+      if (ENV['REMOTE_DEBUG'] != "true")
+        repo_object = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
+        repo_object.pull
+      end
     end
 
     def whois_myself()

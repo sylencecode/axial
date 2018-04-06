@@ -97,6 +97,7 @@ module Axial
           dcc.message("no addons loaded.")
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} reloaded addons.")
           addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
           addon_names = addon_list.collect{ |addon| addon[:name] }
           dcc.message("unloading addons: #{addon_names.join(', ')}")
@@ -154,6 +155,7 @@ module Axial
           tcp_server = TCPServer.new(next_port)
           socket = nil
           begin
+            dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}sent dcc chat offer to #{nick.uhost}", :director)
             LOGGER.debug("dcc chat offer to #{nick.name} (user: #{user.pretty_name}) (source: #{local_ip}:#{next_port})")
             nick.message("\x01DCC CHAT chat #{long_ip} #{next_port}\x01")
             Timeout.timeout(@dcc_timeout) do
@@ -163,6 +165,7 @@ module Axial
             @port_monitor.synchronize do
               @ports_in_use.delete(next_port)
             end
+            dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc chat offer to #{nick.uhost} timed out.", :director)
             LOGGER.error("connection attempt timed out attempting to dcc chat #{nick.name} (#{user.pretty_name})")
           end
           
@@ -197,11 +200,12 @@ module Axial
                     dcc.message("welcome.")
                     dcc.status = :open
                     timer.delete(auth_timeout_timer)
-                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged in.")
+                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} has logged in.")
                     LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
                   else
                     if (attempts == 3)
                       dcc.message("incorrect password after 3 attempts.")
+                      dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
                       dcc.status = :failed
                       dcc.close
                     else

@@ -186,6 +186,7 @@ module Axial
 
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name_with_colors} issued an axnet reload request.", :director)
         axnet.send('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_axnet

@@ -18,7 +18,7 @@ module Axial
               rest_api       = @rest_api + '/batch'
 
               if (!symbols.kind_of?(Array) || symbols.empty?)
-                raise(ArgumentError, "Invalid query provided to GeoNames: #{symbols.inspect}")
+                raise(ArgumentError, "Invalid query provided to #{self.class}: #{symbols.inspect}")
               end
 
               params = Hash.new
@@ -85,6 +85,7 @@ module Axial
                   end
                 end
 
+                result.symbol = symbol
                 results[symbol] = result
               end
               return results
