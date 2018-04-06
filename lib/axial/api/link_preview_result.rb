@@ -11,7 +11,7 @@ module Axial
       end
 
       def data?()
-        return (!@title.nil? && !@title.empty? && !@description.nil? && !@description.empty?)
+        return (!@title.nil? && !@title.empty? && !@description.nil? && !@description.empty? && !@url.nil? && !@url.empty?)
       end
 
       def short_description()
