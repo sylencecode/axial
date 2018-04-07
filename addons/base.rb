@@ -7,16 +7,15 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'base'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                   = 'base'
+        @author                 = 'sylence <sylence@sylence.org>'
+        @version                = '1.1.0'
 
-        throttle 10
+        throttle                10
 
         on_channel    'help',   :send_help
         on_channel   'about',   :send_help
         on_channel  'reload',   :reload_addons
-        on_channel     'lag',   :ctcp_ping_user
         on_channel   'topic',   :change_topic
         on_topic                :handle_topic_change
       end

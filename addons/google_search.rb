@@ -9,9 +9,11 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'google custom search'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                       = 'google custom search'
+        @author                     = 'sylence <sylence@sylence.org>'
+        @version                    = '1.1.0'
+
+        throttle                    5
 
         on_channel 'gis',           :google_image_search
         on_channel 'image',         :google_image_search

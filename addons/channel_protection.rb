@@ -21,26 +21,23 @@ module Axial
 
         @maximum_ban_time           = 3600
 
-        throttle                    2
-
-        # general mode/user management
         on_startup                  :start_ban_cleanup_timer
         on_reload                   :start_ban_cleanup_timer
+
         on_join                     :auto_op_voice
         on_join                     :auto_ban
+
         on_mode @prevent_modes,     :handle_prevent_modes
         on_mode @enforce_modes,     :handle_enforce_modes
         on_mode @op_deop_modes,     :handle_op_deop
         on_mode :bans,              :protect_banned_users
+
         on_user_list                :check_for_new_users
         on_ban_list                 :check_for_new_bans
+
         on_self_kick                :rejoin
         on_kick                     :handle_kick
-        # create a timer for checking channel bans every minute, use banlist response to check timestamps
 
-        # on kick...protect the people
-
-        # commands
         on_privmsg      'exec',     :handle_privmsg_exec
       end
 
@@ -50,7 +47,6 @@ module Axial
         if (!possible_user.nil? && possible_user.role.op?)
           if (!bot_or_director?(user))
             if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
-              # immediate
               channel.deop(kicker_nick)
               channel.kick(kicker_nick, "don't do that.")
             end

@@ -9,12 +9,13 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'weather underground'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                     = 'weather underground'
+        @author                   = 'sylence <sylence@sylence.org>'
+        @version                  = '1.1.0'
 
-        on_channel 'weather', :handle_weather
-        on_channel 'w',       :handle_weather
+        throttle                  2
+
+        on_channel  'weather|w',  :handle_weather
       end
       
       def weather_color(temp)

@@ -11,9 +11,9 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'axnet master'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                             = 'axnet master'
+        @author                           = 'sylence <sylence@sylence.org>'
+        @version                          = '1.1.0'
 
         @last_uhost                       = myself.uhost
         @uhost_timer                      = nil

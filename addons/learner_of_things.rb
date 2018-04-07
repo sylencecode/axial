@@ -20,7 +20,9 @@ module Axial
         on_channel       'random',  :random
         on_channel  'randomthing',  :random
         on_channel        'thing',  :random
+
         on_join                     :explain_on_join
+
         throttle                    2
       end
 

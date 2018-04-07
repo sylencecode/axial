@@ -13,46 +13,48 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'user management'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                                   = 'user management'
+        @author                                 = 'sylence <sylence@sylence.org>'
+        @version                                = '1.1.0'
 
-        on_channel 'addmask', :dcc_wrapper, :add_mask
-        on_channel 'adduser', :dcc_wrapper, :add_user
-        on_channel 'delmask|deletemask', :dcc_wrapper, :delete_mask
-        on_channel 'deluser|deleteuser', :dcc_wrapper, :delete_user
-        on_channel 'setrole', :dcc_wrapper, :set_role
-        on_channel 'ban', :dcc_wrapper, :ban
-        on_channel 'unban', :dcc_wrapper, :unban
-        on_channel 'who|whofrom', :dcc_wrapper, :who_from
-        on_channel 'note', :dcc_wrapper, :set_note
+        throttle                                2
 
-        on_privmsg 'pass|password', :silent, :dcc_wrapper, :set_password
-        on_privmsg 'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
-        on_privmsg 'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
-        on_privmsg 'note', :dcc_wrapper, :set_note
+        on_channel                   'addmask', :dcc_wrapper, :add_mask
+        on_channel                   'adduser', :dcc_wrapper, :add_user
+        on_channel        'delmask|deletemask', :dcc_wrapper, :delete_mask
+        on_channel        'deluser|deleteuser', :dcc_wrapper, :delete_user
+        on_channel                   'setrole', :dcc_wrapper, :set_role
+        on_channel                       'ban', :dcc_wrapper, :ban
+        on_channel                     'unban', :dcc_wrapper, :unban
+        on_channel               'who|whofrom', :dcc_wrapper, :who_from
+        on_channel                      'note', :dcc_wrapper, :set_note
 
-        on_dcc 'addmask|+mask', :dcc_wrapper, :add_mask
-        on_dcc 'adduser|+user', :dcc_wrapper, :add_user
-        on_dcc 'delmask|deletemask|-mask', :dcc_wrapper, :delete_mask
-        on_dcc 'deluser|deleteuser|-user', :dcc_wrapper, :delete_user
-        on_dcc 'setrole', :dcc_wrapper, :set_role
-        on_dcc 'ban|+ban', :dcc_wrapper, :ban
-        on_dcc 'unban|-ban', :dcc_wrapper, :unban
-        on_dcc 'whofrom', :dcc_wrapper, :who_from
-        on_dcc 'clearpass|clearpassword', :silent, :dcc_wrapper, :clear_other_user_password
-        on_dcc 'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
-        on_dcc 'note', :dcc_wrapper, :set_note
+        on_privmsg             'pass|password', :silent, :dcc_wrapper, :set_password
+        on_privmsg       'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
+        on_privmsg   'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
+        on_privmsg                      'note', :dcc_wrapper, :set_note
 
-        on_dcc 'banlist|bans', :dcc_ban_list
-        on_dcc 'userlist|users', :dcc_user_list
-        on_dcc 'whois', :dcc_whois
-        on_dcc 'password', :silent, :dcc_wrapper, :set_password
+        on_dcc                 'addmask|+mask', :dcc_wrapper, :add_mask
+        on_dcc                 'adduser|+user', :dcc_wrapper, :add_user
+        on_dcc      'delmask|deletemask|-mask', :dcc_wrapper, :delete_mask
+        on_dcc      'deluser|deleteuser|-user', :dcc_wrapper, :delete_user
+        on_dcc                       'setrole', :dcc_wrapper, :set_role
+        on_dcc                      'ban|+ban', :dcc_wrapper, :ban
+        on_dcc                    'unban|-ban', :dcc_wrapper, :unban
+        on_dcc                       'whofrom', :dcc_wrapper, :who_from
+        on_dcc       'clearpass|clearpassword', :silent, :dcc_wrapper, :clear_other_user_password
+        on_dcc           'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
+        on_dcc                          'note', :dcc_wrapper, :set_note
 
-        on_reload :update_user_list
-        on_reload :update_ban_list
-        on_startup :update_user_list
-        on_startup :update_ban_list
+        on_dcc                  'banlist|bans', :dcc_ban_list
+        on_dcc                'userlist|users', :dcc_user_list
+        on_dcc                         'whois', :dcc_whois
+        on_dcc                      'password', :silent, :dcc_wrapper, :set_password
+
+        on_reload                               :update_user_list
+        on_reload                               :update_ban_list
+        on_startup                              :update_user_list
+        on_startup                              :update_ban_list
 
         @foreign_tables = {
             DB_CONNECTION[:rss_feeds] => { model: Models::RSSFeed, set_unknown: true },
@@ -669,11 +671,11 @@ module Axial
               dcc.message('')
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
-                  if (nick.last_spoke[:time].nil?)
+                  if (nick.last_spoke[channel][:time].nil?)
                     last_spoke = TimeSpan.new(channel.joined_at, Time.now)
                     dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
                   else
-                    last_spoke = TimeSpan.new(nick.last_spoke[:time], Time.now)
+                    last_spoke = TimeSpan.new(nick.last_spoke[channel][:time], Time.now)
                     dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
                   end
                 end

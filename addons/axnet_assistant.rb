@@ -10,9 +10,9 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'axnet assistant'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                             = 'axnet assistant'
+        @author                           = 'sylence <sylence@sylence.org>'
+        @version                          = '1.1.0'
 
         @request_timer                    = nil
         @requests                         = {}

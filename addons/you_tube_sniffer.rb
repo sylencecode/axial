@@ -9,13 +9,15 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'youtube video sniffer'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                                                 = 'youtube video sniffer'
+        @author                                               = 'sylence <sylence@sylence.org>'
+        @version                                              = '1.1.0'
 
-        on_channel /https{0,1}:\/\/youtu\.be\/\S+/,          :handle_youtube
-        on_channel /https{0,1}:\/\/www\.youtube\.com\/\S+/,  :handle_youtube
-        on_channel /https{0,1}:\/\/m\.youtube\.com\/\S+/,    :handle_youtube
+        throttle                                              5
+
+        on_channel          /https{0,1}:\/\/youtu\.be\/\S+/,  :handle_youtube
+        on_channel  /https{0,1}:\/\/www\.youtube\.com\/\S+/,  :handle_youtube
+        on_channel    /https{0,1}:\/\/m\.youtube\.com\/\S+/,  :handle_youtube
       end
 
       def handle_youtube(channel, nick, text)

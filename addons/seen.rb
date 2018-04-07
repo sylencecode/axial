@@ -8,24 +8,24 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'last seen'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                                 = 'last seen'
+        @author                               = 'sylence <sylence@sylence.org>'
+        @version                              = '1.1.0'
   
         on_channel   'seen|lastspoke|last',   :dcc_wrapper, :seen
         on_dcc       'seen|lastspoke|last',   :dcc_wrapper, :seen
         on_privmsg   'seen|lastspoke|last',   :dcc_wrapper, :seen
 
-        on_channel_any            :update_last_spoke
-        on_join                   :update_seen_join
-        on_part                   :update_seen_part
-        on_quit                   :update_seen_quit
-        on_kick                   :update_seen_kick
-        throttle                  2
+        on_channel_any                        :update_last_spoke
+        on_join                               :update_seen_join
+        on_part                               :update_seen_part
+        on_quit                               :update_seen_quit
+        on_kick                               :update_seen_kick
+        throttle                              2
       end
 
       def update_last_spoke(channel, nick, text)
-        nick.last_spoke = { time: Time.now, text: text }
+        nick.last_spoke[channel] = { time: Time.now, text: text }
       end
 
       def seen(source, user, nick, command)
@@ -81,63 +81,49 @@ module Axial
             seen_name = subject_nick_name
           end
 
-          if (on_channels.any?)
-            on_channels.each do |channel, tmp_nicks|
-              latest_message = nil
-              seen_nick_names = []
-              tmp_nicks.each do |tmp_nick|
-                seen_nick_names.push(tmp_nick.name)
-                last_spoke = tmp_nick.last_spoke[:time]
-                if (!last_spoke.nil?)
-                  if (latest_message.nil? || latest_message > last_spoke)
-                    latest_message = last_spoke
-                  end
-                end
-              end
-
-              seen_nick_names.sort!
-              same = false
-              if (seen_nick_names.count > 2)
-                nick_string = ''
-                while (seen_nick_names.count > 2)
-                  nick_string += "'#{seen_nick_names.shift}', "
-                end
-                nick_string += "'#{seen_nick_names.shift}', and '#{seen_nick_names.shift}'"
-              elsif (seen_nick_names.count == 2)
-                nick_string = "'#{seen_nick_names.shift}' and '#{seen_nick_names.shift}'"
-              else
-                if (seen_nick_names.first.casecmp(subject_nick_name).zero?)
-                  same = true
-                end
-                nick_string = "'#{seen_nick_names.shift}'"
-              end
-
-              if (latest_message.nil?)
-                last_spoke = TimeSpan.new(channel.joined_at, Time.now)
-                if (same)
-                  reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle since i joined #{last_spoke.approximate_to_s} ago)")
-                else
-                  reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle since i joined #{last_spoke.approximate_to_s} ago)")
-                end
-              else
-                last_spoke = TimeSpan.new(latest_message, Time.now)
-                if (same)
-                  reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle for #{last_spoke.approximate_to_s})")
-                else
-                  reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle for #{last_spoke.approximate_to_s})")
+          on_channels.each do |channel, tmp_nicks|
+            latest_message = nil
+            seen_nick_names = []
+            tmp_nicks.each do |tmp_nick|
+              seen_nick_names.push(tmp_nick.name)
+              last_spoke = tmp_nick.last_spoke[channel][:time]
+              if (!last_spoke.nil?)
+                if (latest_message.nil? || latest_message > last_spoke)
+                  latest_message = last_spoke
                 end
               end
             end
-          else
-            reply(source, nick, "#{seen_name} is on multiple channels:")
-            on_channels.each do |channel, nicks|
-              nicks.each do |tmp_nick|
-                if (tmp_nick.last_spoke[:time].nil?)
-                  reply(source, nick, "  - #{channel.name} as #{tmp_nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
-                else
-                  last_spoke = TimeSpan.new(tmp_nick.last_spoke[:time], Time.now)
-                  reply(source, nick, "  - #{channel.name} as #{tmp_nick.name} (idle for #{last_spoke.approximate_to_s})")
-                end
+
+            seen_nick_names.sort!
+            same = false
+            if (seen_nick_names.count > 2)
+              nick_string = ''
+              while (seen_nick_names.count > 2)
+                nick_string += "'#{seen_nick_names.shift}', "
+              end
+              nick_string += "'#{seen_nick_names.shift}', and '#{seen_nick_names.shift}'"
+            elsif (seen_nick_names.count == 2)
+              nick_string = "'#{seen_nick_names.shift}' and '#{seen_nick_names.shift}'"
+            else
+              if (seen_nick_names.first.casecmp(subject_nick_name).zero?)
+                same = true
+              end
+              nick_string = "'#{seen_nick_names.shift}'"
+            end
+
+            if (latest_message.nil?)
+              last_spoke = TimeSpan.new(channel.joined_at, Time.now)
+              if (same)
+                reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+              else
+                reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+              end
+            else
+              last_spoke = TimeSpan.new(latest_message, Time.now)
+              if (same)
+                reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle for #{last_spoke.approximate_to_s})")
+              else
+                reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle for #{last_spoke.approximate_to_s})")
               end
             end
           end
@@ -162,6 +148,7 @@ module Axial
       end
 
       def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
+        nick.last_spoke.delete(channel)
         user = Models::User.get_from_nick_object(kicked_nick)
         if (!user.nil?)
           status = "getting kicked from #{channel.name} by #{kicker_nick.name} (#{reason})"
@@ -177,6 +164,7 @@ module Axial
       end
 
       def update_seen_join(channel, nick)
+        nick.last_spoke[channel] = {}
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           status = "joining #{channel.name}"
@@ -192,6 +180,7 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
+        nick.last_spoke.delete(channel)
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
@@ -211,6 +200,7 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
+        nick.last_spoke.delete(channel)
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)

@@ -9,12 +9,13 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'wikipedia search'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                           = 'wikipedia search'
+        @author                         = 'sylence <sylence@sylence.org>'
+        @version                        = '1.1.0'
 
-        on_channel 'wiki',      :handle_wikipedia
-        on_channel 'wikipedia', :handle_wikipedia
+        throttle                        5
+
+        on_channel  'wiki|wikipedia',   :handle_wikipedia
       end
 
       def handle_wikipedia(channel, nick, command)

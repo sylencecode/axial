@@ -16,7 +16,7 @@ module Axial
         on_channel      'quote|stock',  :stock_quote
         on_channel   'market|markets',  :market_quote
 
-        throttle 5
+        throttle                        5
       end
 
       def get_symbol_name(symbol)

@@ -26,6 +26,8 @@ module Axial
         on_channel   'rss',   :handle_rss_command
         on_startup            :start_ingest_timer
         on_reload             :start_ingest_timer
+
+        throttle              2
       end
 
       def stop_ingest_timer()

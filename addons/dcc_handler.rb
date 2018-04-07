@@ -27,6 +27,8 @@ module Axial
         @monitor                  = @dcc_state.monitor
         @port_monitor             = @dcc_state.port_monitor
 
+        throttle                  10
+
         on_dcc          'help',   :silent, :dcc_help
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who

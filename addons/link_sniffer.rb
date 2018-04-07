@@ -10,13 +10,13 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'link sniffer'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                                         = 'link sniffer'
+        @author                                       = 'sylence <sylence@sylence.org>'
+        @version                                      = '1.1.0'
 
-        throttle 5
+        throttle                                      5
 
-        on_channel_leftover /https{0,1}:\/\/\S+/,   :sniff_link
+        on_channel_leftover   /https{0,1}:\/\/\S+/,   :sniff_link
       end
 
       def sniff_link(channel, nick, text)
