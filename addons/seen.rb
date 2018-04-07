@@ -13,6 +13,8 @@ module Axial
         @version = '1.1.0'
   
         on_channel   'seen|lastspoke|last',   :dcc_wrapper, :seen
+        on_dcc       'seen|lastspoke|last',   :dcc_wrapper, :seen
+        on_privmsg   'seen|lastspoke|last',   :dcc_wrapper, :seen
 
         on_channel_any            :update_last_spoke
         on_join                   :update_seen_join
