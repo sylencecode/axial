@@ -39,7 +39,7 @@ module Axial
               msg += preview.url
               msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
             else
-              msg += URIUtils.shorten(preview.url)
+              msg += URIUtils.shorten(preview.url).to_s
             end
             channel.message(msg)
           else

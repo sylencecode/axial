@@ -43,7 +43,6 @@ module Axial
           rescue
           end
 
-          link = URIUtils.shorten(result.link)
           msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.irc_snippet
           msg += " #{Colors.gray}|#{Colors.reset} "

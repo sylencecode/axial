@@ -10,6 +10,9 @@ module Axial
       REST_API  = 'https://api.linkpreview.net'
       API_KEY   = '5abc7576a270f47fa1e27cc0c050aaf8f02272045eca0'
 
+      # submits a url to the link preview service for title and text snippets
+      # @param url [String] url to preview
+      # @return [LinkPreviewResult] an object representing the data retrieved from the api
       def self.preview(url)
         rest_endpoint = URI.parse(API::LinkPreview::REST_API)
 
