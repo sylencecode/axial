@@ -104,7 +104,7 @@ module Axial
         when 'op' 
           role_color = Colors.blue
         when 'friend' 
-          role_color = Colors.reset
+          role_color = Colors.green
         when 'basic' 
           role_color = Colors.gray
       end

@@ -1,4 +1,5 @@
-$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname('.'), 'lib')))
+$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
+
 $stdout.sync = true
 $stderr.sync = true
 

@@ -1,6 +1,7 @@
 require 'yaml'
-require 'axial/role'
 require 'axial/addon'
+require 'axial/cert_utils'
+require 'axial/role'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 
@@ -25,10 +26,7 @@ module Axial
         @refresh_timer                    = nil
         @handler_monitor                  = Monitor.new
         @port                             = 34567
-        @cacert                           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key                              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert                             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
-        @bot.local_cn                     = get_local_cn
+        @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
  
         axnet.master = true
@@ -106,26 +104,6 @@ module Axial
 
         serialized_yaml         = YAML.dump(bot_list).gsub(/\n/, "\0")
         axnet.send("BOTS #{serialized_yaml}")
-      end
-
-      def get_local_cn()
-        local_x509_cert = OpenSSL::X509::Certificate.new(File.read(@cert))
-        local_x509_array = local_x509_cert.subject.to_a
-        if (local_x509_array.empty?)
-          raise(AxnetError, "No subject info found in certificate: #{local_x509_cert.inspect}")
-        end
-
-        local_x509_fragments = local_x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
-        if (local_x509_fragments.empty?)
-          raise(AxnetError, "No CN found in #{local_x509_array.inspect}")
-        end
-
-        local_x509_cn_fragment = local_x509_fragments.flatten
-        if (local_x509_cn_fragment.count < 3)
-          raise(AxnetError, "CN fragment appears to be corrupt: #{local_x509_cn_fragment.inspect}")
-        end
-
-        return local_x509_cn_fragment[1]
       end
 
       def handle_broadcast(dcc, command)
@@ -273,27 +251,17 @@ module Axial
       end
 
       def listen()
-        LOGGER.info("axnet master listening for connections on port #{@port}")
-        context = OpenSSL::SSL::SSLContext::new
-        context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
-        context.cert = OpenSSL::X509::Certificate.new(File.read(@cert))
-        context.key = OpenSSL::PKey::RSA.new(File.read(@key))
-        context.ca_file = @cacert
-        context.ssl_version = :TLSv1_2
-
-        context.ciphers = [
-            ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
-        ]
-
         begin
           @tcp_listener = TCPServer.new(@port)
         rescue Errno::EADDRINUSE => ex
           LOGGER.error("axnet master can't bind to port #{@port}, it is already in use.")
           @running = false
         end
+        LOGGER.info("axnet master listening for connections on port #{@port}")
+
         while (@running)
           begin
-            @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, context)
+            @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, Axial::CertUtils.get_context)
             client_socket = @ssl_listener.accept
             handler = Axnet::SocketHandler.new(@bot, client_socket)
             handler.ssl_handshake

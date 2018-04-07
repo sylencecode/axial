@@ -1,7 +1,3 @@
-$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname('.'), 'lib')))
-$stdout.sync = true
-$stderr.sync = true
-
 require 'socket'
 require 'timeout'
 require 'openssl'

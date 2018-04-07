@@ -1,5 +1,6 @@
 require 'yaml'
 require 'axial/addon'
+require 'axial/cert_utils'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 
@@ -21,10 +22,7 @@ module Axial
         @port                             = 34567
         @handler                          = nil
         @master_address                   = 'axial.sylence.org'
-        @cacert                           = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet-ca.crt'))
-        @key                              = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.key'))
-        @cert                             = File.expand_path(File.join(File.dirname(__FILE__), '..', 'certs', 'axnet.crt'))
-        @bot.local_cn                     = get_local_cn
+        @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
 
         if (axnet.master?)
@@ -133,26 +131,6 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
-      end
-
-      def get_local_cn()
-        local_x509_cert = OpenSSL::X509::Certificate.new(File.read(@cert))
-        local_x509_array = local_x509_cert.subject.to_a
-        if (local_x509_array.empty?)
-          raise(AxnetError, "No subject info found in certificate: #{local_x509_cert.inspect}")
-        end
-
-        local_x509_fragments = local_x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
-        if (local_x509_fragments.empty?)
-          raise(AxnetError, "No CN found in #{local_x509_array.inspect}")
-        end
-
-        local_x509_cn_fragment = local_x509_fragments.flatten
-        if (local_x509_cn_fragment.count < 3)
-          raise(AxnetError, "CN fragment appears to be corrupt: #{local_x509_cn_fragment.inspect}")
-        end
-
-        return local_x509_cn_fragment[1]
       end
 
       def client()
