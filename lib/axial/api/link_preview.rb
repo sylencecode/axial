@@ -1,7 +1,8 @@
 gem 'rest-client'
 require 'rest-client'
-require 'axial/api/link_preview_result'
+gem 'nokogiri'
 require 'nokogiri'
+require 'axial/api/link_preview_result'
 
 module Axial
   module API
@@ -17,14 +18,12 @@ module Axial
             accept: 'application/json'
         }
 
-        payload = "key=#{API::LinkPreview::API_KEY}&q=#{url}"
+        payload   = "key=#{API::LinkPreview::API_KEY}&q=#{url}"
 
-        response = RestClient::Request.execute(method: :post, headers: headers, payload: payload, url: rest_endpoint.to_s, verify_ssl: false)
+        response  = RestClient::Request.execute(method: :post, headers: headers, payload: payload, url: rest_endpoint.to_s, verify_ssl: false)
+        json      = JSON.parse(response)
 
-        json = JSON.parse(response)
-
-        result = API::LinkPreviewResult.new
-
+        result    = API::LinkPreviewResult.new
         if (json.has_key?('title'))
           result.title = Nokogiri::HTML(json['title']).text
         end
@@ -48,6 +47,7 @@ module Axial
         if (result.description.empty?)
           result.description = '<no description>'
         end
+
         return result
       rescue Exception => ex
         return nil

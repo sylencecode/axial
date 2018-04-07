@@ -1,6 +1,7 @@
 require 'axial/addon'
 require 'axial/uri_utils'
 require 'axial/api/google/custom_search/v1'
+require 'axial/api/web_of_trust/v0_4/public_link_json2'
 
 module Axial
   module Addons
@@ -18,7 +19,7 @@ module Axial
         on_channel 'google',        :google_search
         on_channel 'g',             :google_search
       end
-      
+
       def google_search(channel, nick, command)
         query = command.args.strip
         if (query.empty?)
@@ -32,12 +33,24 @@ module Axial
         end
 
         result = API::Google::CustomSearch::V1.search(query)
+
         if (!result.link.empty?)
+          warnings = []
+          begin
+            warnings  = Axial::API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+          rescue
+          end
+
           link = URIUtils.shorten(result.link)
           msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.irc_snippet
           msg += " #{Colors.gray}|#{Colors.reset} "
-          msg += link.to_s
+          if (warnings.any?)
+            msg += result.link
+            msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
+          else
+            msg += URIUtils.shorten(result.link).to_s
+          end
           channel.message(msg)
         else
           channel.message("#{nick.name}: No search results.")
@@ -64,11 +77,22 @@ module Axial
 
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
-          link = URIUtils.shorten(result.link)
+          warnings = []
+          begin
+            warnings  = Axial::API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+          rescue
+          end
+
           msg  = "#{Colors.gray}[#{Colors.green}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
           msg += result.title
           msg += " #{Colors.gray}|#{Colors.reset} "
-          msg += link.to_s
+          if (warnings.any?)
+            msg += result.link
+            msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
+          else
+            msg += URIUtils.shorten(result.link).to_s
+          end
+
           channel.message(msg)
         else
           channel.message("#{nick.name}: No image search results.")

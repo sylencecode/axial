@@ -5,6 +5,7 @@ require 'nokogiri'
 require 'uri'
 require 'json'
 require 'axial/api/google/search_result'
+require 'axial/api/web_of_trust/v0_4/public_link_json2'
 
 $google_api_key = "AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs"
 
@@ -19,28 +20,29 @@ module Axial
           def self.default_params()
             params = {}
             params[:cx]         = @custom_search_engine
-            params[:filter]     = 1 
-            params[:num]        = 1 
+            params[:filter]     = 1
+            params[:num]        = 1
             params[:key]        = $google_api_key
             return params
           end
-    
+
           def self.image_search(in_query)
             if (!in_query.kind_of?(String) || in_query.strip.empty?)
               raise(ArgumentError, "Invalid query provided to Google Custom Search: #{in_query.inspect}")
             end
-    
-            query               = in_query.strip
-            params              = default_params
-            params[:q]          = query
-            params[:searchType] = 'image'
+
+            query                 = in_query.strip
+            params                = default_params
+            params[:q]            = query
+            params[:searchType]   = 'image'
 
             rest_endpoint = URI::parse(@rest_api)
             rest_endpoint.query = URI.encode_www_form(params)
             response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
-            json = JSON.parse(response)
-            result = API::Google::SearchResult.new
-            result.json = json
+
+            json                  = JSON.parse(response)
+            result                = API::Google::SearchResult.new
+            result.json           = json
             
             if (json.has_key?('items'))
               items = json['items']

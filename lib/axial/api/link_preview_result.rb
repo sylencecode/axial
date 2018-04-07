@@ -15,8 +15,8 @@ module Axial
       end
 
       def short_description()
-        if (@description.length > 319)
-          description = @description[0..319] + "..."
+        if (@description.length > 250)
+          description = @description[0..249] + "..."
         else
           description = @description
         end
