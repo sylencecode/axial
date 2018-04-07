@@ -135,21 +135,10 @@ module Axial
 
       def client()
         LOGGER.info("connecting to #{@master_address}:#{@port}")
-        context = OpenSSL::SSL::SSLContext::new
-        context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
-        context.cert = OpenSSL::X509::Certificate.new(File.read(@cert))
-        context.key = OpenSSL::PKey::RSA.new(File.read(@key))
-        context.ca_file = @cacert
-        context.ssl_version = :TLSv1_2
-
-        context.ciphers = [
-            ["DHE-RSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256],
-        ]
-
         while (@running)
           begin
             tcp_socket = TCPSocket.new(@master_address, @port)
-            ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
+            ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, Axial::CertUtils.get_context)
             server_socket = ssl_socket.connect
             @handler = Axnet::SocketHandler.new(@bot, server_socket)
             @handler.ssl_handshake
