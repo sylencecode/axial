@@ -43,6 +43,10 @@ module Axial
         return @user_list.select{ |tmp_user| tmp_user.name.casecmp(user_name).zero? }.any?
       end
 
+      def get_from_name(user_name)
+        return @user_list.select{ |tmp_user| tmp_user.name.casecmp(user_name) }.first
+      end
+
       def get_from_nick_object(nick)
         if (!nick.kind_of?(IRCTypes::Nick))
           raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick.")

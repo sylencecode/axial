@@ -27,39 +27,128 @@ module Axial
       end
 
       def seen(source, user, nick, command)
-        subject_name = command.first_argument
-        if (subject_name.empty?)
+        subject_nick_name = command.first_argument
+        if (subject_nick_name.empty?)
           reply(source, nick, "usage: #{command.command} <nick>")
           return
-        elsif (subject_name.casecmp(nick.name.downcase).zero?)
-          reply(source, nick, "we're all trying to find ourselves.")
+        elsif (subject_nick_name.casecmp(nick.name.downcase).zero?)
+          reply(source, nick, "trying to find yourself?")
           return
-        elsif (subject_name.casecmp(myself.name.downcase).zero?)
+        elsif (subject_nick_name.casecmp(myself.name.downcase).zero?)
           reply(source, nick, "i'm one handsome guy.")
           return
         end
 
-        who = channel.nick_list.get_silent(subject_name)
-        if (who.nil?)
-          subject_model = Models::User[name: subject_name.downcase]
+        if (source.is_a?(IRCTypes::Channel))
+          scan_channels = [ source ]
+        else
+          scan_channels = channel_list.all_channels
+        end
+
+        subject_model = Models::User[name: subject_nick_name.downcase]
+
+        on_channels = {}
+
+        scan_channels.each do |channel|
+          if (!subject_model.nil?)
+            channel.nick_list.all_nicks.each do |nick|
+              # check for nicks associated with a known user
+              possible_user = user_list.get_from_nick_object(nick)
+              if (!possible_user.nil? && possible_user.id == subject_model.id)
+                if (!on_channels.has_key?(channel))
+                  on_channels[channel] = []
+                end
+                on_channels[channel].push(nick)
+              end
+            end
+          else
+            if (channel.nick_list.include?(subject_nick_name))
+              seen_nick = channel.nick_list.get(subject_nick_name)
+              if (!on_channels.has_key?(channel))
+                on_channels[channel] = []
+              end
+              on_channels[channel].push(seen_nick)
+            end
+          end
+        end
+
+        if (on_channels.any?)
+          if (!subject_model.nil?)
+            seen_name = subject_model.pretty_name_with_color
+          else
+            seen_name = subject_nick_name
+          end
+
+          if (on_channels.any?)
+            on_channels.each do |channel, tmp_nicks|
+              latest_message = nil
+              seen_nick_names = []
+              tmp_nicks.each do |tmp_nick|
+                seen_nick_names.push(tmp_nick.name)
+                last_spoke = tmp_nick.last_spoke[:time]
+                if (!last_spoke.nil?)
+                  if (latest_message.nil? || latest_message > last_spoke)
+                    latest_message = last_spoke
+                  end
+                end
+              end
+
+              seen_nick_names.sort!
+              same = false
+              if (seen_nick_names.count > 2)
+                nick_string = ''
+                while (seen_nick_names.count > 2)
+                  nick_string += "'#{seen_nick_names.shift}', "
+                end
+                nick_string += "'#{seen_nick_names.shift}', and '#{seen_nick_names.shift}'"
+              elsif (seen_nick_names.count == 2)
+                nick_string = "'#{seen_nick_names.shift}' and '#{seen_nick_names.shift}'"
+              else
+                if (seen_nick_names.first.casecmp(subject_nick_name).zero?)
+                  same = true
+                end
+                nick_string = "'#{seen_nick_names.shift}'"
+              end
+
+              if (latest_message.nil?)
+                last_spoke = TimeSpan.new(channel.joined_at, Time.now)
+                if (same)
+                  reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+                else
+                  reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+                end
+              else
+                last_spoke = TimeSpan.new(latest_message, Time.now)
+                if (same)
+                  reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle for #{last_spoke.approximate_to_s})")
+                else
+                  reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle for #{last_spoke.approximate_to_s})")
+                end
+              end
+            end
+          else
+            reply(source, nick, "#{seen_name} is on multiple channels:")
+            on_channels.each do |channel, nicks|
+              nicks.each do |tmp_nick|
+                if (tmp_nick.last_spoke[:time].nil?)
+                  reply(source, nick, "  - #{channel.name} as #{tmp_nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
+                else
+                  last_spoke = TimeSpan.new(tmp_nick.last_spoke[:time], Time.now)
+                  reply(source, nick, "  - #{channel.name} as #{tmp_nick.name} (idle for #{last_spoke.approximate_to_s})")
+                end
+              end
+            end
+          end
+        else
           if (subject_model.nil?)
-            reply(source, nick, "i don't know anything about #{subject_name}.")
+            reply(source, nick, "i don't know anything about #{subject_nick_name}")
           else
             seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
             if (subject_model.seen.status =~ /^for the first time/i)
-              msg = "i haven't actually /seen/ #{subject_name} but his/her account was created #{seen_at.approximate_to_s} ago."
+              reply(source, nick, "i haven't seen #{subject_model.pretty_name_with_color} since his/her account was created #{seen_at.approximate_to_s} ago.")
             else
-              msg = "#{subject_name} was last seen #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
+              reply(source, nick, "#{subject_model.pretty_name_with_color} was last seen #{subject_model.seen.status} #{TimeSpan.new(Time.now, subject_model.seen.last).approximate_to_s} ago")
             end
-            reply(source, nick, msg)
-          end
-        else # nick is currently on channel
-          if (who.last_spoke.empty?) # but hasn't said anything
-            joined_at = TimeSpan.new(channel.joined_at, Time.now)
-            reply(source, nick, "#{who.name} is here now but has been idle since I joined #{joined_at.approximate_to_s} ago.")
-          else # on channel, and has said something recently
-            last_spoke = TimeSpan.new(who.last_spoke[:time], Time.now)
-            reply(source, nick, "#{nick.name}: #{who.name} is here now and has been idle for #{last_spoke.approximate_to_s}. Last message: <#{who.name}> #{who.last_spoke[:text]}")
           end
         end
       rescue Exception => ex
