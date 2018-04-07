@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/web_of_trust/api/public_link_json2.rb'
+$LOAD_PATH.unshift('../lib')
+require 'axial/api/web_of_trust/public_link_json2'
 
-filter = WebOfTrust::API::PublicLinkJSON2.new
-foo = filter.get_rating(ARGV[0])
+fofoo = Axial::API::WebOfTrust::PublicLinkJSON2.get_rating(ARGV[0])
 puts "domain: #{foo.domain}"
 puts "trustworthiness: #{foo.trustworthiness.rating} (#{foo.trustworthiness.confidence} confidence)"
 puts "child safety: #{foo.child_safety.rating} (#{foo.child_safety.confidence} confidence)"

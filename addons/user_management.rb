@@ -866,36 +866,6 @@ module Axial
         end
       end
 
-      def reply(source, nick, text)
-        if (source.is_a?(IRCTypes::Channel))
-          source.message("#{nick.name}: #{text}")
-        else
-          source.message(text)
-        end
-      end
-
-      def dcc_wrapper(*args)
-        source = args.shift
-        if (source.is_a?(IRCTypes::Channel))
-          nick    = args.shift
-          command = args.shift
-          method  = args.shift
-          user    = user_list.get_from_nick_object(nick)
-        elsif (source.is_a?(IRCTypes::Nick))
-          nick    = source
-          command = args.shift
-          method  = args.shift
-          user    = user_list.get_from_nick_object(nick)
-        elsif (source.is_a?(IRCTypes::DCC))
-          nick      = IRCTypes::Nick.new(nil)
-          nick.name = source.user.pretty_name
-          command   = args.shift
-          method    = args.shift
-          user      = source.user
-        end
-        self.send(method, source, user, nick, command)
-      end
-
       def update_user_list()
         new_user_list = Axnet::UserList.new
         Models::User.all.each do |user_model|

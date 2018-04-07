@@ -12,9 +12,7 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
   
-        on_channel      'seen',   :seen
-        on_channel 'lastspoke',   :seen
-        on_channel      'last',   :seen
+        on_channel   'seen|lastspoke|last',   :dcc_wrapper, :seen
 
         on_channel_any            :update_last_spoke
         on_join                   :update_seen_join
@@ -28,16 +26,16 @@ module Axial
         nick.last_spoke = { time: Time.now, text: text }
       end
 
-      def seen(channel, nick, command)
-        subject_name = command.args.strip
+      def seen(source, user, nick, command)
+        subject_name = command.first_argument
         if (subject_name.empty?)
-          channel.message("#{nick.name}: try #{command.command} <nick> instead of whatever you just did.")
+          reply(source, nick, "usage: #{command.command} <nick>")
           return
         elsif (subject_name.casecmp(nick.name.downcase).zero?)
-          channel.message("#{nick.name}: are you still trying to find yourself?")
+          reply(source, nick, "we're all trying to find ourselves.")
           return
         elsif (subject_name.casecmp(myself.name.downcase).zero?)
-          channel.message("#{nick.name}: you're looking right at me.")
+          reply(source, nick, "i'm one handsome guy.")
           return
         end
 
@@ -45,27 +43,27 @@ module Axial
         if (who.nil?)
           subject_model = Models::User[name: subject_name.downcase]
           if (subject_model.nil?)
-            channel.message("#{nick.name}: I don't know anything about #{subject_name}.")
+            reply(source, nick, "i don't know anything about #{subject_name}.")
           else
             seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
             if (subject_model.seen.status =~ /^for the first time/i)
-              msg = "#{nick.name}: I haven't actually seen #{subject_name} yet, but their account was created #{seen_at.approximate_to_s} ago."
+              msg = "i haven't actually /seen/ #{subject_name} but his/her account was created #{seen_at.approximate_to_s} ago."
             else
-              msg = "#{nick.name}: I saw #{subject_name} #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
+              msg = "#{subject_name} was last seen #{subject_model.seen.status} #{seen_at.approximate_to_s} ago."
             end
-            channel.message(msg)
+            reply(source, nick, msg)
           end
         else # nick is currently on channel
           if (who.last_spoke.empty?) # but hasn't said anything
             joined_at = TimeSpan.new(channel.joined_at, Time.now)
-            channel.message("#{nick.name}: #{who.name} is here now but has been idle since I joined #{joined_at.approximate_to_s} ago.")
+            reply(source, nick, "#{who.name} is here now but has been idle since I joined #{joined_at.approximate_to_s} ago.")
           else # on channel, and has said something recently
             last_spoke = TimeSpan.new(who.last_spoke[:time], Time.now)
-            channel.message("#{nick.name}: #{who.name} is here now and has been idle for #{last_spoke.approximate_to_s}. Last message: <#{who.name}> #{who.last_spoke[:text]}")
+            reply(source, nick, "#{nick.name}: #{who.name} is here now and has been idle for #{last_spoke.approximate_to_s}. Last message: <#{who.name}> #{who.last_spoke[:text]}")
           end
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -80,7 +78,7 @@ module Axial
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -95,7 +93,7 @@ module Axial
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -114,7 +112,7 @@ module Axial
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -134,7 +132,7 @@ module Axial
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
