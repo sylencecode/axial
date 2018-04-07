@@ -40,8 +40,6 @@ module Axial
         key                     = OpenSSL::PKey::EC.new(File.read("#{@key_path}/axnet.key"))
         cert                    = OpenSSL::X509::Certificate.new(File.read("#{@key_path}/axnet.crt"))
 
-        puts File.read("#{@key_path}/axnet.key")
-
         context                 = OpenSSL::SSL::SSLContext::new
         context.ssl_version     = @ssl_version
         context.ecdh_curves     = @curve
