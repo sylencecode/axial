@@ -671,7 +671,7 @@ module Axial
               dcc.message('')
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
-                  if (nick.last_spoke[channel][:time].nil?)
+                  if (!nick.last_spoke.has_key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
                     last_spoke = TimeSpan.new(channel.joined_at, Time.now)
                     dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
                   else

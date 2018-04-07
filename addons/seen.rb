@@ -25,7 +25,7 @@ module Axial
       end
 
       def update_last_spoke(channel, nick, text)
-        nick.last_spoke[channel] = { time: Time.now, text: text }
+        nick.last_spoke[channel.name] = { time: Time.now, text: text }
       end
 
       def seen(source, user, nick, command)
@@ -86,10 +86,12 @@ module Axial
             seen_nick_names = []
             tmp_nicks.each do |tmp_nick|
               seen_nick_names.push(tmp_nick.name)
-              last_spoke = tmp_nick.last_spoke[channel][:time]
-              if (!last_spoke.nil?)
-                if (latest_message.nil? || latest_message > last_spoke)
-                  latest_message = last_spoke
+              if (tmp_nick.last_spoke.has_key?(channel.name))
+                last_spoke = tmp_nick.last_spoke[channel.name][:time]
+                if (!last_spoke.nil?)
+                  if (latest_message.nil? || latest_message > last_spoke)
+                    latest_message = last_spoke
+                  end
                 end
               end
             end
@@ -148,7 +150,7 @@ module Axial
       end
 
       def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
-        nick.last_spoke.delete(channel)
+        nick.last_spoke.delete(channel.name)
         user = Models::User.get_from_nick_object(kicked_nick)
         if (!user.nil?)
           status = "getting kicked from #{channel.name} by #{kicker_nick.name} (#{reason})"
@@ -164,7 +166,7 @@ module Axial
       end
 
       def update_seen_join(channel, nick)
-        nick.last_spoke[channel] = {}
+        nick.last_spoke[channel.name] = {}
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           status = "joining #{channel.name}"
@@ -180,7 +182,7 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
-        nick.last_spoke.delete(channel)
+        nick.last_spoke.delete(channel.name)
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
@@ -200,7 +202,7 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        nick.last_spoke.delete(channel)
+        nick.last_spoke.delete(channel.name)
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
