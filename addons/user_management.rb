@@ -76,7 +76,7 @@ module Axial
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask>")
         else
-          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect { |user| user.pretty_name }.join(', ')
+          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect { |user| user.pretty_name_with_color }.join(', ')
           if (users.any?)
             reply(source, nick, "possible users for '#{subject_mask}': #{possible_user_names}")
           else
@@ -135,10 +135,10 @@ module Axial
           if (can_modify?(source, user, nick, subject_nickname, subject_model, true, true))
             if (note.empty?)
               subject_model.update(note: '')
-              reply(source, nick, "erased note for #{subject_model.pretty_name}.")
+              reply(source, nick, "erased note for #{subject_model.pretty_name_with_color}.")
             else
               subject_model.update(note: note)
-              reply(source, nick, "updated note for #{subject_model.pretty_name}.")
+              reply(source, nick, "updated note for #{subject_model.pretty_name_with_color}.")
             end
           end
         end
@@ -163,9 +163,9 @@ module Axial
               if (subject_model.password_set?)
                 subject_model.update(password: '')
                 update_user_list
-                reply(source, nick, "password for #{subject_model.pretty_name} cleared. please instruct the user to reset their password as soon as possible.")
+                reply(source, nick, "password for #{subject_model.pretty_name_with_color} cleared. please instruct the user to reset their password as soon as possible.")
               else
-                reply(source, nick, "#{subject_model.pretty_name} does not have a password set.")
+                reply(source, nick, "#{subject_model.pretty_name_with_color} does not have a password set.")
               end
             end
           end
@@ -193,7 +193,7 @@ module Axial
               if (complex_password?(source, nick, new_password))
                 subject_model.set_password(new_password)
                 update_user_list
-                reply(source, nick, "password for #{subject_model.pretty_name} changed.")
+                reply(source, nick, "password for #{subject_model.pretty_name_with_color} changed.")
                 dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
               end
             else
@@ -253,7 +253,7 @@ module Axial
         counter = 0
         conflicts.each do |subject_model, masks|
           counter += 1
-          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name} (#{masks.collect { |mask| mask.mask }.join(', ')})")
+          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name_with_color} (#{masks.collect { |mask| mask.mask }.join(', ')})")
           if (counter == 3)
             if (!source.is_a?(IRCTypes::DCC))
               reply(source, nick, "... and #{conflicts.count - 3} more. review the rest via dcc or provide a more specific mask.")
@@ -289,7 +289,7 @@ module Axial
         else
           subject_model = Models::User.get_from_nickname(subject_nickname)
           if (!subject_model.nil?)
-            reply(source, nick, "user #{subject_model.pretty_name} already exists.")
+            reply(source, nick, "user #{subject_model.pretty_name_with_color} already exists.")
             return
           end
 
@@ -299,7 +299,7 @@ module Axial
           else
             subject_model = Models::User.create_from_nickname_mask(user.pretty_name, subject_nickname, subject_mask)
             update_user_list
-            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}' and role 'basic'.")
+            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}' and the role of #{Role.basic.name_with_color}.")
           end
         end
       rescue Exception => ex
@@ -412,13 +412,13 @@ module Axial
                 old_mask = mask_models.first.mask
                 db_destroy_collection(mask_models)
                 update_user_list
-                reply(source, nick, "mask '#{old_mask}' removed from #{subject_model.pretty_name}.")
+                reply(source, nick, "mask '#{old_mask}' removed from #{subject_model.pretty_name_with_color}.")
               elsif (mask_models.count > 1 && !force)
                 output_mask_conflicts(source, user, nick, mask_models, subject_mask)
               else
                 db_destroy_collection(mask_models)
                 update_user_list
-                reply(source, nick, "#{mask_models.count} masks matching '#{subject_mask}' were removed from #{subject_model.pretty_name}.")
+                reply(source, nick, "#{mask_models.count} masks matching '#{subject_mask}' were removed from #{subject_model.pretty_name_with_color}.")
               end
             end
           end
@@ -450,7 +450,7 @@ module Axial
               else
                 mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
                 update_user_list
-                reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name}.")
+                reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name_with_color}.")
               end
             end
           end
@@ -564,10 +564,10 @@ module Axial
             if (!user.role.root?)
               if (user.role <= possible_user.role)
                 # example: ops cannot ban other ops, but managers+ can
-                protected_user_names.push(possible_user.pretty_name)
+                protected_user_names.push(possible_user.pretty_name_with_color)
               end
             elsif (!force)
-              protected_user_names.push(possible_user.pretty_name)
+              protected_user_names.push(possible_user.pretty_name_with_color)
             end
           end
           if (protected_user_names.empty?)

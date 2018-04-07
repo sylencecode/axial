@@ -96,7 +96,7 @@ module Axial
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}random thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
+        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name_with_color} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -120,7 +120,7 @@ module Axial
         LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
         learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
         msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name} #{learned_at.approximate_to_s} ago)"
+        msg += "#{thing_model.pretty_thing} = #{thing_model.explanation} (learned from #{thing_model.user.pretty_name_with_color} #{learned_at.approximate_to_s} ago)"
         channel.message(msg)
       rescue StandardError => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")

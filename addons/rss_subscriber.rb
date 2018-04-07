@@ -150,7 +150,7 @@ module Axial
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += feed.pretty_url
             msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "added on #{feed.added.strftime("%m/%d/%Y")} by #{feed.user.pretty_name}"
+            msg += "added on #{feed.added.strftime("%m/%d/%Y")} by #{feed.user.pretty_name_with_color}"
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += "#{feed.ingest_count} ingested"
             msg += " #{Colors.gray}|#{Colors.reset} "

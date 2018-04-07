@@ -217,7 +217,7 @@ module Axial
                   if (dispatched_commands.any?)
                     dispatched_commands.each do |dispatched_command|
                       if (!dispatched_command[:silent])
-                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} executed command: #{text}", :director)
+                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
                         LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
                       end
                     end
