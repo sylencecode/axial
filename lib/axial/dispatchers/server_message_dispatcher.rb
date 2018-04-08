@@ -76,7 +76,7 @@ module Axial
           when Server::MOTD_END, Server::MOTD_ERROR
             LOGGER.info("end of motd, performing autojoin")
             @bot.whois_myself
-            @bot.autojoin_channels
+            @bot.auto_join_channels
           when Server::MOTD_ENTRY
             LOGGER.info("motd: #{Regexp.last_match[1]}")
           when Server::PARAMETERS

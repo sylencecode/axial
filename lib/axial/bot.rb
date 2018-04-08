@@ -190,15 +190,15 @@ module Axial
       @server_interface.send_raw("WHOIS #{@real_nick}")
     end
 
-    def autojoin_channels()
-      @autojoin_channels.each do |channel|
-        if (!channel.has_key?('password') || channel['password'].nil? || channel['password'].empty?)
-          channel['password'] = ''
+    def auto_join_channels()
+      @config['channels'].each do |channel_name|
+        if (!channel_name.has_key?('password') || channel_name['password'].nil? || channel_name['password'].empty?)
+          channel_name['password'] = ''
         end
-        if (!@server_interface.trying_to_join.has_key?(channel['name'].downcase))
-          @server_interface.trying_to_join[channel['name'].downcase] = channel['password']
+        if (!@server_interface.trying_to_join.has_key?(channel_name['name'].downcase))
+          @server_interface.trying_to_join[channel_name['name'].downcase] = channel_name['password']
         end
-        @server_interface.join_channel(channel['name'].downcase, channel['password'])
+        @server_interface.join_channel(channel_name['name'].downcase, channel_name['password'])
       end
     end
 
@@ -220,10 +220,16 @@ module Axial
     end
     private :load_server_settings
 
+    def save_config()
+      File.open(@config_yaml, 'w') do |config_file|
+        config_file.puts(YAML.dump(@config))
+      end
+    end
+    private :save_config
+
     def load_config()
       @config                     = YAML.load_file(@config_yaml)
       @addon_list                 = @config['addons']                    || []
-      @autojoin_channels          = @config['channels']                  || []
       @nick                       = @config['bot']['nick']               || 'unnamed'
       @real_name                  = @config['bot']['real_name']          || 'unnamed'
       @user                       = @config['bot']['user_name']          || 'unnamed'
@@ -231,7 +237,23 @@ module Axial
       @dcc_command_character      = @config['dcc_command_character']     || '.'
       @channel_command_character  = @config['channel_command_character'] || '?'
       @real_nick                  = @config['bot']['nick']               || 'unnamed'
+      if (!@config.has_key?('channels') || @config['channels'].empty?)
+        @config['channels'] = []
+      end
     end
     private :load_config
+
+    def add_channel(channel_name, password = '')
+      puts @config['channels'].inspect
+      @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
+      @config['channels'].push({ 'name' => channel_name, 'password' => password })
+      save_config
+    end
+
+    def delete_channel(channel_name)
+      puts @config['channels'].inspect
+      @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
+      save_config
+    end
   end
 end

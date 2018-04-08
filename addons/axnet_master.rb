@@ -40,9 +40,15 @@ module Axial
 
         on_axnet_disconnect               :remove_bot
 
+        on_privmsg               'join',  :dcc_wrapper, :join_channel
+        on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
+
         on_dcc              'broadcast',  :handle_broadcast
         on_dcc                  'axnet',  :handle_axnet_command
         on_dcc             'connstatus',  :display_conn_status
+
+        on_privmsg               'join',  :dcc_wrapper, :join_channel
+        on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
 
         on_channel               'ping',  :pong_channel
 
@@ -50,10 +56,40 @@ module Axial
         axnet.register_relay(self, :relay)
       end
 
+      def join_channel(source, user, nick, command)
+        if (!user.role.director?)
+          dcc_access_denied(source)
+        else
+          channel_name, password = command.two_arguments
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
+          if (!server.trying_to_join.has_key?(channel_name.downcase))
+            server.trying_to_join[channel_name.downcase] = password
+          end
+          server.join_channel(channel_name.downcase, password)
+          @bot.add_channel(channel_name.downcase, password)
+          axnet.send("JOIN #{channel_name} #{password}")
+        end
+      end
+
+      def part_channel(source, user, nick, command)
+        if (!user.role.director?)
+          dcc_access_denied(source)
+        else
+          channel_name = command.first_argument
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
+          if (server.trying_to_join.has_key?(channel_name.downcase))
+            server.trying_to_join.delete(channel_name.downcase)
+          end
+          server.part_channel(channel_name.downcase)
+          @bot.delete_channel(channel_name.downcase, password)
+          axnet.send("PART #{channel_name}")
+        end
+      end
+
       def pong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
-        if (!user.nil? && user.director?)
-          channel.message("pong")
+        if (!user.nil? && user.role.director?)
+          channel.message("pong! (axnet master)")
         end
       end
 
@@ -164,7 +200,7 @@ module Axial
 
       def reload_axnet(dcc)
         dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name_with_colors} issued an axnet reload request.", :director)
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} issued an axnet reload request.", :director)
         axnet.send('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_axnet

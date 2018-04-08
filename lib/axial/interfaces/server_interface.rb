@@ -39,6 +39,16 @@ module Axial
         end
       end
 
+      def part_channel(channel_or_name)
+        channel_name = nil
+        if (channel_or_name.is_a?(IRCTypes::Channel))
+          channel_name = channel_or_name.name.downcase
+        elsif (channel_or_name.is_a?(String))
+          channel_name = channel_or_name.downcase
+        end
+        @bot.connection_handler.send_raw("PART #{channel_name}")
+      end
+
       def set_channel_mode(channel_name, mode)
         if (mode.is_a?(IRCTypes::Mode))
           mode.to_string_array.each do |mode_string|

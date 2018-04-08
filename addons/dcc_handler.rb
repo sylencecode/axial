@@ -99,7 +99,7 @@ module Axial
           dcc.message("no addons loaded.")
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} reloaded addons.")
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} reloaded addons.")
           addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
           addon_names = addon_list.collect{ |addon| addon[:name] }
           dcc.message("unloading addons: #{addon_names.join(', ')}")
@@ -202,7 +202,7 @@ module Axial
                     dcc.message("welcome. type '#{@bot.dcc_command_character}help' for a list of available commands.")
                     dcc.status = :open
                     timer.delete(auth_timeout_timer)
-                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} has logged in.")
+                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{dcc.user.pretty_name_with_color} has logged in.")
                     LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
                   else
                     if (attempts == 3)
@@ -219,7 +219,7 @@ module Axial
                   if (dispatched_commands.any?)
                     dispatched_commands.each do |dispatched_command|
                       if (!dispatched_command[:silent])
-                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.reset} #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
+                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
                         LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
                       end
                     end

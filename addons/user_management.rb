@@ -216,7 +216,7 @@ module Axial
               user_model.set_password(new_password)
               update_user_list
               reply(source, nick, "password set.")
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has set an initial password.", :director)
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has set an initial password.", :director)
             end
           end
         else
@@ -229,11 +229,11 @@ module Axial
                 user_model.set_password(new_password)
                 update_user_list
                 reply(source, nick, "password changed.")
-                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has changed his/her password.", :director)
+                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has changed his/her password.", :director)
               end
             else
               reply(source, nick, "old password is incorrect.")
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}failed password change attempt for #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.reset} failed password change attempt for #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
             end
           end
         end

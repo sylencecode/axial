@@ -33,20 +33,43 @@ module Axial
         on_reload                         :start_slave_thread
         on_axnet_connect                  :axnet_login
         on_axnet_disconnect               :axnet_disconnect
+
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
         on_axnet                 'BOTS',  :update_bot_list
         on_axnet     'BANLIST_RESPONSE',  :update_ban_list
         on_axnet         'RELOAD_AXNET',  :reload_axnet
-
-        on_channel               'ping',  :pong_channel
+        on_axnet                 'JOIN',  :join_channel
+        on_axnet                 'PART',  :part_channel
+        on_axnet                 'PING',  :pong_channel
 
         axnet.register_transmitter(self, :send)
       end
 
-      def pong_channel(channel, nick, command)
-        user = user_list.get_from_nick_object(nick)
-        if (!user.nil? && user.role.director?)
-          channel.message("pong")
+      def join_channel(handler, command)
+        channel_name, password = command.two_arguments
+        LOGGER.info("received orders to join #{channel} from #{handler.remote_cn}")
+        if (!server.trying_to_join.has_key?(channel_name.downcase))
+          server.trying_to_join[channel_name.downcase] = password
+        end
+        server.join_channel(channel_name.downcase, password)
+        @bot.add_channel(channel_name.downcase, password)
+      end
+
+      def part_channel(handler, command)
+        channel_name = command.first_argument
+        LOGGER.info("received orders to part #{channel} from #{handler.remote_cn}")
+        if (!server.trying_to_join.has_key?(channel_name.downcase))
+          server.trying_to_join[channel_name.downcase] = password
+        end
+        server.join_channel(channel_name.downcase, password)
+        @bot.delete_channel(channel_name.downcase, password)
+      end
+
+      def pong_channel(handler, command)
+        channel_name = command.first_argument
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil?)
+          channel.message("pong! (axnet slave, pinged by #{handler.remote_cn})")
         end
       end
 
