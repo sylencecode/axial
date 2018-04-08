@@ -113,8 +113,8 @@ module Axial
 
     def reload_addons()
       unload_addons
-      @config             = YAML.load_file(@config_yam)
-      @addon_list         = @config['addons'] || []
+      tmp_config_load           = YAML.load_file(@config_yaml)
+      @addon_list               = tmp_config_load['addons'] || []
       load_addons
       @bind_handler.dispatch_reload_binds
     end
