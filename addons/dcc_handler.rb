@@ -51,8 +51,8 @@ module Axial
           @bot.addons.each do |addon|
             dcc_binds = addon[:object].binds.select{ |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
             if (dcc_binds.count > 0)
-              commands = dcc_binds.collect{ |bind| @bot.dcc_command_character + bind[:command] }
-              dcc.message("+ #{addon[:name]}: #{commands.sort.join(', ')}")
+              commands = dcc_binds.collect{ |bind| bind[:command] }.sort_by{ |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect{ |command| @bot.dcc_command_character + command }
+              dcc.message("+ #{addon[:name]}: #{commands.join(', ')}")
             end
           end
         else
@@ -199,7 +199,7 @@ module Axial
                 if (dcc.status == :authenticating)
                   attempts += 1
                   if (user.password?(text))
-                    dcc.message("welcome.")
+                    dcc.message("welcome. type '#{@bot.dcc_command_character}help' for a list of available commands.")
                     dcc.status = :open
                     timer.delete(auth_timeout_timer)
                     dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}>#{Colors.cyan} #{dcc.user.pretty_name_with_color} has logged in.")

@@ -216,7 +216,7 @@ module Axial
               user_model.set_password(new_password)
               update_user_list
               reply(source, nick, "password set.")
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has seet an initial password.", :director)
+              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has set an initial password.", :director)
             end
           end
         else
