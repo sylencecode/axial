@@ -93,10 +93,10 @@ module Axial
         if (!user.role.director?)
           dcc_access_denied(source)
         else
+          channel_name = command.first_argument
           if (channel_name.empty?)
             reply(source, nick, "usage: #{command.command} <nick>")
           else
-            channel_name = command.first_argument
             LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
             dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
             if (server.trying_to_join.has_key?(channel_name.downcase))
