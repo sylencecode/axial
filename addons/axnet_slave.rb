@@ -47,7 +47,7 @@ module Axial
 
       def join_channel(handler, command)
         channel_name, password = command.two_arguments
-        LOGGER.info("received orders to join #{channel} from #{handler.remote_cn}")
+        LOGGER.info("received orders to join #{channel_name} from #{handler.remote_cn}")
         if (!server.trying_to_join.has_key?(channel_name.downcase))
           server.trying_to_join[channel_name.downcase] = password
         end
@@ -57,7 +57,7 @@ module Axial
 
       def part_channel(handler, command)
         channel_name = command.first_argument
-        LOGGER.info("received orders to part #{channel} from #{handler.remote_cn}")
+        LOGGER.info("received orders to part #{channel_name} from #{handler.remote_cn}")
         if (!server.trying_to_join.has_key?(channel_name.downcase))
           server.trying_to_join[channel_name.downcase] = password
         end

@@ -43,12 +43,12 @@ module Axial
         on_privmsg               'join',  :dcc_wrapper, :join_channel
         on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
 
+
+        on_dcc                   'join',  :dcc_wrapper, :join_channel
+        on_dcc             'part|leave',  :dcc_wrapper, :part_channel
         on_dcc              'broadcast',  :handle_broadcast
         on_dcc                  'axnet',  :handle_axnet_command
         on_dcc             'connstatus',  :display_conn_status
-
-        on_privmsg               'join',  :dcc_wrapper, :join_channel
-        on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
 
         on_channel               'ping',  :pong_channel
 
@@ -61,6 +61,7 @@ module Axial
           dcc_access_denied(source)
         else
           channel_name, password = command.two_arguments
+          LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
           dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
           if (!server.trying_to_join.has_key?(channel_name.downcase))
             server.trying_to_join[channel_name.downcase] = password
@@ -76,6 +77,7 @@ module Axial
           dcc_access_denied(source)
         else
           channel_name = command.first_argument
+          LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
           dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
           if (server.trying_to_join.has_key?(channel_name.downcase))
             server.trying_to_join.delete(channel_name.downcase)

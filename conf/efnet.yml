@@ -8,23 +8,25 @@ bot:
   real_name: axial
   user_name: axial
 channels:
-  - name: '#lulz'
-    password: ''
+- name: "#lulz"
+  password: ''
+- name: "#blahfoo"
+  password: ''
 addons:
-  - AxnetAssistant
-  - AxnetMaster
-  - Base
-  - ChannelProtection
-  - DCCHandler
-  - FloodProtection
-  - GoogleSearch
-  - LearnerOfThings
-  - LinkSniffer
-  - RSSSubscriber
-  - Seen
-  - StockQuotes
-  - Translation
-  - UserManagement
-  - Weather
-  - Wikipedia
-  - YouTubeSniffer
+- AxnetAssistant
+- AxnetMaster
+- Base
+- ChannelProtection
+- DCCHandler
+- FloodProtection
+- GoogleSearch
+- LearnerOfThings
+- LinkSniffer
+- RSSSubscriber
+- Seen
+- StockQuotes
+- Translation
+- UserManagement
+- Weather
+- Wikipedia
+- YouTubeSniffer
