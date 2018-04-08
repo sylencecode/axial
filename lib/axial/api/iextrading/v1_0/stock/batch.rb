@@ -17,7 +17,7 @@ module Axial
             def self.batch(symbols)
               rest_api       = @rest_api + '/batch'
 
-              if (!symbols.kind_of?(Array) || symbols.empty?)
+              if (!symbols.is_a?(Array) || symbols.empty?)
                 raise(ArgumentError, "Invalid query provided to #{self.class}: #{symbols.inspect}")
               end
 

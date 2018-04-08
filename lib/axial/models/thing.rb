@@ -29,7 +29,7 @@ module Axial
       end
 
       def self.upsert(thing, explanation, user_model)
-        if (!user_model.kind_of?(Models::User))
+        if (!user_model.is_a?(Models::User))
           raise(UserObjectError, "#{self.class}.upsert requires a Models::User object")
         end
         thing_model = self[thing: thing.downcase]

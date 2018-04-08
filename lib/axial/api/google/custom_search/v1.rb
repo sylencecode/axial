@@ -27,7 +27,7 @@ module Axial
           end
 
           def self.image_search(in_query)
-            if (!in_query.kind_of?(String) || in_query.strip.empty?)
+            if (!in_query.is_a?(String) || in_query.strip.empty?)
               raise(ArgumentError, "Invalid query provided to Google Custom Search: #{in_query.inspect}")
             end
 
@@ -48,7 +48,7 @@ module Axial
               items = json['items']
               if (items.count > 0)
                 item = items.first
-                if (item.kind_of?(Hash))
+                if (item.is_a?(Hash))
                   if (result.snippet.empty? && item.has_key?('snippet'))
                     result.snippet = item['snippet']
                   end
@@ -66,7 +66,7 @@ module Axial
           end
 
           def self.search(in_query)
-            if (!in_query.kind_of?(String) || in_query.strip.empty?)
+            if (!in_query.is_a?(String) || in_query.strip.empty?)
               raise(ArgumentError, "Invalid query provided to Google Custom Search: #{in_query.inspect}")
             end
     
@@ -85,13 +85,13 @@ module Axial
               items = json['items']
               if (items.count > 0)
                 item = items.first
-                if (item.kind_of?(Hash))
+                if (item.is_a?(Hash))
                   # might be able to get better description from metadata than the snippet itself
-                  if (item.has_key?('pagemap') && item['pagemap'].kind_of?(Hash))
+                  if (item.has_key?('pagemap') && item['pagemap'].is_a?(Hash))
                     pagemap = item['pagemap']
-                    if (pagemap.has_key?('metatags') && pagemap['metatags'].kind_of?(Array))
+                    if (pagemap.has_key?('metatags') && pagemap['metatags'].is_a?(Array))
                       metatags = pagemap['metatags'][0]
-                      if (metatags.kind_of?(Hash))
+                      if (metatags.is_a?(Hash))
                         if (metatags.has_key?('twitter:description'))
                           result.snippet = metatags['twitter:description']
                         end

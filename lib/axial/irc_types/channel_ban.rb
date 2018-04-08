@@ -6,9 +6,9 @@ module Axial
         @mask     = mask
         @set_by   = set_by
 
-        if (set_at.kind_of?(String))
+        if (set_at.is_a?(String))
           @set_at = Time.at(set_at.to_i)
-        elsif (set_at.kind_of?(Integer))
+        elsif (set_at.is_a?(Integer))
           @set_at = Time.at(set_at)
         else
           @set_at = set_at

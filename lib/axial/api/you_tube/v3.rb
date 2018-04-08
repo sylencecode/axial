@@ -23,33 +23,33 @@ module Axial
           response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
           json = JSON.parse(response)
           video.json = json
-          if (json.has_key?('items') && json['items'].kind_of?(Array))
+          if (json.has_key?('items') && json['items'].is_a?(Array))
             items = json['items']
             if (items.count > 0)
               video.found = true
               item = items[0]
-              if (item.has_key?('id') && item['id'].kind_of?(String))
+              if (item.has_key?('id') && item['id'].is_a?(String))
                 video.id = item['id']
               end
-              if (item.has_key?('snippet') && item['snippet'].kind_of?(Hash))
+              if (item.has_key?('snippet') && item['snippet'].is_a?(Hash))
                 snippet = item['snippet']
-                if (snippet.has_key?('title') && snippet['title'].kind_of?(String))
+                if (snippet.has_key?('title') && snippet['title'].is_a?(String))
                   video.title = snippet['title']
                 end
-                if (snippet.has_key?('description') && snippet['description'].kind_of?(String))
+                if (snippet.has_key?('description') && snippet['description'].is_a?(String))
                   video.description = snippet['description']
                 end
               end
-              if (item.has_key?('statistics') && item['statistics'].kind_of?(Hash))
+              if (item.has_key?('statistics') && item['statistics'].is_a?(Hash))
                 statistics = item['statistics']
                 if (statistics.has_key?('viewCount'))
                   viewcount = statistics['viewCount'].to_i
                   video.view_count = viewcount
                 end
               end
-              if (item.has_key?('contentDetails') && item['contentDetails'].kind_of?(Hash))
+              if (item.has_key?('contentDetails') && item['contentDetails'].is_a?(Hash))
                 contentDetails = item['contentDetails']
-                if (contentDetails.has_key?('duration') && contentDetails['duration'].kind_of?(String) && !contentDetails['duration'].empty?)
+                if (contentDetails.has_key?('duration') && contentDetails['duration'].is_a?(String) && !contentDetails['duration'].empty?)
                   duration = contentDetails['duration'].strip.downcase
                   if (duration =~ /^pt(.*)/)
                     raw_duration = $1

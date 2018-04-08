@@ -14,7 +14,7 @@ module Axial
         @rest_api = "http://api.geonames.org/searchJSON"
     
         def self.search(in_query)
-          if (!in_query.kind_of?(String) || in_query.strip.empty?)
+          if (!in_query.is_a?(String) || in_query.strip.empty?)
             raise(ArgumentError, "Invalid query provided to #{self.class}: #{in_query.inspect}")
           end
   
@@ -35,7 +35,7 @@ module Axial
             result_count = json['totalResultsCount'].to_i
             if (result_count > 0)
               geonames = json['geonames']
-              if (geonames.kind_of?(Array) && geonames.count > 0)
+              if (geonames.is_a?(Array) && geonames.count > 0)
                 result.found = true
                 geoname = geonames[0]
                 if (geoname.has_key?('countryCode'))

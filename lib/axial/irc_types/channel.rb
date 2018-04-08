@@ -93,10 +93,6 @@ module Axial
         set_mode(mode)
       end
 
-      def set_topic(topic)
-        @server_interface.send_raw("TOPIC #{@name} :#{topic}")
-      end
-
       def invite(nick_or_name)
         if (nick_or_name.is_a?(IRCTypes::Nick))
           nick_name = nick_or_name.name.downcase

@@ -109,7 +109,7 @@ module Axial
       end
 
       def self.get_from_nick_object(nick)
-        if (!nick.kind_of?(IRCTypes::Nick))
+        if (!nick.is_a?(IRCTypes::Nick))
           raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick")
         end
 

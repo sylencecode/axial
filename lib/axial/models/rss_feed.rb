@@ -30,7 +30,7 @@ module Axial
 
 
       def self.upsert(feed_name, url, user_model)
-        if (!user_model.kind_of?(Models::User))
+        if (!user_model.is_a?(Models::User))
           raise(UserObjectError, "#{self.class}.upsert requires a Models::User object")
         end
         rss_model = self[name: feed_name.downcase, url: url.downcase] # find by matching url and name

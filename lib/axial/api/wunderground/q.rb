@@ -14,7 +14,7 @@ module Axial
         @rest_api = "http://api.wunderground.com/api/#{$wunderground_api_key}/conditions/q"
   
         def self.get_current_conditions(in_location)
-          if (!in_location.kind_of?(String) || in_location.strip.empty?)
+          if (!in_location.is_a?(String) || in_location.strip.empty?)
             raise(ArgumentError, "Invalid location provided to WUnderground: #{in_location.inspect}")
           end
   
@@ -29,7 +29,7 @@ module Axial
 
           if (orig_json.has_key?('response') && !orig_json.has_key?('current_observation'))
             response = orig_json['response']
-            if (response.has_key?('results') && response['results'].kind_of?(Array))
+            if (response.has_key?('results') && response['results'].is_a?(Array))
               results = response['results']
               if (results.count > 0)
                 result = results[0]

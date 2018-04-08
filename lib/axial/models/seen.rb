@@ -26,10 +26,10 @@ module Axial
       end
 
       def self.upsert(user, last, status)
-        if (!user.kind_of?(Models::User))
+        if (!user.is_a?(Models::User))
           raise(UserObjectError, "#{self.class}.upsert requires a Models::User object")
         end
-        if (!last.kind_of?(Time))
+        if (!last.is_a?(Time))
           raise(UserObjectError, "#{self.class}.upsert requires a Time object")
         end
         if (status.nil? || status.empty?)

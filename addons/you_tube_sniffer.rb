@@ -33,7 +33,7 @@ module Axial
         elsif (uri.host =~ /youtube\.com/)
           query = CGI.parse(uri.query)
           if (query.has_key?('v'))
-            if (query['v'].kind_of?(Array))
+            if (query['v'].is_a?(Array))
               if (query['v'].count > 0)
                 youtube_id = query['v'][0]
               end
