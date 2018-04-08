@@ -103,7 +103,7 @@ module Axial
               server.trying_to_join.delete(channel_name.downcase)
             end
             server.part_channel(channel_name.downcase)
-            @bot.delete_channel(channel_name.downcase, password)
+            @bot.delete_channel(channel_name.downcase)
             axnet.send("PART #{channel_name}")
           end
         end
