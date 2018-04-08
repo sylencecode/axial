@@ -15,7 +15,7 @@ module Axial
         @server_interface     = server_interface
         @name                 = channel_name
         @topic                = ''
-        @mode                 = IRCTypes::Mode.new
+        @mode                 = IRCTypes::Mode.new(@server_interface)
         @nick_list            = IRCTypes::NickList.new(@server_interface, self)
         @synced               = false
         @opped                = false
@@ -43,7 +43,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.ban(mask)
         set_mode(mode)
       end
@@ -52,7 +52,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.unban(mask)
         set_mode(mode)
       end
@@ -61,7 +61,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.op(nick.name)
         set_mode(mode)
       end
@@ -70,7 +70,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.deop(nick)
         set_mode(mode)
       end
@@ -79,7 +79,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.devoice(nick.name)
         set_mode(mode)
       end
@@ -88,7 +88,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode.voice(nick.name)
         set_mode(mode)
       end

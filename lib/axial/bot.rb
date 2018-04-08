@@ -27,30 +27,11 @@ module Axial
                   :dcc_command_character, :dcc_state
 
     attr_accessor :real_nick, :local_cn
-    @class_instance = nil
-    @class_props_yaml = ''
-    @server = nil
 
-    def self.create(props_yaml)
-      if (@class_instance.nil?)
-        @class_props_yaml = props_yaml
-        @class_instance = new
-      end
-      return @class_instance
-    end
-
-    def self.server()
-      return @server
-    end
-
-    def self.server=(server)
-      @server = server
-    end
-
-    def initialize()
-      @props_yaml = Bot.instance_variable_get('@class_props_yaml')
+    def initialize(config_yaml)
+      @config_yaml = config_yaml
       set_defaults
-      load_properties
+      load_config
       load_server_settings
       load_consumers
       load_axnet
@@ -132,8 +113,8 @@ module Axial
 
     def reload_addons()
       unload_addons
-      props               = YAML.load_file(@props_yaml)
-      @addon_list         = props['addons'] || []
+      @config             = YAML.load_file(@config_yam)
+      @addon_list         = @config['addons'] || []
       load_addons
       @bind_handler.dispatch_reload_binds
     end
@@ -229,29 +210,28 @@ module Axial
     private :set_defaults
 
     def load_server_settings()
-      address                     = @props['server']['address']         || 'irc.efnet.org'
-      port                        = @props['server']['port']            || 6667
-      timeout                     = @props['server']['timeout']         || 10
-      ssl                         = @props['server']['ssl']             || false
-      password                    = @props['server']['password']        || ''
+      address                     = @config['server']['address']         || 'irc.efnet.org'
+      port                        = @config['server']['port']            || 6667
+      timeout                     = @config['server']['timeout']         || 10
+      ssl                         = @config['server']['ssl']             || false
+      password                    = @config['server']['password']        || ''
 
       @server                     = IRCTypes::Server.new(address, port, ssl, password, timeout)
-      Bot.server                  = @server
     end
     private :load_server_settings
 
-    def load_properties()
-      @props                      = YAML.load_file(@props_yaml)
-      @addon_list                 = @props['addons']                    || []
-      @autojoin_channels          = @props['channels']                  || []
-      @nick                       = @props['bot']['nick']               || 'unnamed'
-      @real_name                  = @props['bot']['real_name']          || 'unnamed'
-      @user                       = @props['bot']['user_name']          || 'unnamed'
-      @real_nick                  = @props['bot']['nick']               || 'unnamed'
-      @dcc_command_character      = @props['dcc_command_character']     || '.'
-      @channel_command_character  = @props['channel_command_character'] || '?'
-      @real_nick                  = @props['bot']['nick']               || 'unnamed'
+    def load_config()
+      @config                     = YAML.load_file(@config_yaml)
+      @addon_list                 = @config['addons']                    || []
+      @autojoin_channels          = @config['channels']                  || []
+      @nick                       = @config['bot']['nick']               || 'unnamed'
+      @real_name                  = @config['bot']['real_name']          || 'unnamed'
+      @user                       = @config['bot']['user_name']          || 'unnamed'
+      @real_nick                  = @config['bot']['nick']               || 'unnamed'
+      @dcc_command_character      = @config['dcc_command_character']     || '.'
+      @channel_command_character  = @config['channel_command_character'] || '?'
+      @real_nick                  = @config['bot']['nick']               || 'unnamed'
     end
-    private :load_properties
+    private :load_config
   end
 end

@@ -85,7 +85,7 @@ module Axial
         channel_list.all_channels.each do |channel|
           if (channel.opped?)
             wait_a_sec
-            response_mode = IRCTypes::Mode.new
+            response_mode = IRCTypes::Mode.new(server)
             bans_to_remove = channel.ban_list.all_bans.select { |ban| ban.set_at + @maximum_ban_time <= Time.now }
             bans_to_remove.each do |ban|
               response_mode.unban(ban.mask)
@@ -102,7 +102,7 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
         kicks = []
         ban_list.all_bans.each do |ban|
           channel.nick_list.all_nicks.each do |nick|
@@ -130,7 +130,7 @@ module Axial
 
         wait_a_sec
 
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = get_bot_or_user(subject_nick)
           if (possible_user.nil?)
@@ -162,7 +162,7 @@ module Axial
         end
 
         user = get_bot_or_user(nick)
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
 
         kicks = []
         mode.bans.each do |ban_mask|
@@ -203,7 +203,7 @@ module Axial
         end
 
         user = get_bot_or_user(nick)
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
 
         if (mode.ops.any?)
           mode.ops.each do |op|
@@ -262,7 +262,7 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
         mode.channel_modes.each do |channel_mode|
           mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
           if (mode_set)
@@ -291,7 +291,7 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new
+        response_mode = IRCTypes::Mode.new(server)
         mode.channel_modes.each do |channel_mode|
           mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
           if (!mode_set)
@@ -341,7 +341,7 @@ module Axial
         if (user.nil?)
           ban_list.all_bans.each do |ban|
             if (ban.match_mask?(nick.uhost))
-              response_mode = IRCTypes::Mode.new
+              response_mode = IRCTypes::Mode.new(server)
               response_mode.ban(ban.mask)
               channel.set_mode(response_mode)
               channel.kick(nick, ban.long_reason)

@@ -9,7 +9,7 @@ module Axial
   module Interfaces
     class ServerInterface
       attr_reader     :channel_list, :trying_to_join
-      attr_accessor   :myself
+      attr_accessor   :myself, :max_modes
 
       def initialize(bot)
         @bot              = bot
@@ -18,6 +18,7 @@ module Axial
         @trying_to_join   = {}
         @ctcp_throttle    = 2
         @last_ctcp        = Time.now - @ctcp_throttle
+        @max_modes        = 4
       end
 
       def retry_joins()
@@ -38,7 +39,6 @@ module Axial
         end
       end
 
-      # TODO: make a mode parser that checks server.modelimit or whatever
       def set_channel_mode(channel_name, mode)
         if (mode.is_a?(IRCTypes::Mode))
           mode.to_string_array.each do |mode_string|

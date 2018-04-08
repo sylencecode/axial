@@ -208,7 +208,7 @@ module Axial
         channel = channel_list.get_silent(channel_name)
         if (!channel.nil?)
           if (channel.opped?)
-            response_mode = IRCTypes::Mode.new
+            response_mode = IRCTypes::Mode.new(server)
             channel.ban_list.all_bans.each do |ban|
               if (MaskUtils.masks_match?(ban.mask, bot_nick.uhost))
                 response_mode.unban(ban.mask)
@@ -238,7 +238,7 @@ module Axial
         channel = channel_list.get_silent(channel_name)
         if (!channel.nil? && channel.opped?)
           if (channel.mode.limit?)
-            response_mode = IRCTypes::Mode.new
+            response_mode = IRCTypes::Mode.new(server)
             response_mode.limit = channel.nick_list.count + 1
             channel.set_mode(response_mode)
             channel.invite(bot_nick.name)

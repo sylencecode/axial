@@ -17,7 +17,7 @@ module Axial
       end
 
       def handle_who_list_entry(nick_name, uhost, channel_name, mode)
-        if (nick_name == @bot.real_nick)
+        if (nick_name.casecmp(@bot.real_nick).zero?)
           @server_interface.myself.uhost = uhost
         end
 
@@ -282,7 +282,7 @@ module Axial
 
       def dispatch_join(uhost, channel_name)
         nick_name = uhost.split('!').first
-        if (nick_name == @bot.real_nick)
+        if (nick_name.casecmp(@bot.real_nick).zero?)
           @server_interface.myself.uhost = uhost
         end
 
@@ -358,7 +358,7 @@ module Axial
       def handle_mode(nick, channel, raw_mode_string)
         channel.mode.merge_string(raw_mode_string)
 
-        mode = IRCTypes::Mode.new
+        mode = IRCTypes::Mode.new(@server_interface)
         mode_string = raw_mode_string.strip
         mode.parse_string(mode_string)
 

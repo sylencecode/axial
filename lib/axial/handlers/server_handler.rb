@@ -5,11 +5,11 @@ module Axial
         @bot = bot
       end
 
-      def dispatch_whois_uhost(nick, ident, host)
-        if (nick.casecmp(@bot.real_nick).zero?)
-          @bot.server_interface.myself.uhost = "#{nick}!#{ident}@#{host}"
+      def dispatch_whois_uhost(nick_name, ident, host)
+        if (nick_name.casecmp(@bot.real_nick).zero?)
+          @bot.server_interface.myself.uhost = "#{nick_name}!#{ident}@#{host}"
         else
-          LOGGER.debug("unhandled whois response for #{nick}: #{nick}!#{ident}@#{host}")
+          LOGGER.debug("unhandled whois response for #{nick_name}: #{nick_name}!#{ident}@#{host}")
         end
       end
 

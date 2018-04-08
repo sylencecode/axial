@@ -81,7 +81,7 @@ module Axial
             LOGGER.info("motd: #{Regexp.last_match[1]}")
           when Server::PARAMETERS
             if (Regexp.last_match[1] =~ /MODES=(\d+)/)
-              @bot.server.max_modes = Regexp.last_match[1]
+              @bot.server_interface.max_modes = Regexp.last_match[1]
             end
           when Server::UNKNOWN_COMMAND
             LOGGER.warn("server responded with unknown command: '#{Regexp.last_match[1]}'")

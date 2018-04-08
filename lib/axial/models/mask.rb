@@ -13,15 +13,6 @@ module Axial
     class Mask < Sequel::Model
 
       many_to_one :user
-      
-      def self.create_or_find(uhost)
-        mask = MaskUtils.gen_wildcard_mask(uhost)
-        db_mask = self[mask: mask]
-        if (db_mask.nil?)
-          db_mask = self.create(mask: mask)
-        end
-        return db_mask
-      end
     end
   end
 end

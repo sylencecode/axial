@@ -6,8 +6,8 @@ module Axial
     class Mode
       attr_reader   :bans, :unbans, :ops, :deops, :voices, :devoices
 
-      def initialize()
-        @max_modes            = Bot.server.max_modes
+      def initialize(server_interface)
+        @max_modes            = server_interface.max_modes
         @bans                 = []
         @unbans               = []
         @invite_only          = :unknown

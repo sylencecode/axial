@@ -734,8 +734,6 @@ module Axial
       end
 
       def dispatch_channel_binds(channel, nick, text)
-        # TODO: break into smaller methods
-        # any/all channel text
         @binds.select{ |bind| bind[:type] == :channel_any }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)

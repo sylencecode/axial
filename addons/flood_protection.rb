@@ -130,7 +130,7 @@ module Axial
               if (message_count >= flood_limit[:limit])
                 if (channel.opped?)
                   if (!channel.mode.moderated?)
-                    response_mode = IRCTypes::Mode.new
+                    response_mode = IRCTypes::Mode.new(server)
                     response_mode.moderated = true
                     channel.set_mode(response_mode)
 
@@ -138,7 +138,7 @@ module Axial
                       if (channel.opped?)
                         wait_a_sec
                         if (channel.mode.moderated?)
-                          response_mode = IRCTypes::Mode.new
+                          response_mode = IRCTypes::Mode.new(server)
                           response_mode.moderated = false
                           channel.set_mode(response_mode)
                         end
@@ -182,7 +182,7 @@ module Axial
             if (join_count >= flood_limit[:limit])
               if (channel.opped?)
                 if (!channel.mode.invite_only?)
-                  response_mode = IRCTypes::Mode.new
+                  response_mode = IRCTypes::Mode.new(server)
                   response_mode.invite_only = true
                   channel.set_mode(response_mode)
 
@@ -190,7 +190,7 @@ module Axial
                     if (channel.opped?)
                       wait_a_sec
                       if (channel.mode.invite_only?)
-                        response_mode = IRCTypes::Mode.new
+                        response_mode = IRCTypes::Mode.new(server)
                         response_mode.invite_only = false
                         channel.set_mode(response_mode)
                       end

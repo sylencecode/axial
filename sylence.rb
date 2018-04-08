@@ -33,5 +33,5 @@ require_relative 'lib/axial/bot.rb'
 
 config_file = 'conf/sylence.yml'
 
-bot = Axial::Bot.create(File.join(File.dirname(__FILE__), config_file))
+bot = Axial::Bot.new(File.join(File.dirname(__FILE__), config_file))
 bot.run
