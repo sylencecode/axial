@@ -40,10 +40,12 @@ module Axial
 
         on_axnet_disconnect               :remove_bot
 
+        on_privmsg             'loreum',  :dcc_wrapper, :lorem_ipsum
         on_privmsg               'join',  :dcc_wrapper, :join_channel
         on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
 
 
+        on_dcc                  'lorem',  :dcc_wrapper, :lorem_ipsum
         on_dcc                   'join',  :dcc_wrapper, :join_channel
         on_dcc             'part|leave',  :dcc_wrapper, :part_channel
         on_dcc              'broadcast',  :handle_broadcast
@@ -61,14 +63,24 @@ module Axial
           dcc_access_denied(source)
         else
           channel_name, password = command.two_arguments
-          LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
-          if (!server.trying_to_join.has_key?(channel_name.downcase))
-            server.trying_to_join[channel_name.downcase] = password
+          if (channel_name.empty?)
+            reply(source, nick, "usage: #{command.command} <nick>")
+          else
+            LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
+            dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
+            if (!server.trying_to_join.has_key?(channel_name.downcase))
+              server.trying_to_join[channel_name.downcase] = password
+            end
+            server.join_channel(channel_name.downcase, password)
+            @bot.add_channel(channel_name.downcase, password)
+            axnet.send("JOIN #{channel_name} #{password}")
           end
-          server.join_channel(channel_name.downcase, password)
-          @bot.add_channel(channel_name.downcase, password)
-          axnet.send("JOIN #{channel_name} #{password}")
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -76,15 +88,53 @@ module Axial
         if (!user.role.director?)
           dcc_access_denied(source)
         else
-          channel_name = command.first_argument
-          LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
-          if (server.trying_to_join.has_key?(channel_name.downcase))
-            server.trying_to_join.delete(channel_name.downcase)
+          if (channel_name.empty?)
+            reply(source, nick, "usage: #{command.command} <nick>")
+          else
+            channel_name = command.first_argument
+            LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
+            dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
+            if (server.trying_to_join.has_key?(channel_name.downcase))
+              server.trying_to_join.delete(channel_name.downcase)
+            end
+            server.part_channel(channel_name.downcase)
+            @bot.delete_channel(channel_name.downcase, password)
+            axnet.send("PART #{channel_name}")
           end
-          server.part_channel(channel_name.downcase)
-          @bot.delete_channel(channel_name.downcase, password)
-          axnet.send("PART #{channel_name}")
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def lorem_ipsum(source, user, nick, command)
+        if (!user.role.director?)
+          dcc_access_denied(source)
+        else
+          channel_name, repeats = command.two_arguments
+            if (repeats.empty?)
+              reply(source, nick, "usage: #{command.command} <channel> <times>")
+            else
+              repeats = repeats.to_i
+              channel = channel_list.get_silent(channel_name)
+              if (!channel.nil?)
+                LOGGER.info("received orders to flood #{channel_name} from #{user.pretty_name}")
+                dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
+                axnet.send("LOREM #{channel_name}")
+                repeats.times do
+                  channel.message('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
+                end
+              end
+            end
+        end
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
@@ -93,6 +143,7 @@ module Axial
         if (!user.nil? && user.role.director?)
           channel.message("pong! (axnet master)")
         end
+        axnet.send("PING #{channel.name}")
       end
 
       def display_conn_status(dcc, command)
