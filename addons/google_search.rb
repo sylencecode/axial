@@ -40,6 +40,7 @@ module Axial
           begin
             warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
           rescue
+            warnings  = []
           end
 
           msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
@@ -80,6 +81,7 @@ module Axial
           begin
             warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
           rescue
+            warnings  = []
           end
 
           msg  = "#{Colors.gray}[#{Colors.green}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "

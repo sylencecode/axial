@@ -25,6 +25,7 @@ module Axial
           begin
             warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(urls.first)
           rescue
+            warnings  = []
           end
 
           preview = API::LinkPreview.preview(urls.first)
