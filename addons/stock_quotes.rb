@@ -135,9 +135,9 @@ module Axial
               msg += "#{Colors.gray}|#{quote_color} "
               msg += "#{change_string}"
               msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "low: $#{format("%.2f", result.low.to_f.round(2).to_s)}"
+              msg += "low: $ #{format("%.2f", result.low.to_f.round(2).to_s)}"
               msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "high: $#{format("%.2f", result.high.to_f.round(2).to_s)}"
+              msg += "high: $ #{format("%.2f", result.high.to_f.round(2).to_s)}"
               msg += " #{Colors.gray}|#{Colors.reset} "
               msg += "news: #{result.news[:headline]}"
               channel.message(msg)

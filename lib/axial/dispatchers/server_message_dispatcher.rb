@@ -84,7 +84,7 @@ module Axial
               @bot.server.max_modes = Regexp.last_match[1]
             end
           when Server::UNKNOWN_COMMAND
-            LOGGER.warn("server responded with unknown command '#{Regexp.last_match[1]}'")
+            LOGGER.warn("server responded with unknown command: '#{Regexp.last_match[1]}'")
           when Server::WHOIS_UHOST
             nick, ident, host = Regexp.last_match.captures
             @bot.server_handler.dispatch_whois_uhost(nick, ident, host)

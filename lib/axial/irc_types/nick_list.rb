@@ -80,7 +80,7 @@ module Axial
           nick = @nick_list[key]
           return nick
         else
-          raise(NickListError, "nick '#{nick_name}' does not exist")
+          raise(NickListError, "nick '#{nick_or_name}' does not exist")
         end
       end
 
