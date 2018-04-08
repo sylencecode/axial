@@ -37,9 +37,8 @@ module Axial
         result = API::Google::CustomSearch::V1.search(query)
 
         if (!result.link.empty?)
-          warnings = []
           begin
-            warnings  = Axial::API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
           rescue
           end
 
@@ -78,9 +77,8 @@ module Axial
 
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
-          warnings = []
           begin
-            warnings  = Axial::API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
           rescue
           end
 

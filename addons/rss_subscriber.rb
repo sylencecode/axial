@@ -15,9 +15,9 @@ module Axial
       def initialize(bot)
         super
 
-        @name    = 'rss feed ingest'
-        @author  = 'sylence <sylence@sylence.org>'
-        @version = '1.1.0'
+        @name                 = 'rss feed ingest'
+        @author               = 'sylence <sylence@sylence.org>'
+        @version              = '1.1.0'
 
         @ingest_timer         = nil
 
@@ -229,12 +229,10 @@ module Axial
 
       def handle_rss_command(channel, nick, command)
         begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil?)
-            channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
+          user_list.get_from_nick_object(nick)
+          if (!user_model.director?)
             return
-          end
-          if (command.args.strip.empty?)
+          elsif (command.args.strip.empty?)
             send_help(channel, nick)
             return
           end

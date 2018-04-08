@@ -11,9 +11,9 @@ module Axial
     module WebOfTrust
       REST_API = 'https://api.mywot.com'
       module V0_4
-        REST_API = Axial::API::WebOfTrust::REST_API + '/0.4'
+        REST_API = API::WebOfTrust::REST_API + '/0.4'
         class PublicLinkJSON2
-          @rest_api = Axial::API::WebOfTrust::V0_4::REST_API + '/public_link_json2'
+          @rest_api = API::WebOfTrust::V0_4::REST_API + '/public_link_json2'
           @api_key  = "f204e49afeeb0fd892e3a2643ceb1b7ea9e64a5e"
 
           def self.get_rating(in_uri)

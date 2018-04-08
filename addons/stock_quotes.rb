@@ -77,7 +77,7 @@ module Axial
       def market_quote(channel, nick, command)
         symbols               = %w(DIA SPY QQQ IWM)
         LOGGER.debug("market quote request from #{nick.uhost}: #{symbols.join(', ')}")
-        results = Axial::API::IEXTrading::V10::Stock::Market.batch(symbols)
+        results = API::IEXTrading::V10::Stock::Market.batch(symbols)
         render_market_quote(channel, nick, 'market quote', results)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -90,7 +90,7 @@ module Axial
       def crypto_quote(channel, nick, command)
         symbols = %w(BTC ETH XRP BCH LTC)
         LOGGER.debug("crypto quote request from #{nick.uhost}: #{symbols.join(', ')}")
-        results = Axial::API::CryptoCompare::Data.price_multi_full(symbols)
+        results = API::CryptoCompare::Data.price_multi_full(symbols)
         render_market_quote(channel, nick, 'crypto quote', results)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -123,7 +123,7 @@ module Axial
           channel.message("#{nick.name}: only 3 symbols at a time, please.")
         else
           LOGGER.debug("stock quote request from #{nick.uhost}: #{symbols.join(', ')}")
-          results = Axial::API::IEXTrading::V10::Stock::Market.batch(symbols)
+          results = API::IEXTrading::V10::Stock::Market.batch(symbols)
           if (results.any?)
             results.each do |symbol, result|
               quote_color, change_string = colorify_result(result)

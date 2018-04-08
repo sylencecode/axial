@@ -22,9 +22,8 @@ module Axial
       def sniff_link(channel, nick, text)
         urls = URIUtils.extract(text)
         if (urls.any?)
-          warnings = []
           begin
-            warnings  = Axial::API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(urls.first)
+            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(urls.first)
           rescue
           end
 
