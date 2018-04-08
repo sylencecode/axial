@@ -53,9 +53,9 @@ module Axial
           results.each do |symbol, result|
             quote_color, change = colorify_result(result)
             symbol          = "#{Colors.cyan}#{           get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
-            latest_price    = "$#{format("%.2f", result.latest_price.to_f.round(2).to_s).ljust(latest_price_length)}"
-            low             = "$#{format("%.2f",          result.low.to_f.round(2).to_s).rjust(low_length)}"
-            high            = "$#{format("%.2f",         result.high.to_f.round(2).to_s).rjust(high_length)}"
+            latest_price    = "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s).rjust(latest_price_length)}"
+            low             = "$ #{format("%.2f",          result.low.to_f.round(2).to_s).rjust(low_length)}"
+            high            = "$ #{format("%.2f",         result.high.to_f.round(2).to_s).rjust(high_length)}"
 
             msg  = "#{Colors.gray}[#{Colors.blue} #{type_string} #{Colors.gray}]#{Colors.reset} "
             msg += symbol.center(symbol_length)
@@ -131,7 +131,7 @@ module Axial
               msg = "#{Colors.gray}[#{Colors.blue} #{result.company_name} #{Colors.gray}]#{Colors.reset} "
               msg += "#{quote_color}#{symbol}#{Colors.reset}"
               msg += " #{Colors.gray}|#{quote_color} "
-              msg += "$#{format("%.2f", result.latest_price.to_f.round(2).to_s)} "
+              msg += "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s)} "
               msg += "#{Colors.gray}|#{quote_color} "
               msg += "#{change_string}"
               msg += " #{Colors.gray}|#{Colors.reset} "
