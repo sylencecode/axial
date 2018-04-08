@@ -39,6 +39,7 @@ module Axial
         on_axnet             'USERLIST',  :send_user_list
 
         on_axnet_disconnect               :remove_bot
+        on_axnet_connect                  :announce_bot
 
         on_privmsg             'loreum',  :dcc_wrapper, :lorem_ipsum
         on_privmsg               'join',  :dcc_wrapper, :join_channel
@@ -56,6 +57,10 @@ module Axial
 
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
+      end
+
+      def announce_bot(handler)
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{handler.remote_cn}#{Colors.reset} connected to axnet.", :director)
       end
 
       def join_channel(source, user, nick, command)
@@ -123,7 +128,7 @@ module Axial
             if (!channel.nil?)
               LOGGER.info("received orders to flood #{channel_name} from #{user.pretty_name}")
               dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
-              axnet.send("PART #{channel_name} #{repeats}")
+              axnet.send("LOREM #{channel_name} #{repeats}")
               repeats.times do
                 channel.message('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
               end
@@ -158,6 +163,7 @@ module Axial
       end
 
       def remove_bot(handler)
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{handler.remote_cn}#{Colors.reset} disconnected from axnet.", :director)
         if (bot_list.include?(handler.remote_cn))
           LOGGER.debug("removing #{handler.remote_cn} from bot list")
           bot_list.delete(handler.remote_cn)

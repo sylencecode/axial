@@ -41,6 +41,7 @@ module Axial
         on_axnet                 'JOIN',  :join_channel
         on_axnet                 'PART',  :part_channel
         on_axnet                'LOREM',  :lorem_ipsum
+        on_axnet                 'PING',  :pong_channel
 
         axnet.register_transmitter(self, :send)
       end
