@@ -77,10 +77,10 @@ module Axial
       def part_channel(handler, command)
         channel_name = command.first_argument
         LOGGER.info("received orders to part #{channel_name} from #{handler.remote_cn}")
-        if (!server.trying_to_join.has_key?(channel_name.downcase))
-          server.trying_to_join[channel_name.downcase] = password
+        if (server.trying_to_join.has_key?(channel_name.downcase))
+          server.trying_to_join.delete(channel_name.downcase)
         end
-        server.join_channel(channel_name.downcase, password)
+        server.part_channel(channel_name.downcase)
         @bot.delete_channel(channel_name.downcase, password)
       end
 
