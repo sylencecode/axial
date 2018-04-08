@@ -44,6 +44,7 @@ module Axial
         else
           channel.nick_list.add(nick)
         end
+        @bot.bind_handler.dispatch_who_list_entry_binds(channel, nick)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

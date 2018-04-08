@@ -65,16 +65,10 @@ module Axial
         }
       end
 
-      def access_denied(source, nick)
-        if (source.is_a?(IRCTypes::DCC))
-          reply(source, nick, Constants::ACCESS_DENIED)
-        end
-      end
-
       def who_from(source, user, nick, command)
         subject_mask = command.first_argument
         if (user.nil? || !user.role.manager?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask>")
         else
@@ -129,7 +123,7 @@ module Axial
       def set_note(source, user, nick, command)
         subject_nickname, note = command.one_plus
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_nickname.empty?)
           reply(source, nick, "usage: #{command.command} <user> <note> (an empty note will erase the user's note)")
         else
@@ -155,7 +149,7 @@ module Axial
       def clear_other_user_password(source, user, nick, command)
         subject_nickname = command.first_argument
         if (user.nil? || !user.role.director?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         else
           subject_model = Models::User.get_from_nickname(subject_nickname)
           if (subject_model.nil?)
@@ -183,7 +177,7 @@ module Axial
       def set_other_user_password(source, user, nick, command)
         subject_nickname, new_password = command.two_arguments
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (new_password.empty?)
           reply(source, nick, "usage: #{command.command} <user> <new_password>")
         else
@@ -285,7 +279,7 @@ module Axial
       def add_user(source, user, nick, command)
         subject_nickname, subject_mask = command.two_arguments
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask>")
         else
@@ -365,7 +359,7 @@ module Axial
       def delete_user(source, user, nick, command)
         subject_nickname = command.first_argument
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_nickname.empty?)
           reply(source, nick, "usage: #{command.command} <username>")
         else
@@ -394,7 +388,7 @@ module Axial
         force                                         = false
         subject_nickname, subject_mask, force_command = command.three_arguments
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask> [-force]")
         else
@@ -436,7 +430,7 @@ module Axial
       def add_mask(source, user, nick, command)
         subject_nickname, subject_mask = command.two_arguments
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask>")
         else
@@ -523,7 +517,7 @@ module Axial
         force                       = false
         subject_mask, force_command = command.two_arguments
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask> [-force]")
         else
@@ -589,7 +583,7 @@ module Axial
         force                = false
         subject_mask, reason = command.one_plus
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask> <reason> [-force]")
         else
@@ -671,12 +665,16 @@ module Axial
               dcc.message('')
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
-                  if (!nick.last_spoke.has_key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
-                    last_spoke = TimeSpan.new(channel.joined_at, Time.now)
-                    dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
+                  if (!nick.last_spoke.nil?)
+                    if (!nick.last_spoke.has_key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
+                      last_spoke = TimeSpan.new(channel.joined_at, Time.now)
+                      dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
+                    else
+                      last_spoke = TimeSpan.new(nick.last_spoke[channel.name][:time], Time.now)
+                      dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                    end
                   else
-                    last_spoke = TimeSpan.new(nick.last_spoke[channel][:time], Time.now)
-                    dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                    dcc.message("  - #{channel.name} as #{nick.name}")
                   end
                 end
               end
@@ -902,7 +900,7 @@ module Axial
         subject_nickname, new_role_name = command.two_arguments
         new_role_name                   = new_role_name.downcase
         if (user.nil? || !user.role.op?)
-          access_denied(source, nick)
+          dcc_access_denied(source)
         elsif (new_role_name.empty?)
           reply(source, nick, "usage: #{command.command} <username> <#{Role.basic.name_with_color}|#{Role.friend.name_with_color}|#{Role.op.name_with_color}|#{Role.manager.name_with_color}|#{Role.director.name_with_color}>")
         else

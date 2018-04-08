@@ -3,7 +3,7 @@ require 'securerandom'
 module Axial
   module IRCTypes
     class Nick
-      attr_accessor :name, :ident, :host, :user_model, :last_spoke
+      attr_accessor :name, :ident, :host, :user_model
       attr_reader   :uuid
 
       def initialize(server_interface)
@@ -12,7 +12,6 @@ module Axial
         @ident                = ''
         @host                 = ''
         @user_model           = nil
-        @last_spoke           = {}
         @uuid                 = SecureRandom.uuid
         @voiced_channels      = []
         @opped_channels       = []

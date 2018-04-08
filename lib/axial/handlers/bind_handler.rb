@@ -562,6 +562,34 @@ module Axial
         end
       end
 
+      def dispatch_who_list_entry_binds(channel, nick)
+        @binds.select{ |bind| bind[:type] == :who_list_entry }.each do |bind|
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, nick, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, nick)
+                end
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      rescue Exception => ex
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
       def dispatch_join_binds(channel, nick)
         @binds.select{ |bind| bind[:type] == :join }.each do |bind|
           Thread.new do
@@ -969,11 +997,6 @@ module Axial
       def dispatch_dcc_binds(dcc, text)
         dispatched_commands = []
         @binds.select{ |bind| bind[:type] == :dcc }.each do |bind|
-          if (bind[:object].throttle_secs > 0)
-            if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
-              next
-            end
-          end
           if (bind[:command].is_a?(String))
             match = '^(' + Regexp.escape(@bot.dcc_command_character) + Regexp.escape(bind[:command]) + ')'
             base_match = match + '$'
@@ -982,7 +1005,6 @@ module Axial
             args_regexp = Regexp.new(args_match, true)
             base_regexp = Regexp.new(base_match, true)
             if (text =~ args_regexp)
-              bind[:object].last = Time.now
               dispatched_commands.push(bind)
               command, args = Regexp.last_match.captures
               command_object = IRCTypes::Command.new(command, args)
@@ -1006,7 +1028,6 @@ module Axial
               end
               break
             elsif (text =~ base_regexp)
-              bind[:object].last = Time.now
               dispatched_commands.push(bind)
               command = Regexp.last_match[1]
               args = ""

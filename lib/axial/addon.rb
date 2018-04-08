@@ -417,6 +417,23 @@ module Axial
       LOGGER.debug("channel join will invoke method '#{self.class}.#{method}'")
     end
 
+    def on_who_list_entry(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @binds.push(type: :who_list_entry, method: method, args: args)
+      else
+        @binds.push(type: :who_list_entry, method: method)
+      end
+
+      LOGGER.debug("IRC channel who list entry (352) will invoke method '#{self.class}.#{method}'")
+    end
+
     def on_dcc(command, *args)
       if (args.nil? || args.flatten.empty?)
         raise(AddonError, "#{self.class}.on_dcc called without a callback method")
@@ -644,6 +661,12 @@ module Axial
 
     def before_reload()
       LOGGER.debug("#{self.class}: before_reload super invoked")
+    end
+
+    def dcc_access_denied(source)
+      if (source.is_a?(IRCTypes::DCC))
+        source.message(Constants::ACCESS_DENIED)
+      end
     end
   end
 end

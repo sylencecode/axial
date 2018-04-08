@@ -38,7 +38,8 @@ module Axial
         on_self_kick                :rejoin
         on_kick                     :handle_kick
 
-        on_privmsg      'exec',     :handle_privmsg_exec
+        on_privmsg          'exec', :dcc_wrapper, :handle_exec
+        on_dcc              'exec', :dcc_wrapper, :handle_exec
       end
 
       def handle_kick(channel, kicker_nick, kicked_nick, reason)
@@ -355,13 +356,15 @@ module Axial
         end
       end
 
-      def handle_privmsg_exec(nick, command)
-        user = get_bot_or_user(nick)
-        if (user.nil? || !user.director?)
-          return
+      def handle_exec(source, user, nick, command)
+        if (user.nil? || !user.role.director?)
+          dcc_access_denied(source)
+        elsif (command.args.empty?)
+          reply(source, nick, "usage: #{command.command} <raw command>")
+        else
+          server.send_raw(command.args)
+          LOGGER.info("#{nick.name} EXEC #{command.args.inspect}")
         end
-        server.send_raw(command.args)
-        LOGGER.info("#{nick.name} EXEC #{command.args.inspect}")
       end
 
       def get_bot_or_user(nick)

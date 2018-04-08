@@ -3,6 +3,15 @@ require 'axial/models/user'
 require 'axial/models/mask'
 
 module Axial
+  module IRCTypes
+    class Nick
+      attr_accessor :last_spoke
+    end
+  end
+end
+
+
+module Axial
   module Addons
     class Seen < Axial::Addon
       def initialize(bot)
@@ -16,6 +25,7 @@ module Axial
         on_dcc       'seen|lastspoke|last',   :dcc_wrapper, :seen
         on_privmsg   'seen|lastspoke|last',   :dcc_wrapper, :seen
 
+        on_who_list_entry                     :populate_last_spoke
         on_channel_any                        :update_last_spoke
         on_join                               :update_seen_join
         on_part                               :update_seen_part
@@ -24,7 +34,18 @@ module Axial
         throttle                              2
       end
 
+      def populate_last_spoke(channel, nick)
+        if (nick.last_spoke.nil?)
+          nick.last_spoke = {}
+        elsif (!nick.last_spoke.has_key?(channel.name))
+          nick.last_spoke[channel.name] = {}
+        end
+      end
+
       def update_last_spoke(channel, nick, text)
+        if (nick.last_spoke.nil?)
+          nick.last_spoke = {}
+        end
         nick.last_spoke[channel.name] = { time: Time.now, text: text }
       end
 
@@ -86,6 +107,9 @@ module Axial
             seen_nick_names = []
             tmp_nicks.each do |tmp_nick|
               seen_nick_names.push(tmp_nick.name)
+              if (tmp_nick.last_spoke.nil?)
+                tmp_nick.last_spoke = {}
+              end
               if (tmp_nick.last_spoke.has_key?(channel.name))
                 last_spoke = tmp_nick.last_spoke[channel.name][:time]
                 if (!last_spoke.nil?)
@@ -150,7 +174,9 @@ module Axial
       end
 
       def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
-        nick.last_spoke.delete(channel.name)
+        if (!nick.last_spoke.nil?)
+          nick.last_spoke.delete(channel.name)
+        end
         user = Models::User.get_from_nick_object(kicked_nick)
         if (!user.nil?)
           status = "getting kicked from #{channel.name} by #{kicker_nick.name} (#{reason})"
@@ -166,6 +192,9 @@ module Axial
       end
 
       def update_seen_join(channel, nick)
+        if (nick.last_spoke.nil?)
+          nick.last_spoke = {}
+        end
         nick.last_spoke[channel.name] = {}
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
@@ -182,7 +211,9 @@ module Axial
       end
 
       def update_seen_part(channel, nick, reason)
-        nick.last_spoke.delete(channel.name)
+        if (!nick.last_spoke.nil?)
+          nick.last_spoke.delete(channel.name)
+        end
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
@@ -202,7 +233,9 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        nick.last_spoke.delete(channel.name)
+        if (!nick.last_spoke.nil?)
+          nick.last_spoke.delete(channel.name)
+        end
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
