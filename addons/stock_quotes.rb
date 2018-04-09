@@ -42,22 +42,35 @@ module Axial
         end
       end
 
-      def render_market_quote(channel, nick, type_string, results)
-        symbol_length         = results.values.collect{ |result|                              get_symbol_name(result.symbol).length }.max
-        change_length         = results.values.collect{ |result|                                  colorify_result(result)[1].length }.max
-        latest_price_length   = results.values.collect{ |result| "#{format("%.2f", result.latest_price.to_f.round(2).to_s)}".length }.max
-        low_length            = results.values.collect{ |result| "#{format("%.2f",          result.low.to_f.round(2).to_s)}".length }.max
-        high_length           = results.values.collect{ |result| "#{format("%.2f",         result.high.to_f.round(2).to_s)}".length }.max
+      def render_market_quote(channel, nick, type_string, results, batch = false)
+        if (batch)
+          symbol_length           = results.values.collect{ |result|                              get_symbol_name(result.symbol).length }.max
+        else
+          symbol_length           = results.values.collect{ |result|                                               result.symbol.length }.max
+          company_symbol_length   = results.values.collect{ |result|                 "#{result.company_name} (#{result.symbol})".length }.max
+        end
+        change_length             = results.values.collect{ |result|                                  colorify_result(result)[1].length }.max
+        latest_price_length       = results.values.collect{ |result| "#{format("%.2f", result.latest_price.to_f.round(2).to_s)}".length }.max
+        low_length                = results.values.collect{ |result| "#{format("%.2f",          result.low.to_f.round(2).to_s)}".length }.max
+        high_length               = results.values.collect{ |result| "#{format("%.2f",         result.high.to_f.round(2).to_s)}".length }.max
+        type_string_length        =                                                                                        type_string.length
 
         if (results.any?)
           results.each do |symbol, result|
+            type_string       = "#{Colors.blue}#{              type_string.center(type_string_length)}#{Colors.reset}"
             quote_color, change = colorify_result(result)
-            symbol          = "#{Colors.cyan}#{           get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
+            if (batch)
+              symbol          = "#{Colors.cyan}#{    _symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
+            else
+              company_symbol  = "#{result.company_name} (#{result.symbol})"
+              symbol          = "#{Colors.cyan}#{        company_symbol.ljust(company_symbol_length)}#{Colors.reset}"
+            end
+
             latest_price    = "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s).rjust(latest_price_length)}"
             low             = "$ #{format("%.2f",          result.low.to_f.round(2).to_s).rjust(low_length)}"
             high            = "$ #{format("%.2f",         result.high.to_f.round(2).to_s).rjust(high_length)}"
 
-            msg  = "#{Colors.gray}[#{Colors.blue} #{type_string} #{Colors.gray}]#{Colors.reset} "
+            msg  = "#{Colors.gray}[ #{type_string} #{Colors.gray}]#{Colors.reset} "
             msg += symbol.center(symbol_length)
             msg += " #{Colors.gray}|#{quote_color} "
             msg += latest_price
@@ -78,7 +91,7 @@ module Axial
         symbols               = %w(DIA SPY QQQ IWM)
         LOGGER.debug("market quote request from #{nick.uhost}: #{symbols.join(', ')}")
         results = API::IEXTrading::V10::Stock::Market.batch(symbols)
-        render_market_quote(channel, nick, 'market quote', results)
+        render_market_quote(channel, nick, 'market quote', results, true)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -91,7 +104,7 @@ module Axial
         symbols = %w(BTC ETH XRP BCH LTC)
         LOGGER.debug("crypto quote request from #{nick.uhost}: #{symbols.join(', ')}")
         results = API::CryptoCompare::Data.price_multi_full(symbols)
-        render_market_quote(channel, nick, 'crypto quote', results)
+        render_market_quote(channel, nick, 'crypto quote', results, true)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -125,23 +138,24 @@ module Axial
           LOGGER.debug("stock quote request from #{nick.uhost}: #{symbols.join(', ')}")
           results = API::IEXTrading::V10::Stock::Market.batch(symbols)
           if (results.any?)
-            results.each do |symbol, result|
-              quote_color, change_string = colorify_result(result)
+            #results.each do |symbol, result|
+              render_market_quote(channel, nick, 'ticker', results)
+              # quote_color, change_string = colorify_result(result)
 
-              msg = "#{Colors.gray}[#{Colors.blue} #{result.company_name} #{Colors.gray}]#{Colors.reset} "
-              msg += "#{quote_color}#{symbol}#{Colors.reset}"
-              msg += " #{Colors.gray}|#{quote_color} "
-              msg += "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s)} "
-              msg += "#{Colors.gray}|#{quote_color} "
-              msg += "#{change_string}"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "low: $ #{format("%.2f", result.low.to_f.round(2).to_s)}"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "high: $ #{format("%.2f", result.high.to_f.round(2).to_s)}"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "news: #{result.news[:headline]}"
-              channel.message(msg)
-            end
+              # msg = "#{Colors.gray}[#{Colors.blue} #{result.company_name} #{Colors.gray}]#{Colors.reset} "
+              # msg += "#{quote_color}#{symbol}#{Colors.reset}"
+              # msg += " #{Colors.gray}|#{quote_color} "
+              # msg += "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s)} "
+              # msg += "#{Colors.gray}|#{quote_color} "
+              # msg += "#{change_string}"
+              # msg += " #{Colors.gray}|#{Colors.reset} "
+              # msg += "low: $ #{format("%.2f", result.low.to_f.round(2).to_s)}"
+              # msg += " #{Colors.gray}|#{Colors.reset} "
+              # msg += "high: $ #{format("%.2f", result.high.to_f.round(2).to_s)}"
+              # msg += " #{Colors.gray}|#{Colors.reset} "
+              # msg += "news: #{result.news[:headline]}"
+              # channel.message(msg)
+            #end
           else
             channel.message("#{nick.name}: couldn't find any matches for symbols: #{symbols.join(', ')}")
           end

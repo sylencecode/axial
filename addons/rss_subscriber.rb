@@ -64,7 +64,7 @@ module Axial
 
             link = URIUtils.shorten(article_url)
 
-            text =  "#{Colors.gray}[#{Colors.blue}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
+            text =  "#{Colors.gray}[#{Colors.cyan}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
             text += title
 
             if (!summary.empty?)
