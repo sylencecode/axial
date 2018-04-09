@@ -488,7 +488,11 @@ module Axial
       end
 
       def handle_self_nick(new_nick)
-        LOGGER.debug("I changed nicks: #{new_nick}")
+        if (new_nick.casecmp(@bot.nick).zero?)
+          @bot.connection_handler.nick_regained
+        else
+          LOGGER.debug("I changed nicks: #{new_nick}")
+        end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

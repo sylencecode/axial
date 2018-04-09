@@ -26,7 +26,7 @@ module Axial
                   :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
                   :dcc_command_character, :dcc_state
 
-    attr_accessor :real_nick, :local_cn
+    attr_accessor :real_nick, :local_cn, :trying_nick
 
     def initialize(config_yaml)
       @config_yaml = config_yaml
@@ -186,10 +186,6 @@ module Axial
       end
     end
 
-    def whois_myself()
-      @server_interface.send_raw("WHOIS #{@real_nick}")
-    end
-
     def auto_join_channels()
       @config['channels'].each do |channel_name|
         if (!channel_name.has_key?('password') || channel_name['password'].nil? || channel_name['password'].empty?)
@@ -236,7 +232,7 @@ module Axial
       @real_nick                  = @config['bot']['nick']               || 'unnamed'
       @dcc_command_character      = @config['dcc_command_character']     || '.'
       @channel_command_character  = @config['channel_command_character'] || '?'
-      @real_nick                  = @config['bot']['nick']               || 'unnamed'
+      @trying_nick                = @config['bot']['nick']               || 'unnamed'
       if (!@config.has_key?('channels') || @config['channels'].empty?)
         @config['channels'] = []
       end
@@ -244,14 +240,12 @@ module Axial
     private :load_config
 
     def add_channel(channel_name, password = '')
-      puts @config['channels'].inspect
       @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
       @config['channels'].push({ 'name' => channel_name, 'password' => password })
       save_config
     end
 
     def delete_channel(channel_name)
-      puts @config['channels'].inspect
       @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
       save_config
     end

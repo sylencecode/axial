@@ -9,16 +9,26 @@ module Axial
   module Interfaces
     class ServerInterface
       attr_reader     :channel_list, :trying_to_join
-      attr_accessor   :myself, :max_modes
+      attr_accessor   :myself, :max_modes, :max_nick_length
 
       def initialize(bot)
-        @bot              = bot
-        @channel_list     = IRCTypes::ChannelList.new(self)
-        @myself           = IRCTypes::Nick.new(self)
-        @trying_to_join   = {}
-        @ctcp_throttle    = 2
-        @last_ctcp        = Time.now - @ctcp_throttle
-        @max_modes        = 4
+        @bot                    = bot
+        @channel_list           = IRCTypes::ChannelList.new(self)
+        @myself                 = IRCTypes::Nick.new(self)
+        @trying_to_join         = {}
+        @ctcp_throttle          = 2
+        @last_ctcp              = Time.now - @ctcp_throttle
+        @max_modes              = 4
+        @max_nick_length        = 9
+        @nick_shuffle_attempts  = 0
+      end
+
+      def set_invisible()
+        @bot.connection_handler.send_raw("MODE #{@bot.real_nick} +i")
+      end
+
+      def whois_myself()
+        @bot.connection_handler.send_raw("WHOIS #{@bot.real_nick}")
       end
 
       def retry_joins()
@@ -125,6 +135,42 @@ module Axial
 
       def send_channel_message(channel_name, text)
         @bot.connection_handler.send_chat("PRIVMSG #{channel_name} :#{text}")
+      end
+
+      def send_ison()
+        LOGGER.debug("ison timer called")
+        if (!@bot.real_nick.casecmp(@bot.nick).zero?)
+          @bot.connection_handler.send_raw("ISON #{@bot.nick}")
+        else
+          LOGGER.warn("regain_nick timer called, but bot already has the right nick")
+        end
+      end
+
+      def rotate_nick_characters(nick_name)
+        char_array = nick_name.scan(/\S/)
+        new_char = char_array.shift
+        char_array.push(new_char)
+        new_nick_name = char_array.join('')
+        return (new_nick_name)
+      end
+
+      def nick_in_use(nick_name, type = :in_use)
+        if (!@bot.connection_handler.regaining_nick)
+          if (type == :erroneous)
+            LOGGER.warn("nick #{nick_name} is invalid. tryin  g a permutation.")
+          else
+            LOGGER.warn("nick #{nick_name} already in use. trying a permutation.")
+          end
+
+          sleep 1
+          @nick_shuffle_attempts += 1
+          if (@nick_shuffle_attempts < @bot.trying_nick.length)
+            @bot.trying_nick = rotate_nick_characters(nick_name)
+            @bot.connection_handler.try_nick
+          else
+            LOGGER.warn("unable to secure a valid nickname on the server. giving up.")
+          end
+        end
       end
     end
   end

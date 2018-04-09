@@ -33,8 +33,6 @@ module Axial
           response            = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
           json                = JSON.parse(response)
 
-          puts JSON.pretty_generate(json)
-
           results = {}
 
           if (json.has_key?('RAW'))

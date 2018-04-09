@@ -36,7 +36,6 @@ module Axial
 
         on_privmsg      'chat',   :start_dcc_loop
         on_user_list              :check_for_user_updates
-        on_ban_list               :check_for_banned_users
       end
 
       def check_for_user_updates()

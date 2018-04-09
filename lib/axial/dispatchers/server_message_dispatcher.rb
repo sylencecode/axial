@@ -71,23 +71,37 @@ module Axial
           when Messages::PRIVMSG
             uhost, dest, text = Regexp.last_match.captures
             @bot.message_handler.dispatch_privmsg(uhost, dest, text)
+          when Server::ISON_REPLY
+            @bot.server_handler.handle_ison_reply(Regexp.last_match[1])
           when Server::MOTD_BEGIN
             LOGGER.info("begin motd")
           when Server::MOTD_END, Server::MOTD_ERROR
             LOGGER.info("end of motd, performing autojoin")
-            @bot.whois_myself
+            @bot.server_interface.set_invisible
+            @bot.server_interface.whois_myself
             @bot.auto_join_channels
           when Server::MOTD_ENTRY
             LOGGER.info("motd: #{Regexp.last_match[1]}")
+          when Server::NICK_ERRONEOUS
+            @bot.server_interface.nick_in_use(Regexp.last_match[1], :erroneous)
+          when Server::NICK_IN_USE
+            @bot.server_interface.nick_in_use(Regexp.last_match[1], :in_use)
+          when Server::NICK_MODE
+            nick_name, user_mode = Regexp.last_match.captures
+            LOGGER.info("server sets user mode for #{nick_name}: #{user_mode}")
           when Server::PARAMETERS
-            if (Regexp.last_match[1] =~ /MODES=(\d+)/)
-              @bot.server_interface.max_modes = Regexp.last_match[1]
+            params = Regexp.last_match[1]
+            if (params =~ /MODES=(\d+)/)
+              @bot.server_interface.max_modes = Regexp.last_match[1].to_i
+            end
+            if (params =~ /NICKLEN=(\d+)/)
+              @bot.server_interface.max_nick_length = Regexp.last_match[1].to_i
             end
           when Server::UNKNOWN_COMMAND
             LOGGER.warn("server responded with unknown command: '#{Regexp.last_match[1]}'")
           when Server::WHOIS_UHOST
             nick, ident, host = Regexp.last_match.captures
-            @bot.server_handler.dispatch_whois_uhost(nick, ident, host)
+            @bot.server_handler.handle_whois_uhost(nick, ident, host)
           when Server::ANY_NUMERIC
             numeric, text = Regexp.last_match.captures
             numeric = numeric.to_i

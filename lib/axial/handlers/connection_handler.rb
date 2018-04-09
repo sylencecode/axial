@@ -8,14 +8,18 @@ require 'axial/consumers/raw_consumer'
 module Axial
   module Handlers
     class ConnectionHandler
-      attr_reader :server, :raw_consumer, :chat_consumer
+      attr_reader :server, :raw_consumer, :chat_consumer, :regaining_nick
 
       def initialize(bot, server)
-        @server          = server
-        @bot             = bot
-        @send_monitor    = Monitor.new
-        @raw_consumer    = Consumers::RawConsumer.new
-        @chat_consumer   = Consumers::ChatConsumer.new
+        @server                 = server
+        @bot                    = bot
+        @send_monitor           = Monitor.new
+        @raw_consumer           = Consumers::RawConsumer.new
+        @chat_consumer          = Consumers::ChatConsumer.new
+        @uhost_timer            = nil
+        @auto_join_timer        = nil
+        @nick_regain_timer      = nil
+        @regaining_nick         = false
         @raw_consumer.register_callback(self, :direct_send)
         @chat_consumer.register_callback(self, :direct_send)
       end
@@ -41,14 +45,16 @@ module Axial
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
         @bot.timer.delete(@uhost_timer)
-        @bot.timer.delete(@autojoin_timer)
+        @bot.timer.delete(@auto_join_timer)
+        @bot.timer.delete(@nick_regain_timer)
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
         LOGGER.info("reconnecting in 30 seconds...")
         sleep 30
         retry
       rescue Exception => ex
         @bot.timer.delete(@uhost_timer)
-        @bot.timer.delete(@autojoin_timer)
+        @bot.timer.delete(@auto_join_timer)
+        @bot.timer.delete(@nick_regain_timer)
         LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -58,6 +64,15 @@ module Axial
         retry
       end
       private :connect
+
+      def nick_regained()
+        @regaining_nick                   = false
+        @bot.server_interface.myself.name = @bot.nick
+        @bot.real_nick                    = @bot.nick
+
+        @bot.timer.delete(@nick_regain_timer)
+        LOGGER.debug("regained original nick: #{new_nick}")
+      end
 
       def send_chat(raw)
         @chat_consumer.send(raw)
@@ -76,9 +91,13 @@ module Axial
         end
       end
 
+      def try_nick()
+        direct_send("NICK #{@bot.trying_nick}")
+      end
+
       def login()
         direct_send("USER #{@bot.user} 0 * :#{@bot.real_name}")
-        direct_send("NICK #{@bot.real_nick}")
+        try_nick
         LOGGER.info("sent credentials to server")
       end
       private :login
@@ -89,14 +108,23 @@ module Axial
       private :pong
 
       def dispatch(raw)
-        if (raw =~ /^:(\S+)\s+001\s+#{@bot.real_nick}/)
+        if (raw =~ /^:(\S+)\s+001\s+(#{@bot.trying_nick})/)
           @server.real_address = Regexp.last_match[1]
+          if (!@bot.trying_nick.casecmp(@bot.nick).zero?)
+            @regaining_nick = true
+            @nick_regain_timer = @bot.timer.every_60_seconds(@bot.server_interface, :send_ison)
+          end
+          @bot.real_nick = @bot.trying_nick
+          @bot.server_interface.myself.name = @bot.real_nick
+          LOGGER.info("actual nick: #{@bot.real_nick}")
           LOGGER.info("actual server host: #{@server.real_address}")
           @bot.server_consumer.send(raw)
           @uhost_timer = @bot.timer.every_minute do
-            @bot.server_interface.send_raw("WHOIS #{@bot.real_nick}")
+            if (@bot.server_interface.myself.uhost.empty?)
+              @bot.server_interface.whois_myself
+            end
           end
-          @autojoin_timer = @bot.timer.every_30_seconds(@bot.server_interface, :retry_joins)
+          @auto_join_timer = @bot.timer.every_30_seconds(@bot.server_interface, :retry_joins)
         elsif (raw =~ /^PING\s+(.*)/)
           pong(Regexp.last_match[1])
         else

@@ -29,12 +29,14 @@ module Axial
       module Server
         SILENCE_NUMERICS      = [ 1, 2, 3, 4, 250, 251, 254, 255, 265, 266, 312, 317, 318, 319, 333, 338, 353, 366, 671 ]
         ANY_NUMERIC           = /^:{0,1}\S+ ([0-9][0-9][0-9]) \S+ :{0,1}(.*)/
+        ISON_REPLY            = /^:{0,1}\S+ 303 \S+ :{0,1}(.*)/
         MOTD_BEGIN            = /^:{0,1}\S+ 375/
         MOTD_END              = /^:{0,1}\S+ 376/
         MOTD_ENTRY            = /^:{0,1}\S+ 372 \S+ :{0,1}(.*)/
         MOTD_ERROR            = /^:{0,1}\S+ 422/
-        NICK_IN_USE           = /^:{0,1}\S+ 433 \S+ :{0,1}(.*)/
-        NICK_MODE             = /^(\S+) MODE :{0,1}(.*)/
+        NICK_IN_USE           = /^:{0,1}\S+ 433 \* (\S+)/
+        NICK_ERRONEOUS        = /^:{0,1}\S+ 432 \* (\S+)/
+        NICK_MODE             = /^:{0,1}\S+ MODE (\S+) :{0,1}(\S+)/
         PARAMETERS            = /^:{0,1}\S+ 005 \S+ :{0,1}(.*)/
         UNKNOWN_COMMAND       = /^:{0,1}\S+ 421 \S+ :{0,1}(.*)/
         WHOIS_UHOST           = /^:{0,1}\S+ 311 \S+ (\S+) (\S+) (\S+)/
