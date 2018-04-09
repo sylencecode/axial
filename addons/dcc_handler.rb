@@ -49,7 +49,6 @@ module Axial
             dcc_binds = addon[:object].binds.select{ |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
             if (dcc_binds.count > 0)
               commands = dcc_binds.collect{ |bind| bind[:command] }.sort_by{ |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect{ |command| @bot.dcc_command_character + command }
-              if (foo =~ /asdf/i)
               dcc.message("+ #{addon[:name]}: #{commands.join(', ')}")
             end
           end
