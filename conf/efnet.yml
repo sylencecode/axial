@@ -10,8 +10,6 @@ bot:
 channels:
 - name: "#lulz"
   password: ''
-- name: "#blahfoo"
-  password: ''
 addons:
 - AxnetAssistant
 - AxnetMaster
