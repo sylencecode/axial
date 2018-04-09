@@ -118,6 +118,11 @@ module Axial
         @server_interface.send_channel_message(@name, text)
       end
 
+      def emote(emote)
+        emote = "\x01ACTION #{emote}\x01"
+        @server_interface.send_channel_message(@name, emote)
+      end
+
       def kick(nick, reason)
         if (reason.nil? || reason.empty?)
           reason = 'kicked'

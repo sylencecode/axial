@@ -17,7 +17,14 @@ module Axial
         on_channel   'about',   :send_help
         on_channel  'reload',   :reload_addons
         on_channel   'topic',   :change_topic
+        on_channel_emote        :channel_emote
         on_topic                :handle_topic_change
+      end
+
+      def channel_emote(channel, nick, emote)
+        if (emote.split(/\s+/).collect{ |words| words.downcase }.include?(@bot.real_nick))
+          channel.emote("ducks")
+        end
       end
 
       def change_topic(channel, nick, command)

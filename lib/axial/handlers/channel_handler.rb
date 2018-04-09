@@ -530,9 +530,10 @@ module Axial
         end
       end
 
-      def handle_channel_action(channel, nick, unstripped_text)
-        text = unstripped_text.strip
-        LOGGER.debug("ACTION #{channel.name}: * #{nick.name} #{text}")
+      def handle_channel_emote(channel, nick, emote)
+        emote = emote.gsub(/^\x01ACTION/, '').gsub(/\x01$/, '').strip
+        LOGGER.debug("EMOTE #{channel.name}: * #{nick.name} #{emote.inspect}")
+        @bot.bind_handler.dispatch_channel_emote_binds(channel, nick, emote)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -558,7 +559,7 @@ module Axial
 
         case text
           when /^\x01ACTION/i
-            handle_channel_action(channel, nick, text)
+            handle_channel_emote(channel, nick, text)
           when /\x01(\S+)(.*)\x01{0,1}/
             ctcp_command, ctcp_args = Regexp.last_match.captures
             ctcp_command.gsub!(/\x01/, '')

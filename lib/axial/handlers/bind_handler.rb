@@ -761,13 +761,37 @@ module Axial
         end
       end
 
-      def dispatch_channel_binds(channel, nick, text)
-        @binds.select{ |bind| bind[:type] == :channel_any }.each do |bind|
+      def dispatch_channel_emote_binds(channel, nick, emote)
+        @binds.select{ |bind| bind[:type] == :channel_emote }.each do |bind|
           if (bind[:object].throttle_secs > 0)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end
           end
+          bind[:object].last = Time.now
+          Thread.new do
+            begin
+              if (bind[:object].respond_to?(bind[:method]))
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  bind[:object].public_send(bind[:method], channel, nick, emote, *bind[:args])
+                else
+                  bind[:object].public_send(bind[:method], channel, nick, emote)
+                end
+              else
+                LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
+              end
+            rescue Exception => ex
+              LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.error(i)
+              end
+            end
+          end
+        end
+      end
+
+      def dispatch_channel_binds(channel, nick, text)
+        @binds.select{ |bind| bind[:type] == :channel_any }.each do |bind|
           Thread.new do
             begin
               if (bind[:object].respond_to?(bind[:method]))

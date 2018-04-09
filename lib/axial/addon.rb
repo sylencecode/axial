@@ -67,7 +67,7 @@ module Axial
 
     def on_nick_change(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_nick_change called without a callback method")
       end
 
       args = args.flatten
@@ -84,7 +84,7 @@ module Axial
 
     def on_startup(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_startup called without a callback method")
       end
 
       args = args.flatten
@@ -100,7 +100,7 @@ module Axial
 
     def on_axnet_connect(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_axnet_connect called without a callback method")
       end
 
       args = args.flatten
@@ -116,7 +116,7 @@ module Axial
 
     def on_axnet_disconnect(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_axnet_disconnect called without a callback method")
       end
 
       args = args.flatten
@@ -132,7 +132,7 @@ module Axial
 
     def on_ban_list(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_ban_list called without a callback method")
       end
 
       args = args.flatten
@@ -165,7 +165,7 @@ module Axial
 
     def on_channel_full(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_full called without a callback method")
       end
 
       args = args.flatten
@@ -182,7 +182,7 @@ module Axial
 
     def on_invite(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_invite called without a callback method")
       end
 
       args = args.flatten
@@ -199,7 +199,7 @@ module Axial
 
     def on_banned_from_channel(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_banned_from_channel called without a callback method")
       end
 
       args = args.flatten
@@ -216,7 +216,7 @@ module Axial
 
     def on_channel_keyword(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_keyword called without a callback method")
       end
 
       args = args.flatten
@@ -233,7 +233,7 @@ module Axial
 
     def on_channel_invite_only(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_invite_only called without a callback method")
       end
 
       args = args.flatten
@@ -250,7 +250,7 @@ module Axial
 
     def on_reload(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_reload called without a callback method")
       end
 
       args = args.flatten
@@ -283,7 +283,7 @@ module Axial
 
     def on_irc_ban_list_end(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_irc_ban_list_end called without a callback method")
       end
 
       args = args.flatten
@@ -300,7 +300,7 @@ module Axial
 
     def on_kick(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_kick called without a callback method")
       end
 
       args = args.flatten
@@ -317,7 +317,7 @@ module Axial
 
     def on_self_kick(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_self_kick called without a callback method")
       end
 
       args = args.flatten
@@ -334,7 +334,7 @@ module Axial
 
     def on_part(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_part called without a callback method")
       end
 
       args = args.flatten
@@ -351,7 +351,7 @@ module Axial
 
     def on_quit(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_quit called without a callback method")
       end
 
       args = args.flatten
@@ -368,7 +368,7 @@ module Axial
 
     def on_topic(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_topic called without a callback method")
       end
 
       args = args.flatten
@@ -385,7 +385,7 @@ module Axial
 
     def on_channel_sync(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_sync called without a callback method")
       end
 
       args = args.flatten
@@ -402,7 +402,7 @@ module Axial
 
     def on_join(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_join called without a callback method")
       end
 
       args = args.flatten
@@ -419,7 +419,7 @@ module Axial
 
     def on_who_list_entry(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_who_list_entry called without a callback method")
       end
 
       args = args.flatten
@@ -479,7 +479,7 @@ module Axial
 
     def on_self_part(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_self_part called without a callback method")
       end
 
       args = args.flatten
@@ -509,9 +509,26 @@ module Axial
       LOGGER.debug("channel self-join will invoke method '#{self.class}.#{method}'")
     end
 
+    def on_channel_emote(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel_emote called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @binds.push(type: :channel_emote, method: method, args: args)
+      else
+        @binds.push(type: :channel_emote, method: method)
+      end
+
+      LOGGER.debug("all channel emotes will invoke method '#{self.class}.#{method}'")
+    end
+
     def on_channel_any(*args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_any called without a callback method")
       end
 
       args = args.flatten
@@ -557,7 +574,7 @@ module Axial
 
     def on_channel_leftover(text, *args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_channel_leftover called without a callback method")
       end
 
       args = args.flatten
@@ -578,7 +595,7 @@ module Axial
 
     def on_axnet(command, *args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_axnet called without a callback method")
       end
 
       args = args.flatten
@@ -599,7 +616,7 @@ module Axial
 
     def on_privmsg(command, *args)
       if (args.nil? || args.flatten.empty?)
-        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+        raise(AddonError, "#{self.class}.on_privmsg called without a callback method")
       end
 
       args = args.flatten
@@ -611,7 +628,7 @@ module Axial
       end
 
       if (args.empty?)
-        raise(AddonError, "#{self.class}.on_dcc called without a callback method")
+        raise(AddonError, "#{self.class}.on_privmsg called without a callback method")
       else
         method = args.shift
       end
