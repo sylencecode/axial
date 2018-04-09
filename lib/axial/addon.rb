@@ -477,6 +477,22 @@ module Axial
       end
     end
 
+    def on_self_part(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_channel called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @binds.push(type: :self_part, method: method, args: args)
+      else
+        @binds.push(type: :self_part, method: method)
+      end
+      LOGGER.debug("channel self-part will invoke method '#{self.class}.#{method}'")
+    end
+
     def on_self_join(*args)
       if (args.nil? || args.flatten.empty?)
         raise(AddonError, "#{self.class}.on_channel called without a callback method")

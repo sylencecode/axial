@@ -34,7 +34,21 @@ module Axial
         on_self_join                      :check_if_opped
         on_self_join                      :clear_pending_join_requests
 
+        on_self_part                      :clear_channel
+
         on_invite                         :handle_invite
+      end
+
+      def clear_channel(channel)
+        if (channel.is_a?(IRCTypes::Channel))
+          key = channel.name.downcase
+        else
+          key = channel.downcase
+        end
+
+        if (@requests.has_key?(key))
+          @requests.delete(key)
+        end
       end
 
       def clear_pending(channel, type)

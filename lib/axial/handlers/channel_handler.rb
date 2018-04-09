@@ -272,6 +272,7 @@ module Axial
         else
           LOGGER.debug("I left #{channel.name} (#{reason})")
         end
+        @bot.bind_handler.dispatch_self_part_binds(channel)
         @server_interface.channel_list.delete(channel)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
