@@ -5,7 +5,7 @@ module Axial
   module Axnet
     class SocketHandler
       attr_accessor   :system_info
-      attr_reader     :socket, :thread, :local_cn, :remote_cn, :uuid, :established_time
+      attr_reader     :socket, :thread, :local_cn, :remote_cn, :uuid, :established_time, :remote_address
 
       def initialize(bot, socket)
         @bot                  = bot

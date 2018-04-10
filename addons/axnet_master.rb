@@ -232,7 +232,7 @@ module Axial
           connected_since   = handler.established_time.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")
 
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since}")
+          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} (from #{handler.remote_address})")
         end
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
