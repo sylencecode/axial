@@ -239,7 +239,7 @@ module Axial
       end
 
       begin
-        @git = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
+        @git = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')))
       rescue
         @git = nil
       end
