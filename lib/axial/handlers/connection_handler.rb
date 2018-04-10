@@ -71,7 +71,7 @@ module Axial
         @bot.real_nick                    = @bot.nick
 
         @bot.timer.delete(@nick_regain_timer)
-        LOGGER.debug("regained original nick: #{new_nick}")
+        LOGGER.debug("regained original nick: #{@bot.nick}")
       end
 
       def send_chat(raw)
