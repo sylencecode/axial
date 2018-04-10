@@ -161,10 +161,11 @@ module Axial
       end
 
       def print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-        running_since   = system_info.startup_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
-        header  = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
-        header += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
-        header += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
+        running_since = system_info.startup_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
+        header        = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
+        header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
+        header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
+
         dcc.message(header)
         dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
         dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")

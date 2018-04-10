@@ -6,9 +6,9 @@ module Axial
     class SystemInfo
       attr_reader   :os, :cpu_model, :cpu_mhz, :cpu_logical_processors, :mem_free, :mem_total, :kernel_name,
                     :kernel_release, :kernel_machine, :ruby_version, :ruby_patch_level, :ruby_platform,
-                    :addons, :latest_commit
+                    :addons
 
-      attr_accessor :startup_time, :addons
+      attr_accessor :startup_time, :addons, :latest_commit
 
       def initialize(data_hash)
         @os                       = data_hash[:os]
