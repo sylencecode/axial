@@ -277,7 +277,7 @@ module Axial
     end
 
     def wait_a_sec()
-      random_sleep = SecureRandom.random_number(1000) / 100.to_f
+      random_sleep = (SecureRandom.random_number(600) / 100.to_f) + 2.0
       sleep(random_sleep)
     end
 
