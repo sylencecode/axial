@@ -23,6 +23,7 @@ module Axial
 
       def channel_emote(channel, nick, emote)
         if (emote.split(/\s+/).collect{ |words| words.downcase }.include?(@bot.real_nick))
+          wait_a_sec
           channel.emote("ducks")
         end
       end
