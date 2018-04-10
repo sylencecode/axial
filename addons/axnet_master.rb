@@ -5,6 +5,7 @@ require 'axial/role'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 require 'axial/axnet/system_info'
+require 'axial/colors'
 
 module Axial
   module Addons
@@ -159,16 +160,58 @@ module Axial
         axnet.send("PING #{channel.name}")
       end
 
-      def display_conn_status(dcc, command)
-        dcc.message(Axnet::SystemInfo.from_environment.inspect)
-        if (@handlers.count == 0)
-          dcc.message("no bots connected.")
+      def print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
+        running_since   = system_info.startup_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
+        header  = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
+        header += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
+        header += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
+        dcc.message(header)
+        dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
+        dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
+        dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} @ #{system_info.cpu_mhz}mhz")
+        dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_free}mb / #{system_info.mem_total}mb")
+        dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
+        if (!system_info.latest_commit.nil?)
+          gc = system_info.latest_commit
+          commit_string = "#{gc.date} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
+          dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
         end
-        @handlers.each do |uuid, handler|
-          dcc.message("status for #{uuid} (#{handler.remote_cn})")
-          dcc.message(handler.socket.inspect)
-          dcc.message(handler.thread.inspect)
-          dcc.message(handler.system_info.inspect)
+        dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since}")
+      end
+
+      def display_conn_status(dcc, command)
+        #dcc.message(Axnet::SystemInfo.from_environment.inspect)
+        #if (@handlers.count == 0)
+        #  dcc.message("no bots connected.")
+        #end
+        if (@handlers.any?)
+          max_bot_name_length       = @handlers.values.collect{ |handler| handler.remote_cn.length }.max
+        else
+          max_bot_name_length       = @bot.local_cn.length
+        end
+
+        system_info                 = Axnet::SystemInfo.from_environment
+        system_info.startup_time    = @bot.startup_time
+        system_info.addons          = @bot.addons.collect{ |addon| addon[:name] }
+        if (!@bot.git.nil?)
+          system_info.latest_commit = @bot.git.log.first
+        end
+
+        print_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
+
+        @handlers.values.each do |handler|
+          bot_name          = handler.remote_cn
+          system_info       = handler.system_info
+
+          connected_since   = handler.established_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
+          print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
+          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since}")
+        end
+      rescue Exception => ex
+        dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 

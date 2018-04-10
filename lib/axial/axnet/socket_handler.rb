@@ -5,7 +5,7 @@ module Axial
   module Axnet
     class SocketHandler
       attr_accessor   :system_info
-      attr_reader     :socket, :thread, :local_cn, :remote_cn, :uuid
+      attr_reader     :socket, :thread, :local_cn, :remote_cn, :uuid, :established_time
 
       def initialize(bot, socket)
         @bot                  = bot
@@ -19,6 +19,7 @@ module Axial
         @remote_address       = @socket.to_io.peeraddr[2]
         @uuid                 = SecureRandom.uuid
         @system_info          = nil
+        @established_time     = Time.now
 
         @transmit_consumer.register_callback(self, :socket_send)
       end

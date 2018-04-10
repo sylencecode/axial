@@ -24,12 +24,14 @@ module Axial
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
                   :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
-                  :dcc_command_character, :dcc_state
+                  :dcc_command_character, :dcc_state, :startup_time, :git
 
     attr_accessor :real_nick, :local_cn, :trying_nick
 
     def initialize(config_yaml)
-      @config_yaml = config_yaml
+      @config_yaml  = config_yaml
+      @startup_time = Time.now
+      @git          = nil
       set_defaults
       load_config
       load_server_settings
@@ -180,9 +182,8 @@ module Axial
     end
 
     def git_pull()
-      if (ENV['REMOTE_DEBUG'] != "true")
-        repo_object = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
-        repo_object.pull
+      if (!@git.nil?)
+        @git.pull
       end
     end
 
@@ -235,6 +236,12 @@ module Axial
       @trying_nick                = @config['bot']['nick']               || 'unnamed'
       if (!@config.has_key?('channels') || @config['channels'].empty?)
         @config['channels'] = []
+      end
+
+      begin
+        @git = Git.open(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), log: LOGGER)
+      rescue
+        @git = nil
       end
     end
     private :load_config

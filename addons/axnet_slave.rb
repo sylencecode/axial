@@ -102,20 +102,28 @@ module Axial
       end
 
       def auth_to_axnet()
-        @bot_user.name            = @bot.local_cn
-        @bot_user.pretty_name     = @bot.local_cn
-        @bot_user.role_name       = 'bot'
-        @bot_user.role            = Role.new('bot')
-        @bot_user.id              = 0
+        @bot_user.name              = @bot.local_cn
+        @bot_user.pretty_name       = @bot.local_cn
+        @bot_user.role_name         = 'bot'
+        @bot_user.role              = Role.new('bot')
+        @bot_user.id                = 0
 
         if (!myself.uhost.empty?)
-          @bot_user.masks         = [ MaskUtils.ensure_wildcard(myself.uhost) ]
+          @bot_user.masks           = [ MaskUtils.ensure_wildcard(myself.uhost) ]
         end
 
-        auth_yaml                 = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        system_info_yaml          = YAML.dump(Axnet::SystemInfo.from_environment).gsub(/\n/, "\0")
-        axnet.send('BOT_AUTH '    + auth_yaml)
-        axnet.send('SYSTEM_INFO ' + system_info_yaml)
+        system_info                 = Axnet::SystemInfo.from_environment
+        system_info.startup_time    = @bot.startup_time
+        system_info.addons          = @bot.addons.collect{ |addon| addon[:name] }
+        if (!@bot.git.nil?)
+          system_info.latest_commit = @bot.git.log.first
+        end
+
+        auth_yaml                   = YAML.dump(@bot_user).gsub(/\n/, "\0")
+        system_info_yaml            = YAML.dump(system_info).gsub(/\n/, "\0")
+
+        axnet.send('BOT_AUTH '      + auth_yaml)
+        axnet.send('SYSTEM_INFO '   + system_info_yaml)
       end
 
       def update_bot_list(handler, command)
