@@ -24,13 +24,14 @@ module Axial
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
                   :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
-                  :dcc_command_character, :dcc_state, :startup_time, :git
+                  :dcc_command_character, :dcc_state, :startup_time, :git, :last_reload
 
     attr_accessor :real_nick, :local_cn, :trying_nick
 
     def initialize(config_yaml)
       @config_yaml  = config_yaml
       @startup_time = Time.now
+      @last_reload  = Time.now
       @git          = nil
       set_defaults
       load_config
@@ -114,6 +115,7 @@ module Axial
     end
 
     def reload_addons()
+      @last_reload              = Time.now
       unload_addons
       tmp_config_load           = YAML.load_file(@config_yaml)
       @addon_list               = tmp_config_load['addons'] || []

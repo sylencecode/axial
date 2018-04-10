@@ -54,7 +54,7 @@ module Axial
         on_dcc             'part|leave',  :dcc_wrapper, :part_channel
         on_dcc              'broadcast',  :handle_broadcast
         on_dcc                  'axnet',  :handle_axnet_command
-        on_dcc             'connstatus',  :display_conn_status
+        on_dcc                   'bots',  :dcc_bot_status
 
         on_channel               'ping',  :pong_channel
 
@@ -161,30 +161,55 @@ module Axial
       end
 
       def print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-        running_since = system_info.startup_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
         header        = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
         header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
         header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
-
         dcc.message(header)
-        dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
-        dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
-        dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} @ #{system_info.cpu_mhz}mhz")
-        dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_free}mb / #{system_info.mem_total}mb")
-        dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
-        if (!system_info.latest_commit.nil?)
-          gc = system_info.latest_commit
-          commit_string = "#{gc.date} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
-          dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
+
+        if (system_info.nil?)
+          dcc.message("system information not yet available.")
+        else
+          addons = system_info.addons.clone
+          addon_chunks = []
+          while (addons.count >= 4)
+            chunk = []
+            4.times do
+              chunk.push(addons.shift)
+            end
+            addon_chunks.push(chunk)
+          end
+
+          if (addons.any?)
+            addon_chunks.push(addons)
+          end
+
+          running_since = system_info.startup_time.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")
+          dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
+          dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
+          dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
+          dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_total}mb (#{system_info.mem_free}mb free)")
+          dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
+          if (system_info.addons.empty?)
+            dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: none")
+          else
+            addon_chunks.each_with_index do |chunk, i|
+              if (i == 0)
+                dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: #{chunk.join(', ')}")
+              else
+                dcc.message("#{Colors.gray}|#{Colors.reset}                   #{chunk.join(', ')}")
+              end
+            end
+          end
+          if (!system_info.latest_commit.nil?)
+            gc = system_info.latest_commit
+            commit_string = "#{gc.date.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
+            dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
+          end
+          dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since}")
         end
-        dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since}")
       end
 
-      def display_conn_status(dcc, command)
-        #dcc.message(Axnet::SystemInfo.from_environment.inspect)
-        #if (@handlers.count == 0)
-        #  dcc.message("no bots connected.")
-        #end
+      def dcc_bot_status(dcc, command)
         if (@handlers.any?)
           max_bot_name_length       = @handlers.values.collect{ |handler| handler.remote_cn.length }.max
         else
@@ -204,7 +229,8 @@ module Axial
           bot_name          = handler.remote_cn
           system_info       = handler.system_info
 
-          connected_since   = handler.established_time.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")
+          connected_since   = handler.established_time.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")
+
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
           dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since}")
         end
