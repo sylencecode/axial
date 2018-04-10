@@ -128,24 +128,32 @@ module Axial
         LOGGER.debug("No addons specified.")
       else
         @addon_list.each do |addon|
-          load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
-          addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
-          @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
-          addon_object.binds.each do |bind|
-            if (bind[:type] == :mode)
-              @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])
-            elsif (bind[:type] == :channel_leftover)
-              if (bind.has_key?(:args) && bind[:args].any?)
-                @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], args: bind[:args], silent: bind[:silent])
+          begin
+            load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
+            addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
+            @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
+            addon_object.binds.each do |bind|
+              if (bind[:type] == :mode)
+                @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])
+              elsif (bind[:type] == :channel_leftover)
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], args: bind[:args], silent: bind[:silent])
+                else
+                  @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], silent: bind[:silent])
+                end
               else
-                @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], silent: bind[:silent])
+                if (bind.has_key?(:args) && bind[:args].any?)
+                  @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
+                else
+                  @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
+                end
               end
-            else
-              if (bind.has_key?(:args) && bind[:args].any?)
-                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
-              else
-                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
-              end
+            end
+          rescue Exception => ex
+            Handlers::DCCState.broadcast("failed to load addon '#{addon}': #{ex.class}: #{ex.message.inspect}", :director)
+            LOGGER.error("failed to load addon '#{addon}': #{ex.class}: #{ex.message.inspect}")
+            ex.backtrace.each do |i|
+              LOGGER.error(i)
             end
           end
         end

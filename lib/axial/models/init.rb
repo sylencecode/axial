@@ -24,3 +24,4 @@ else
 end
 
 Sequel::Model.plugin :after_initialize
+Sequel::Model.plugin :json_serializer
