@@ -4,6 +4,7 @@ require 'axial/cert_utils'
 require 'axial/role'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
+require 'axial/axnet/system_info'
 
 module Axial
   module Addons
@@ -37,6 +38,7 @@ module Axial
         on_axnet              'BANLIST',  :send_ban_list
         on_axnet             'BOT_AUTH',  :add_bot
         on_axnet             'USERLIST',  :send_user_list
+        on_axnet          'SYSTEM_INFO',  :update_bot_system_info
 
         on_axnet_disconnect               :remove_bot
         on_axnet_connect                  :announce_bot
@@ -61,6 +63,12 @@ module Axial
 
       def announce_bot(handler)
         dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{handler.remote_cn}#{Colors.reset} connected to axnet.", :director)
+      end
+
+      def update_bot_system_info(handler, command)
+        system_info_yaml    = command.args.gsub(/\0/, "\n")
+        system_info         = YAML.load(system_info_yaml)
+        handler.system_info = system_info
       end
 
       def join_channel(source, user, nick, command)
@@ -152,6 +160,7 @@ module Axial
       end
 
       def display_conn_status(dcc, command)
+        dcc.message(Axnet::SystemInfo.from_environment.inspect)
         if (@handlers.count == 0)
           dcc.message("no bots connected.")
         end
@@ -159,6 +168,7 @@ module Axial
           dcc.message("status for #{uuid} (#{handler.remote_cn})")
           dcc.message(handler.socket.inspect)
           dcc.message(handler.thread.inspect)
+          dcc.message(handler.system_info.inspect)
         end
       end
 

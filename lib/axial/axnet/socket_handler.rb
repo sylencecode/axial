@@ -4,7 +4,8 @@ require 'axial/consumers/raw_consumer'
 module Axial
   module Axnet
     class SocketHandler
-      attr_reader :socket, :thread, :local_cn, :remote_cn, :uuid
+      attr_accessor   :system_info
+      attr_reader     :socket, :thread, :local_cn, :remote_cn, :uuid
 
       def initialize(bot, socket)
         @bot                  = bot
@@ -17,6 +18,7 @@ module Axial
         @monitor              = Monitor.new
         @remote_address       = @socket.to_io.peeraddr[2]
         @uuid                 = SecureRandom.uuid
+        @system_info          = nil
 
         @transmit_consumer.register_callback(self, :socket_send)
       end

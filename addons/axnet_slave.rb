@@ -3,6 +3,7 @@ require 'axial/addon'
 require 'axial/cert_utils'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
+require 'axial/axnet/system_info'
 
 module Axial
   module Addons
@@ -101,18 +102,20 @@ module Axial
       end
 
       def auth_to_axnet()
-        @bot_user.name          = @bot.local_cn
-        @bot_user.pretty_name   = @bot.local_cn
-        @bot_user.role_name     = 'bot'
-        @bot_user.role          = Role.new('bot')
-        @bot_user.id            = 0
+        @bot_user.name            = @bot.local_cn
+        @bot_user.pretty_name     = @bot.local_cn
+        @bot_user.role_name       = 'bot'
+        @bot_user.role            = Role.new('bot')
+        @bot_user.id              = 0
 
         if (!myself.uhost.empty?)
-          @bot_user.masks       = [ MaskUtils.ensure_wildcard(myself.uhost) ]
+          @bot_user.masks         = [ MaskUtils.ensure_wildcard(myself.uhost) ]
         end
 
-        serialized_yaml         = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        axnet.send('BOT_AUTH ' + serialized_yaml)
+        auth_yaml                 = YAML.dump(@bot_user).gsub(/\n/, "\0")
+        system_info_yaml          = YAML.dump(Axnet::SystemInfo.from_environment).gsub(/\n/, "\0")
+        axnet.send('BOT_AUTH '    + auth_yaml)
+        axnet.send('SYSTEM_INFO ' + system_info_yaml)
       end
 
       def update_bot_list(handler, command)
@@ -125,7 +128,7 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
-    end
+      end
 
       def axnet_disconnect(handler)
         LOGGER.warn("axnet: lost connection to #{handler.remote_cn}")
