@@ -57,7 +57,7 @@ module Axial
         on_startup                              :update_ban_list
 
         @foreign_tables = {
-            DB_CONNECTION[:rss_feeds] => { model: Models::RSSFeed, set_unknown: true },
+            DB_CONNECTION[:rss_feeds] => { model: Models::RssFeed, set_unknown: true },
             DB_CONNECTION[:things]    => { model: Models::Thing, set_unknown: true },
             DB_CONNECTION[:bans]      => { model: Models::Ban, set_unknown: true },
             DB_CONNECTION[:seens]     => { model: Models::Seen, set_unknown: false },

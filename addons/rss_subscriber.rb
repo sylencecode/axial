@@ -43,7 +43,7 @@ module Axial
 
       def ingest()
         LOGGER.debug("RSS: running feed check")
-        Models::RSSFeed.where(enabled: true).each do |feed|
+        Models::RssFeed.where(enabled: true).each do |feed|
           ingested = 0
           begin
             rss_content = Feedjira::Feed.fetch_and_parse(feed.pretty_url)
@@ -133,7 +133,7 @@ module Axial
 
         begin
           rss_content = Feedjira::Feed.fetch_and_parse(parsed_url)
-          Models::RSSFeed.upsert(feed_name, parsed_url, user_model)
+          Models::RssFeed.upsert(feed_name, parsed_url, user_model)
           LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
           channel.message("#{nick.name}: ok, following articles from '#{feed_name}'.")
         rescue Feedjira::NoParserAvailable
@@ -142,7 +142,7 @@ module Axial
       end
 
       def list_feeds(channel, nick)
-        feeds = Models::RSSFeed.all
+        feeds = Models::RssFeed.all
         if (feeds.count > 0)
           LOGGER.debug("RSS: #{nick.uhost} listed feeds")
           channel.message("rss feeds:")
@@ -173,7 +173,7 @@ module Axial
       end
 
       def disable_feed(channel, nick, feed_name)
-        feed_model = Models::RSSFeed[name: feed_name.downcase]
+        feed_model = Models::RssFeed[name: feed_name.downcase]
         if (feed_model.nil?)
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else
@@ -184,7 +184,7 @@ module Axial
       end
 
       def enable_feed(channel, nick, feed_name)
-        feed_model = Models::RSSFeed[name: feed_name.downcase]
+        feed_model = Models::RssFeed[name: feed_name.downcase]
         if (feed_model.nil?)
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else
@@ -195,7 +195,7 @@ module Axial
       end
 
       def delete_feed(channel, nick, feed_name)
-        feed_model = Models::RSSFeed[name: feed_name.downcase]
+        feed_model = Models::RssFeed[name: feed_name.downcase]
         if (feed_model.nil?)
           channel.message("#{nick.name}: no feeds named '#{feed_name}'.")
         else

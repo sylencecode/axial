@@ -8,7 +8,7 @@ end
 
 module Axial
   module Models
-    class RSSFeed < Sequel::Model
+    class RssFeed < Sequel::Model
       many_to_one :user
 
       def self.delete_or_unknown(user_id)
