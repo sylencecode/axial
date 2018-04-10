@@ -4,8 +4,8 @@ require 'ohai'
 module Axial
   module Axnet
     class SystemInfo
-      attr_reader :os, :cpu_model, :cpu_mhz, :cpu_logical_processors, :mem_free, :mem_total,
-                  :ruby_version, :ruby_patch_level, :ruby_platform
+      attr_reader :os, :cpu_model, :cpu_mhz, :cpu_logical_processors, :mem_free, :mem_total, :kernel_name,
+                  :kernel_release, :kernel_machine, :ruby_version, :ruby_patch_level, :ruby_platform
 
       def initialize(data_hash)
         @os                       = data_hash[:os]
@@ -14,6 +14,9 @@ module Axial
         @cpu_logical_processors   = data_hash[:cpu][:logical_processors]
         @mem_free                 = data_hash[:memory][:free]
         @mem_total                = data_hash[:memory][:total]
+        @kernel_name              = data_hash[:kernel][:name]
+        @kernel_release           = data_hash[:kernel][:release]
+        @kernel_machine           = data_hash[:kernel][:machine]
         @ruby_version             = RUBY_VERSION
         @ruby_patch_level         = RUBY_PATCHLEVEL
         @ruby_platform            = RUBY_PLATFORM
