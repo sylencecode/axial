@@ -60,7 +60,7 @@ module Axial
             type_string       = "#{Colors.blue}#{              type_string.center(type_string_length)}#{Colors.reset}"
             quote_color, change = colorify_result(result)
             if (batch)
-              symbol          = "#{Colors.cyan}#{    _symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
+              symbol          = "#{Colors.cyan}#{ get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
             else
               company_symbol  = "#{result.company_name} (#{result.symbol})"
               symbol          = "#{Colors.cyan}#{        company_symbol.ljust(company_symbol_length)}#{Colors.reset}"
