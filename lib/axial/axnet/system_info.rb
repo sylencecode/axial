@@ -44,16 +44,19 @@ module Axial
       end
 
       def self.convert_memory_to_mb(memory_string)
-        if (memory_string =~ /(\d+)kb/i)
-          parsed = (Regexp.last_match[1].to_f / 1024).round(0)
-        elsif (memory_string =~ /(\d+)mb/i)
-          parsed = Regexp.last_match[1].to_f.round(0)
-        elsif (memory_string =~ /(\d+)gb/i)
-          parsed = Regexp.last_match[1].to_i * 1024
-        else
-          parsed = memory_string
+        case memory_string.to_s
+          when /(\d+)kb/i
+            parsed = (Regexp.last_match[1].to_f / 1024).round(0)
+          when /(\d+)mb/i
+            parsed = Regexp.last_match[1].to_f.round(0)
+          when /(\d+)gb/i
+            parsed = Regexp.last_match[1].to_i * 1024
+          when /(\d+)/
+            parsed = (Regexp.last_match[1].to_f / 1024 / 1024).round(0)
+          else
+            parsed = 'unknown'
         end
-        return parsed
+        return parsed.to_s
       end
 
       def self.parse_cpu(cpu_hash)
@@ -62,6 +65,8 @@ module Axial
         mhz           = 'unknown'
         if (cpu_hash.has_key?('total'))
           total       = cpu_hash['total'].to_i
+        else
+          total       = 1
         end
         if (cpu_hash.has_key?('0'))
           mhz         = cpu_hash['0']['mhz'].to_i
