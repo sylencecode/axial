@@ -128,7 +128,7 @@ module Axial
 
       def update_bot_list(handler, command)
         bot_list_yaml = command.args.gsub(/\0/, "\n")
-        new_bot_list = YAML.safe_load(bot_list_yaml)
+        new_bot_list = YAML.load(bot_list_yaml)
         bot_list.reload(new_bot_list)
         LOGGER.info("successfully downloaded new botlist from #{@handler.remote_cn}")
       rescue Exception => ex
@@ -164,7 +164,7 @@ module Axial
 
       def update_user_list(handler, command)
         user_list_yaml = command.args.gsub(/\0/, "\n")
-        new_user_list = YAML.safe_load(user_list_yaml)
+        new_user_list = YAML.load(user_list_yaml)
         axnet.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
@@ -176,7 +176,7 @@ module Axial
 
       def update_ban_list(handler, command)
         ban_list_yaml = command.args.gsub(/\0/, "\n")
-        new_ban_list = YAML.safe_load(ban_list_yaml)
+        new_ban_list = YAML.load(ban_list_yaml)
         axnet.update_ban_list(new_ban_list)
         LOGGER.info("successfully downloaded new banlist from #{handler.remote_cn}")
       rescue Exception => ex
