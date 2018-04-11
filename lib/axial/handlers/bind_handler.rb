@@ -762,7 +762,7 @@ module Axial
 
       def dispatch_channel_emote_binds(channel, nick, emote)
         @binds.select { |bind| bind[:type] == :channel_emote }.each do |bind|
-          if (bind[:object].throttle_secs > 0)
+          if (bind[:object].throttle_secs.positive?)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end
@@ -813,7 +813,7 @@ module Axial
 
         leftovers = true
         @binds.select { |bind| bind[:type] == :channel }.each do |bind|
-          if (bind[:object].throttle_secs > 0)
+          if (bind[:object].throttle_secs.positive?)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end
@@ -907,7 +907,7 @@ module Axial
         if (leftovers)
           # wasn't a command, check against the channel leftover patterns
           @binds.select { |bind| bind[:type] == :channel_leftover }.each do |bind|
-            if (bind[:object].throttle_secs > 0)
+            if (bind[:object].throttle_secs.positive?)
               if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
                 next
               end
@@ -950,7 +950,7 @@ module Axial
       def dispatch_privmsg_binds(nick, text)
         dispatched_commands = []
         @binds.select { |bind| bind[:type] == :privmsg }.each do |bind|
-          if (bind[:object].throttle_secs > 0)
+          if (bind[:object].throttle_secs.positive?)
             if ((Time.now - bind[:object].last) < bind[:object].throttle_secs)
               next
             end

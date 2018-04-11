@@ -5,7 +5,13 @@ AllCops:
   TargetRubyVersion: 2.5.1
 Layout/CaseIndentation:
   Enabled: false
+Layout/ExtraSpacing:
+  Enabled: false
 Layout/IndentArray:
+  Enabled: false
+Layout/IndentHash:
+  Enabled: false
+Layout/SpaceAroundOperators:
   Enabled: false
 Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
@@ -31,19 +37,3 @@ Style/RedundantReturn:
   Enabled: false
 Style/RescueStandardError:
   Enabled: false
-#Style/ConditionalAssignment:
-#  Enabled: false
-# Metrics/AbcSize:
-#   Enabled: false
-# Metrics/ClassLength:
-#   Enabled: false
-# Style/SymbolArray:
-#   Enabled: false
-# Layout/ExtraSpacing:
-#   Enabled: false
-# Layout/SpaceBeforeFirstArg:
-#   Enabled: false
-#Style/GuardClause:
-#  Enabled: false
-#Metrics/MethodLength:
-#  Max: 20

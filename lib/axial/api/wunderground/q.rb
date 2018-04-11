@@ -31,7 +31,7 @@ module Axial
             response = orig_json['response']
             if (response.key?('results') && response['results'].is_a?(Array))
               results = response['results']
-              if (results.count > 0)
+              if (results.any?)
                 result = results[0]
                 if (result.key?('l'))
                   redirect = result['l'].gsub(/^\/q\//, '')

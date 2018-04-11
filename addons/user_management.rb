@@ -798,7 +798,7 @@ module Axial
           dcc.message(top_bar)
           dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'created'.center(created_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
-          %w(root director manager op friend basic).each do |role|
+          %w[root director manager op friend basic].each do |role|
             users.select { |tmp_user| tmp_user[:role].downcase == role }.sort_by { |tmp_user| tmp_user[:created] }.each do |user|
               case user[:seen]
                 when /^active/

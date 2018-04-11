@@ -34,7 +34,7 @@ module Axial
             translation = nil
             if (json.key?('text'))
               text = json['text']
-              if (text.is_a?(Array) && text.count > 0)
+              if (text.is_a?(Array) && text.any?)
                 translation = text.first
               end
             end

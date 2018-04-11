@@ -43,10 +43,10 @@ module Axial
 
       def dcc_help(dcc, command)
         dcc.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
-        if (@bot.addons.count > 0)
+        if (@bot.addons.any?)
           @bot.addons.each do |addon|
             dcc_binds = addon[:object].binds.select { |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
-            if (dcc_binds.count > 0)
+            if (dcc_binds.any?)
               commands = dcc_binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.dcc_command_character + command }
               dcc.message("+ #{addon[:name]}: #{commands.join(', ')}")
             end
@@ -91,7 +91,7 @@ module Axial
           return
         end
 
-        if (@bot.addons.count == 0)
+        if (@bot.addons.empty?)
           dcc.message('no addons loaded.')
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")

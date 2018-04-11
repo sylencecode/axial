@@ -122,7 +122,7 @@ module Axial
       end
 
       def limit?()
-        return (limit > 0)
+        return (limit.positive?)
       end
 
       def limit()
@@ -130,7 +130,7 @@ module Axial
         if (@limit[:type] == :set)
           if (@limit[:value].is_a?(String) && !@limit[:value].empty?)
             retval = @limit[:value].to_i
-          elsif(@limit[:value] > 0)
+          elsif (@limit[:value].positive?)
             retval = @limit[:value]
           end
         end
@@ -204,7 +204,7 @@ module Axial
 
         action = :set
 
-        while (modes.length > 0)
+        while (modes.length.positive?)
           letter = modes[0]
           who = ''
           case letter
@@ -319,7 +319,7 @@ module Axial
 
         action = :set
 
-        while (modes.length > 0)
+        while (modes.length.positive?)
           letter = modes[0]
           who = ''
           case letter
@@ -488,7 +488,7 @@ module Axial
         mode_string = ''
         values_string = ''
         action = '+'
-        while (sets.count > 0)
+        while (sets.any?)
           counter += 1
           set = sets.shift
 
@@ -511,7 +511,7 @@ module Axial
 
         switched = false
         action = '-'
-        while (unsets.count > 0)
+        while (unsets.any?)
           counter += 1
           unset = unsets.shift
           if (!mode_string.start_with?(action))

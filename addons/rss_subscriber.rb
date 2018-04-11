@@ -85,7 +85,7 @@ module Axial
             ingested = ingested + 1
           end
 
-          if (ingested > 0) # if any valid articles were found, update the last ingest timestamp
+          if (ingested.positive?) # if any valid articles were found, update the last ingest timestamp
             LOGGER.debug("Resetting last_ingest time of #{feed.pretty_name} from #{feed.last_ingest} to #{Time.now}")
             feed.update(ingest_count: feed.ingest_count + ingested)
             feed.update(last_ingest: Time.now)
@@ -125,7 +125,7 @@ module Axial
         end
 
         parsed_urls = URIUtilsUtils.extract(feed_url)
-        if (parsed_urls.count == 0)
+        if (parsed_urls.empty?)
           channel.message("#{nick.name}: '#{feed_url}' is not a valid URI. (http|https)")
           return
         end
@@ -143,7 +143,7 @@ module Axial
 
       def list_feeds(channel, nick)
         feeds = Models::RssFeed.all
-        if (feeds.count > 0)
+        if (feeds.any?)
           LOGGER.debug("RSS: #{nick.uhost} listed feeds")
           channel.message('rss feeds:')
           feeds.each do |feed|

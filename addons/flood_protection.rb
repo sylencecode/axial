@@ -48,7 +48,7 @@ module Axial
         @flood_reset_timer      = nil
         @flood_tracker          = {}
         @flood_limits           = {}
-        @types                  = %i(all_channel_text channel_text join nick_change revolving_door)
+        @types                  = %i[all_channel_text channel_text join nick_change revolving_door]
 
         @types.each do |type|
           @flood_limits[type]   = []
@@ -272,7 +272,7 @@ module Axial
         @flood_tracker[:channel_text].values.each do |channel_entries|
           channel_entries.each do |uuid, line_array|
             line_array.delete_if { |line| line + highest_text_limit < Time.now }
-            if (channel_entries[uuid].count.zero?)
+            if (channel_entries[uuid].empty?)
               channel_entries.delete(uuid)
             end
           end
@@ -282,7 +282,7 @@ module Axial
         @flood_tracker[:all_channel_text].values.each do |channel_entries|
           channel_entries.each do |uuid, line_array|
             line_array.delete_if { |line| line + highest_all_text_limit < Time.now }
-            if (channel_entries[uuid].count.zero?)
+            if (channel_entries[uuid].empty?)
               channel_entries.delete(uuid)
             end
           end
@@ -291,7 +291,7 @@ module Axial
         highest_nick_change_limit = @flood_limits[:nick_change].collect { |tracker| tracker[:time] }.max
         @flood_tracker[:nick_change].each do |uuid, line_array|
           line_array.delete_if { |line| line + highest_nick_change_limit < Time.now }
-          if (@flood_tracker[:nick_change][uuid].count.zero?)
+          if (@flood_tracker[:nick_change][uuid].empty?)
             @flood_tracker[:nick_change].delete(uuid)
           end
         end
@@ -299,7 +299,7 @@ module Axial
         @flood_tracker[:revolving_door].values.each do |channel_entries|
           channel_entries.each do |uuid, line_array|
             line_array.delete_if { |part_time| part_time + @flood_limits[:revolving_door].first[:time] < Time.now }
-            if (channel_entries[uuid].count.zero?)
+            if (channel_entries[uuid].empty?)
               channel_entries.delete(uuid)
             end
           end

@@ -30,17 +30,17 @@ module Axial
         @raw_consumer.start
         @chat_consumer.start
         LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
-          Timeout.timeout(@connect_timeout) do
-            if (@server.ssl?)
-              context = OpenSSL::SSL::SSLContext.new
-              context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-              tcp_socket = ::TCPSocket.new(@server.address, @server.port)
-              @conn = OpenSSL::SSL::SSLSocket.new(tcp_socket, context)
-              @conn.connect
-            else
-              @conn = TCPSocket.new(@server.address, @server.port)
-            end
+        Timeout.timeout(@connect_timeout) do
+          if (@server.ssl?)
+            context = OpenSSL::SSL::SSLContext.new
+            context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+            tcp_socket = ::TCPSocket.new(@server.address, @server.port)
+            @conn = OpenSSL::SSL::SSLSocket.new(tcp_socket, context)
+            @conn.connect
+          else
+            @conn = TCPSocket.new(@server.address, @server.port)
           end
+        end
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
         @bot.timer.delete(@uhost_timer)

@@ -25,7 +25,7 @@ module Axial
           video.json = json
           if (json.key?('items') && json['items'].is_a?(Array))
             items = json['items']
-            if (items.count > 0)
+            if (items.any?)
               video.found = true
               item = items[0]
               if (item.key?('id') && item['id'].is_a?(String))

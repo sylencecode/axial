@@ -88,7 +88,7 @@ module Axial
       end
 
       def market_quote(channel, nick, command)
-        symbols               = %w(DIA SPY QQQ IWM)
+        symbols               = %w[DIA SPY QQQ IWM]
         LOGGER.debug("market quote request from #{nick.uhost}: #{symbols.join(', ')}")
         results = API::IEXTrading::V10::Stock::Market.batch(symbols)
         render_market_quote(channel, nick, 'market quote', results, true)
@@ -101,7 +101,7 @@ module Axial
       end
 
       def crypto_quote(channel, nick, command)
-        symbols = %w(BTC ETH XRP BCH LTC)
+        symbols = %w[BTC ETH XRP BCH LTC]
         LOGGER.debug("crypto quote request from #{nick.uhost}: #{symbols.join(', ')}")
         results = API::CryptoCompare::Data.price_multi_full(symbols)
         render_market_quote(channel, nick, 'crypto quote', results, true)
@@ -115,10 +115,10 @@ module Axial
 
       def colorify_result(result)
         change_pct = format('%.2f', (result.change.to_f.abs / result.latest_price.to_f.abs).to_f * 100.0) + '%'
-        if (result.change < 0)
+        if (result.change.negative?)
           quote_color   = Colors.red
           change_string = "\u2193 " + format('%.2f', result.change.to_f.round(2).to_s).gsub(/^-/, '') + " (#{change_pct})"
-        elsif (result.change == 0)
+        elsif (result.change.zero?)
           quote_color   = Colors.reset
           change_string = format('%.2f', result.change.to_f.round(2).to_s) + " (#{change_pct})"
         else

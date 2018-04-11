@@ -67,9 +67,9 @@ module Axial
               msg += " #{Colors.gray}|#{Colors.reset} "
               msg += "visibility: #{conditions.visibility_mi}mi"
               msg += " #{Colors.gray}|#{Colors.reset} "
-              if (conditions.wind_mph > 0)
+              if (conditions.wind_mph.positive?)
                 msg += "winds: #{conditions.wind_mph}mph from #{conditions.wind_dir.downcase}"
-                if (conditions.wind_gust_mph > 0)
+                if (conditions.wind_gust_mph.positive?)
                   msg += " (gusts up to #{conditions.wind_gust_mph}mph)"
                 end
               else

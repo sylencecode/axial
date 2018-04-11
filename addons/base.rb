@@ -49,14 +49,14 @@ module Axial
 
       def send_help(channel, nick, command)
         channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
-        if (@bot.addons.count > 0)
+        if (@bot.addons.any?)
           @bot.addons.each do |addon|
             if (addon[:name] == 'base')
               next
             end
             channel_binds = addon[:object].binds.select { |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
             bind_string = ''
-            if (channel_binds.count > 0)
+            if (channel_binds.any?)
               commands = channel_binds.collect { |bind| @bot.channel_command_character + bind[:command] }
               bind_string = ' (' + commands.sort.join(', ') + ')'
             end
@@ -71,7 +71,7 @@ module Axial
           return
         end
 
-        if (@bot.addons.count == 0)
+        if (@bot.addons.empty?)
           channel.message('no addons loaded.')
         else
           LOGGER.info("#{user.pretty_name} reloaded addons.")

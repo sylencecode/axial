@@ -5,8 +5,7 @@ module Axial
   module Axnet
     class SystemInfo
       attr_reader   :os, :cpu_model, :cpu_mhz, :cpu_logical_processors, :mem_free, :mem_total, :kernel_name,
-                    :kernel_release, :kernel_machine, :ruby_version, :ruby_patch_level, :ruby_platform,
-                    :addons
+                    :kernel_release, :kernel_machine, :ruby_version, :ruby_patch_level, :ruby_platform
 
       attr_accessor :startup_time, :addons, :latest_commit
 
@@ -29,7 +28,7 @@ module Axial
       end
 
       def self.from_environment()
-        plugins = %w(platform cpu uptime memory hostnamectl hardware)
+        plugins = %w[platform cpu uptime memory hostnamectl hardware]
         ohai_parser = Ohai::System.new
         ohai_parser.load_plugins
         ohai_parser.run_plugins(true, plugins)

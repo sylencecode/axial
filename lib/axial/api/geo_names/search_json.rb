@@ -33,9 +33,9 @@ module Axial
 
           if (json.key?('totalResultsCount'))
             result_count = json['totalResultsCount'].to_i
-            if (result_count > 0)
+            if (result_count.positive?)
               geonames = json['geonames']
-              if (geonames.is_a?(Array) && geonames.count > 0)
+              if (geonames.is_a?(Array) && geonames.any?)
                 result.found = true
                 geoname = geonames[0]
                 if (geoname.key?('countryCode'))

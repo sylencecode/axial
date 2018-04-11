@@ -124,7 +124,7 @@ module Axial
     end
 
     def load_addons()
-      if (@addon_list.count == 0)
+      if (@addon_list.empty?)
         LOGGER.debug('No addons specified.')
       else
         @addon_list.each do |addon|

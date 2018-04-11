@@ -39,7 +39,7 @@ module Axial
             query = json['query']
             if (query.key?('pages') && query['pages'].is_a?(Hash))
               pages = query['pages']
-              if (pages.count > 0)
+              if (pages.any?)
                 page = pages.values[0]
                 if (page.key?('pageid'))
                   article.found = true

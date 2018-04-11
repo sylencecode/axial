@@ -196,7 +196,7 @@ module Axial
               dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: none")
             else
               addon_chunks.each_with_index do |chunk, i|
-                if (i == 0)
+                if (i.zero?)
                   dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
                 else
                   dcc.message("#{Colors.gray}|#{Colors.reset}                   #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")

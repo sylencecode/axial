@@ -23,7 +23,7 @@ module Axial
       def handle_youtube(channel, nick, text)
         youtube_id = ''
         parsed_urls = URIUtils.extract(text)
-        if (parsed_urls.count == 0)
+        if (parsed_urls.empty?)
           return
         end
         video_url = parsed_urls.first
@@ -33,10 +33,8 @@ module Axial
         elsif (uri.host =~ /youtube\.com/)
           query = CGI.parse(uri.query)
           if (query.key?('v'))
-            if (query['v'].is_a?(Array))
-              if (query['v'].count > 0)
-                youtube_id = query['v'][0]
-              end
+            if (query['v'].is_a?(Array) && query['v'].any?)
+              youtube_id = query['v'][0]
             end
           end
         end
