@@ -48,9 +48,9 @@ module Axial
                 end
               end
               if (item.key?('contentDetails') && item['contentDetails'].is_a?(Hash))
-                contentDetails = item['contentDetails']
-                if (contentDetails.key?('duration') && contentDetails['duration'].is_a?(String) && !contentDetails['duration'].empty?)
-                  duration = contentDetails['duration'].strip.downcase
+                content_details = item['contentDetails']
+                if (content_details.key?('duration') && content_details['duration'].is_a?(String) && !content_details['duration'].empty?)
+                  duration = content_details['duration'].strip.downcase
                   if (duration =~ /^pt(.*)/)
                     raw_duration = Regexp.last_match[1]
                     if (raw_duration =~ /(\d+)h/)

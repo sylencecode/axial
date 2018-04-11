@@ -21,6 +21,8 @@ Layout/SpaceInsideStringInterpolation:
   Enabled: false
 Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
+Layout/SpaceInsidePercentLiteralDelimiters:
+  Enabled: false
 Lint/HandleExceptions:
   Enabled: false
 Lint/RescueException:

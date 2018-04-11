@@ -82,7 +82,7 @@ module Axial
             channel_list.all_channels.each do |channel|
               channel.message(text)
             end
-            ingested = ingested + 1
+            ingested += 1
           end
 
           if (ingested.positive?) # if any valid articles were found, update the last ingest timestamp
