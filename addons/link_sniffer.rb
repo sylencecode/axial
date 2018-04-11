@@ -6,7 +6,6 @@ require 'axial/api/web_of_trust/v0_4/public_link_json2'
 module Axial
   module Addons
     class LinkSniffer < Axial::Addon
-
       def initialize(bot)
         super
 

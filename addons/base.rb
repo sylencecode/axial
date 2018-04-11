@@ -3,7 +3,6 @@ require 'axial/addon'
 module Axial
   module Addons
     class Base < Axial::Addon
-
       def initialize(bot)
         super
 

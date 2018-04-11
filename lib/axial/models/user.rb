@@ -15,7 +15,6 @@ end
 
 module Axial
   module Models
-
     # note to self: you can use this if your model does not directly imply a table
     # User = Class.new(Sequel::Model)
     # class User
@@ -59,7 +58,6 @@ module Axial
           end
         end
         return possible_users
-        possible_users = []
       end
 
       def self.get_user_from_mask(in_mask)

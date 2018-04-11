@@ -173,7 +173,7 @@ module Axial
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         end
 
-        request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+        request = YAML.safe_load(serialized_yaml.gsub(/\0/, "\n"))
 
         case request.type
           when :op
@@ -202,7 +202,7 @@ module Axial
           axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + serialized_yaml)
         end
 
-        response = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+        response = YAML.safe_load(serialized_yaml.gsub(/\0/, "\n"))
 
         case response.type
           when :keyword

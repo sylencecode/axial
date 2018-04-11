@@ -11,7 +11,6 @@ require 'axial/models/user'
 module Axial
   module Models
     class Mask < Sequel::Model
-
       many_to_one :user
     end
   end

@@ -15,6 +15,10 @@ Layout/IndentHash:
   Enabled: false
 Layout/SpaceAroundOperators:
   Enabled: false
+Layout/SpaceBeforeFirstArg:
+  Enabled: false
+Layout/SpaceInsideStringInterpolation:
+  Enabled: false
 Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
 Lint/HandleExceptions:
@@ -26,6 +30,8 @@ Metrics/LineLength:
 Style/IfUnlessModifier:
   Enabled: false
 Style/NegatedIf:
+  Enabled: false
+Style/CommandLiteral:
   Enabled: false
 Style/DefWithParentheses:
   Enabled: false

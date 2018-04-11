@@ -60,7 +60,7 @@ module Axial
         in_mask = MaskUtils.ensure_wildcard(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
-          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect { |user| user.pretty_name_with_color} .join(', ')}")
+          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect { |user| user.pretty_name_with_color } .join(', ')}")
         end
         return possible_users.uniq.first
       end

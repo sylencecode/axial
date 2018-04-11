@@ -5,7 +5,6 @@ require 'axial/uri_utils'
 module Axial
   module Addons
     class Wikipedia < Axial::Addon
-
       def initialize(bot)
         super
 

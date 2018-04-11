@@ -11,13 +11,13 @@ module Axial
       return timespan
     end
 
-    def initialize(_time1, _time2)
-      if (_time1 > _time2)
-        now = _time1
-        later = _time2
+    def initialize(left_time, right_time)
+      if (left_time > right_time)
+        now = left_time
+        later = right_time
       else
-        now = _time2
-        later = _time1
+        now = right_time
+        later = left_time
       end
       total_seconds = (now - later).to_i
       minute = 60

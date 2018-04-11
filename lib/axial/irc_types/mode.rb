@@ -114,11 +114,11 @@ module Axial
       end
 
       def set_keyword(keyword)
-        @keyword = { type: :set, value: keyword}
+        @keyword = { type: :set, value: keyword }
       end
 
       def unset_keyword(keyword)
-        @keyword = { type: :unset, value: keyword}
+        @keyword = { type: :unset, value: keyword }
       end
 
       def limit?()
@@ -139,9 +139,9 @@ module Axial
 
       def limit=(limit)
         if (limit < 1)
-          @limit = { type: :unset, value: ''}
+          @limit = { type: :unset, value: '' }
         else
-          @limit = { type: :set, value: limit}
+          @limit = { type: :set, value: limit }
         end
       end
 
@@ -419,10 +419,10 @@ module Axial
         sets = []
         unsets = []
         @bans.each do |value|
-          sets.push({mode: 'b', value: value})
+          sets.push({ mode: 'b', value: value })
         end
         @unbans.each do |value|
-          unsets.push({mode: 'b', value: value})
+          unsets.push({ mode: 'b', value: value })
         end
 
         if (@invite_only == :set)

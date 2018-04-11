@@ -259,7 +259,7 @@ module Axial
             when /^start$/i, /^start\s+/i
               start_ingest(channel, nick)
               return
-          else
+            else
               send_help(channel, nick)
               return
           end

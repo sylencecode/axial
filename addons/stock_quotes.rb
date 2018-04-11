@@ -50,9 +50,9 @@ module Axial
           company_symbol_length   = results.values.collect { |result|                 "#{result.company_name} (#{result.symbol})".length }.max
         end
         change_length             = results.values.collect { |result|                                  colorify_result(result)[1].length }.max
-        latest_price_length       = results.values.collect { |result| (format("%.2f", result.latest_price.to_f.round(2).to_s)).to_s.length }.max
-        low_length                = results.values.collect { |result| (format("%.2f",          result.low.to_f.round(2).to_s)).to_s.length }.max
-        high_length               = results.values.collect { |result| (format("%.2f",         result.high.to_f.round(2).to_s)).to_s.length }.max
+        latest_price_length       = results.values.collect { |result| (format('%.2f', result.latest_price.to_f.round(2).to_s)).to_s.length }.max
+        low_length                = results.values.collect { |result| (format('%.2f',          result.low.to_f.round(2).to_s)).to_s.length }.max
+        high_length               = results.values.collect { |result| (format('%.2f',         result.high.to_f.round(2).to_s)).to_s.length }.max
         type_string_length        =                                                                                        type_string.length
 
         if (results.any?)

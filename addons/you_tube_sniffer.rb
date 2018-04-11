@@ -5,7 +5,6 @@ require 'axial/uri_utils'
 module Axial
   module Addons
     class YouTubeSniffer < Axial::Addon
-
       def initialize(bot)
         super
 

@@ -1,7 +1,7 @@
 require 'openssl'
 require 'fileutils'
 
-class CertError < Exception
+class CertError < StandardError
 end
 
 module Axial
@@ -88,7 +88,7 @@ module Axial
         extension_factory.create_extension('basicConstraints', 'CA:TRUE', true),
         extension_factory.create_extension('subjectKeyIdentifier', 'hash'),
         extension_factory.create_extension('keyUsage', 'cRLSign,keyCertSign'),
-        extension_factory.create_extension('crlDistributionPoints', 'URI:http://axnet-ca.axnet.local', false),
+        extension_factory.create_extension('crlDistributionPoints', 'URI:http://axnet-ca.axnet.local', false)
       ]
 
       ca_cert.sign(private_key, OpenSSL::Digest::SHA512.new)

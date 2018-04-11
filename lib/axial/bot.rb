@@ -131,7 +131,7 @@ module Axial
           begin
             load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
             addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
-            @addons.push({name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object})
+            @addons.push({ name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object })
             addon_object.binds.each do |bind|
               if (bind[:type] == :mode)
                 @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])

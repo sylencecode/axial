@@ -5,7 +5,6 @@ require 'axial/api/wunderground/q'
 module Axial
   module Addons
     class Weather < Axial::Addon
-
       def initialize(bot)
         super
 
