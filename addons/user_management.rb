@@ -633,7 +633,7 @@ module Axial
           else
             dcc.message("user: #{user_model.pretty_name}")
             dcc.message("role: #{user_model.role.name_with_color}")
-            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime("%A, %B %-d, %Y at %l:%M%p (%Z)")}")
+            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime('%A, %B %-d, %Y at %l:%M%p (%Z)')}")
 
             on_channels = {}
 

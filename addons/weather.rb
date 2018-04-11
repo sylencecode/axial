@@ -57,7 +57,7 @@ module Axial
             conditions = API::WUnderground::Q.get_current_conditions(location)
             if (conditions.found)
               msg  = "#{Colors.gray}[#{Colors.cyan}weather#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{conditions.location}#{Colors.gray}]#{Colors.reset} "
-              msg += "#{conditions.weather.downcase}"
+              msg += (conditions.weather.downcase).to_s
               msg += " #{Colors.gray}|#{Colors.reset}"
               msg += "#{weather_color(conditions.temp_f)} #{conditions.temp_f}f#{Colors.reset}"
               msg += " #{Colors.gray}|#{Colors.reset} "

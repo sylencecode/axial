@@ -204,7 +204,7 @@ module Axial
             end
             if (!system_info.latest_commit.nil?)
               gc = system_info.latest_commit
-              commit_string = "#{gc.date.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
+              commit_string = "#{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
               dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
             end
             dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since}")

@@ -71,8 +71,8 @@ module Axial
         @server_interface.send_private_message(@name, text)
       end
 
-      def ==(other_nick)
-        return (self.uhost == other_nick.uhost)
+      def ==(other)
+        return (self.uhost == other.uhost)
       end
 
       def match_mask?(in_mask)

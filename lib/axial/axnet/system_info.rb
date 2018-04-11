@@ -80,7 +80,7 @@ module Axial
 
       def self.get_os_string(ohai_hash)
         if (ohai_hash.key?('hostnamectl') && ohai_hash['hostnamectl'].key?('operating_system'))
-          os_string = "#{ohai_hash['hostnamectl']['operating_system']}"
+          os_string = (ohai_hash['hostnamectl']['operating_system']).to_s
         elsif (ohai_hash.key?('hardware') && ohai_hash['hardware'].key?('operating_system'))
           os_string = "#{ohai_hash['hardware']['operating_system']} #{ohai_hash['hardware']['operating_system_version']}"
         else

@@ -36,13 +36,13 @@ module Axial
 
     def short_to_s()
       elapsed = "#{@seconds}s"
-      if ( @hours.positive? || @minutes.positive?)
+      if (@hours.positive? || @minutes.positive?)
         elapsed = "#{@minutes}m#{elapsed}"
       end
-      if ( @days.positive? || @hours.positive?)
+      if (@days.positive? || @hours.positive?)
         elapsed = "#{@hours}h#{elapsed}"
       end
-      if ( @days.positive?)
+      if (@days.positive?)
         elapsed = "#{@days}d#{elapsed}"
       end
       return elapsed

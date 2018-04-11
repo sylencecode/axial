@@ -500,7 +500,7 @@ module Axial
           values_string += set[:value].empty? ? '' : "#{set[:value]} "
 
           if (counter == @max_modes)
-            out_string = "#{mode_string.strip}#{values_string.empty? ? '' : " "}#{values_string.strip}"
+            out_string = "#{mode_string.strip}#{values_string.empty? ? '' : ' '}#{values_string.strip}"
             out.push(out_string)
             out_string = ''
             mode_string = ''
@@ -525,7 +525,7 @@ module Axial
           values_string += unset[:value].empty? ? '' : "#{unset[:value]} "
 
           if (counter == @max_modes)
-            out_string = "#{mode_string.strip}#{values_string.empty? ? '' : " "}#{values_string.strip}"
+            out_string = "#{mode_string.strip}#{values_string.empty? ? '' : ' '}#{values_string.strip}"
             out.push(out_string)
             out_string = ''
             mode_string = ''
@@ -534,7 +534,7 @@ module Axial
             switched = false
           end
         end
-        out_string = "#{mode_string.strip}#{values_string.empty? ? '' : " "}#{values_string.strip}"
+        out_string = "#{mode_string.strip}#{values_string.empty? ? '' : ' '}#{values_string.strip}"
         if (!out_string.empty?)
           out.push(out_string)
         end

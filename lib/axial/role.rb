@@ -52,43 +52,43 @@ module Axial
       end
     end
 
-    def ==(right)
-      if (right.is_a?(Symbol))
-        return self.numeric == Role.numerics[right]
+    def ==(other)
+      if (other.is_a?(Symbol))
+        return self.numeric == Role.numerics[other]
       else
-        return self.numeric == right.numeric
+        return self.numeric == other.numeric
       end
     end
 
-    def <(right)
-      if (right.is_a?(Symbol))
-        return self.numeric < Role.numerics[right]
+    def <(other)
+      if (other.is_a?(Symbol))
+        return self.numeric < Role.numerics[other]
       else
-        return self.numeric < right.numeric
+        return self.numeric < other.numeric
       end
     end
 
-    def <=(right)
-      if (right.is_a?(Symbol))
-        return self.numeric <= Role.numerics[right]
+    def <=(other)
+      if (other.is_a?(Symbol))
+        return self.numeric <= Role.numerics[other]
       else
-        return self.numeric <= right.numeric
+        return self.numeric <= other.numeric
       end
     end
 
-    def >(right)
-      if (right.is_a?(Symbol))
-        return self.numeric > Role.numerics[right]
+    def >(other)
+      if (other.is_a?(Symbol))
+        return self.numeric > Role.numerics[other]
       else
-        return self.numeric > right.numeric
+        return self.numeric > other.numeric
       end
     end
 
-    def >=(right)
-      if (right.is_a?(Symbol))
-        return self.numeric >= Role.numerics[right]
+    def >=(other)
+      if (other.is_a?(Symbol))
+        return self.numeric >= Role.numerics[other]
       else
-        return self.numeric >= right.numeric
+        return self.numeric >= other.numeric
       end
     end
 
