@@ -45,7 +45,7 @@ module Axial
       def handle_kick(channel, kicker_nick, kicked_nick, reason)
         user = get_bot_or_user(kicker_nick)
         possible_user = get_bot_or_user(kicked_nick)
-        if (!possible_user.nil? && possible_user.role.op?)
+        if (bot_or_op?(possible_user))
           if (!bot_or_director?(user))
             if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
               channel.deop(kicker_nick)
@@ -133,21 +133,32 @@ module Axial
         response_mode = IRCTypes::Mode.new(server)
         channel.nick_list.all_nicks.each do |subject_nick|
           possible_user = get_bot_or_user(subject_nick)
-          if (possible_user.nil?)
-            next
-          elsif (possible_user.role.op?)
-            if (!subject_nick.opped_on?(channel))
-              response_mode.op(subject_nick.name)
+          if (!possible_user.nil?)
+            if (bot_or_op?(possible_user))
+              # op bots and ops
+              if (!subject_nick.opped_on?(channel))
+                response_mode.op(subject_nick.name)
+              end
+            elsif (possible_user.role.friend?)
+              # voice friends
+              if (!subject_nick.voiced_on?(channel))
+                response_mode.voice(subject_nick.name)
+              end
+            else
+              # paranoia - deop non-ops, device non-friends
+              if (subject_nick.opped_on?(channel))
+                response_mode.deop(subject_nick)
+              elsif (subject_nick.voiced_on?(channel))
+                response_mode.devoice(subject_nick)
+              end
             end
-          elsif (possible_user.role.friend?)
-            if (!subject_nick.voiced_on?(channel))
-              response_mode.voice(subject_nick.name)
+          else
+            # paranoia - deop non-ops, device non-friends
+            if (subject_nick.opped_on?(channel))
+             response_mode.deop(subject_nick)
+            elsif (subject_nick.voiced_on?(channel))
+             response_mode.devoice(subject_nick)
             end
-          # else
-          # if (subject_nick.opped_on?(channel))
-          #   response_mode.deop(subject_nick)
-          # elsif (subject_nick.voiced_on?(channel))
-          #   response_mode.devoice(subject_nick)
           end
         end
 
@@ -233,11 +244,12 @@ module Axial
               # re-op users and penalize offender unless deopped by a director or bot
               subject_nick = channel.nick_list.get(deop)
               possible_user = get_bot_or_user(subject_nick)
-              if (!possible_user.nil? && possible_user.role.op?)
+              if (bot_or_op?(possible_user))
+                if (!subject_nick.opped_on?(channel))
+                  response_mode.op(subject_nick.name)
+                end
+
                 if (!bot_or_director?(user))
-                  if (!subject_nick.opped_on?(channel))
-                    response_mode.op(subject_nick.name)
-                  end
                   if (!nick.is_a?(IRCTypes::Server) && nick.opped_on?(channel))
                     response_mode.deop(nick)
                   end
@@ -407,6 +419,10 @@ module Axial
 
       def bot_or_director?(user)
         return (!user.nil? && (user.role.bot? || user.role.director?))
+      end
+
+      def bot_or_op?(user)
+        return (!user.nil? && (user.role.bot? || user.role.op?))
       end
 
       def stop_ban_cleanup_timer()
