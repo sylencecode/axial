@@ -7,6 +7,7 @@ module Axial
   class Timer
     attr_reader     :uuid, :last, :type, :interval
     attr_accessor   :thread
+    attr_writer     :expired, :repeat
 
     def initialize(repeat, interval, *args, &block)
       if (interval <= 0)
@@ -36,20 +37,12 @@ module Axial
       end
     end
 
-    def expired=(expired)
-      @expired = expired
-    end
-
     def expired?()
       return @expired
     end
 
     def repeat?()
       return @repeat
-    end
-
-    def repeat=(repeat)
-      @repeat = repeat
     end
 
     def execute()

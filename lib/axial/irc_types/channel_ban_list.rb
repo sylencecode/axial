@@ -4,6 +4,8 @@ require 'axial/irc_types/channel_ban'
 module Axial
   module IRCTypes
     class ChannelBanList
+      attr_writer :synced
+
       def initialize(channel)
         @channel  = channel
         @ban_list = []
@@ -20,10 +22,6 @@ module Axial
 
       def synced?()
         return @synced
-      end
-
-      def synced=(synced)
-        @synced = synced
       end
 
       def include?(mask)

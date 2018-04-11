@@ -548,11 +548,6 @@ module Axial
         end
         text = unstripped_text.strip
 
-        ignore_list = [ 'howto', 'lockie']
-        if (ignore_list.include?(nick.name.downcase))
-          return
-        end
-
         if (text.empty?)
           return
         end

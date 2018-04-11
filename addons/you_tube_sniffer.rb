@@ -51,7 +51,7 @@ module Axial
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += video.duration.short_to_s
             msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} views"
+            msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views"
             msg += " #{Colors.gray}|#{Colors.reset} "
             msg += video.irc_description
             msg += " #{Colors.gray}|#{Colors.reset} "

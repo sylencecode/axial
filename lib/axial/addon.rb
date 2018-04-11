@@ -461,12 +461,12 @@ module Axial
         end
       elsif (command.is_a?(String))
         if (args.any?)
-          command.split('|').each do |command|
-            @binds.push(type: :dcc, command: command, method: method, args: args, silent: silent)
+          command.split('|').each do |command_part|
+            @binds.push(type: :dcc, command: command_part, method: method, args: args, silent: silent)
           end
         else
-          command.split('|').each do |command|
-            @binds.push(type: :dcc, command: command, method: method, silent: silent)
+          command.split('|').each do |command_part|
+            @binds.push(type: :dcc, command: command_part, method: method, silent: silent)
           end
         end
         if (silent)
@@ -560,12 +560,12 @@ module Axial
         LOGGER.debug("channel expression '#{command.source}' will invoke method '#{self.class}.#{method}'")
       elsif (command.is_a?(String))
         if (args.any?)
-          command.split('|').each do |command|
-            @binds.push(type: :channel, command: command, method: method, args: args)
+          command.split('|').each do |command_part|
+            @binds.push(type: :channel, command: command_part, method: method, args: args)
           end
         else
-          command.split('|').each do |command|
-            @binds.push(type: :channel, command: command, method: method)
+          command.split('|').each do |command_part|
+            @binds.push(type: :channel, command: command_part, method: method)
           end
         end
         LOGGER.debug("channel command '#{@bot.channel_command_character}#{command}' will invoke method '#{self.class}.#{method}'")
@@ -646,12 +646,12 @@ module Axial
         end
       elsif (command.is_a?(String))
         if (args.any?)
-          command.split('|').each do |command|
-            @binds.push(type: :privmsg, command: command, method: method, args: args, silent: silent)
+          command.split('|').each do |command_part|
+            @binds.push(type: :privmsg, command: command_part, method: method, args: args, silent: silent)
           end
         else
           command.split('|').each do |command|
-            @binds.push(type: :privmsg, command: command, method: method, silent: silent)
+            @binds.push(type: :privmsg, command: command_part, method: method, silent: silent)
           end
         end
         if (silent)

@@ -2,6 +2,7 @@ module Axial
   module IRCTypes
     class DCC
       attr_accessor :user, :socket
+      attr_writer   :state_data
 
       def initialize(server_interface)
         @server_interface = server_interface
@@ -20,10 +21,6 @@ module Axial
 
       def status=(status)
         @state_data[:status] = status
-      end
-
-      def state_data=(state_data)
-        @state_data = state_data
       end
 
       def remote_ip()
