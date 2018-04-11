@@ -28,11 +28,11 @@ module Axial
             channel_name, created_at = Regexp.last_match.captures
             @bot.channel_handler.dispatch_created(channel_name, created_at.to_i)
           when Channel::INITIAL_MODE
-           channel_name, initial_mode = Regexp.last_match.captures
-           @bot.channel_handler.handle_initial_mode(channel_name, initial_mode)
+            channel_name, initial_mode = Regexp.last_match.captures
+            @bot.channel_handler.handle_initial_mode(channel_name, initial_mode)
           when Channel::INITIAL_TOPIC
-           channel_name, initial_topic = Regexp.last_match.captures
-           @bot.channel_handler.handle_initial_topic(channel_name, initial_topic)
+            channel_name, initial_topic = Regexp.last_match.captures
+            @bot.channel_handler.handle_initial_topic(channel_name, initial_topic)
           when Channel::INVITED
             uhost, channel_name = Regexp.last_match.captures
             @bot.channel_handler.handle_invited_to_channel(uhost, channel_name)

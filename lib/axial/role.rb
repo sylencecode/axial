@@ -92,7 +92,6 @@ module Axial
       end
     end
 
-
     def color()
       case @name
         when 'root'

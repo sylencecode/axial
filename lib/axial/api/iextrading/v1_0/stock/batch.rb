@@ -4,14 +4,13 @@ require 'uri'
 require 'json'
 require 'axial/api/iextrading/v1_0/stock/stock_result'
 
-
 module Axial
   module API
     module IEXTrading
       module V10
         REST_API = 'https://api.iextrading.com/1.0'.freeze
         module Stock
-         REST_API = API::IEXTrading::V10::REST_API + '/stock'.freeze
+          REST_API = API::IEXTrading::V10::REST_API + '/stock'.freeze
           class Market
             @rest_api = API::IEXTrading::V10::Stock::REST_API + '/market'.freeze
             def self.batch(symbols)
@@ -21,7 +20,7 @@ module Axial
                 raise(ArgumentError, "Invalid query provided to #{self.class}: #{symbols.inspect}")
               end
 
-              params = Hash.new
+              params = {}
 
               headers = {
                           accept: 'application/json'

@@ -4,7 +4,6 @@ require 'uri'
 require 'json'
 require 'axial/api/crypto_compare/crypto_result'
 
-
 module Axial
   module API
     module CryptoCompare
@@ -19,7 +18,7 @@ module Axial
             raise(ArgumentError, "Invalid query provided to #{self.class}: #{symbols.inspect}")
           end
 
-          params = Hash.new
+          params = {}
 
           headers = {
               accept: 'application/json'

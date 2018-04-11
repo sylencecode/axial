@@ -28,7 +28,6 @@ module Axial
         end
       end
 
-
       def self.upsert(feed_name, url, user_model)
         if (!user_model.is_a?(Models::User))
           raise(UserObjectError, "#{self.class}.upsert requires a Models::User object")

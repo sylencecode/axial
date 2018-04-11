@@ -280,7 +280,7 @@ module Axial
           channel.message("#{nick.name}: please provide source text.")
           return nil
         elsif (text.length > 319)
-         text = text[0..319]
+          text = text[0..319]
         end
         return text
       rescue Exception => ex

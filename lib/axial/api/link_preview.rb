@@ -7,8 +7,8 @@ require 'axial/api/link_preview_result'
 module Axial
   module API
     module LinkPreview
-      REST_API  = 'https://api.linkpreview.net'
-      API_KEY   = '5abc7576a270f47fa1e27cc0c050aaf8f02272045eca0'
+      REST_API  = 'https://api.linkpreview.net'.freeze
+      API_KEY   = '5abc7576a270f47fa1e27cc0c050aaf8f02272045eca0'.freeze
 
       # submits a url to the link preview service for title and text snippets
       # @param url [String] url to preview

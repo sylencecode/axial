@@ -71,7 +71,7 @@ module Axial
             end
             if (observation.key?('relative_humidity'))
               if (observation['relative_humidity'] =~ /(\d+)/)
-                conditions.relative_humidity = $1.to_i
+                conditions.relative_humidity = Regexp.last_match[1].to_i
               end
             end
             if (observation.key?('temp_c'))

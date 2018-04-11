@@ -70,7 +70,6 @@ module Axial
         return possible_users.first
       end
 
-
       def set_password(plaintext_password)
         encrypted_password = BCrypt::Password.create(plaintext_password)
         self.update(password: encrypted_password)

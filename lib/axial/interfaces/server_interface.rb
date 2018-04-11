@@ -80,7 +80,7 @@ module Axial
           when 'VERSION'
             send_ctcp_reply(nick, ctcp_command, "#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
           else
-          LOGGER.debug("unknown ctcp #{ctcp_command.inspect} request from #{nick.name}: #{ctcp_args}")
+            LOGGER.debug("unknown ctcp #{ctcp_command.inspect} request from #{nick.name}: #{ctcp_args}")
         end
       end
 

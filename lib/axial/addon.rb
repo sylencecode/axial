@@ -650,7 +650,7 @@ module Axial
             @binds.push(type: :privmsg, command: command_part, method: method, args: args, silent: silent)
           end
         else
-          command.split('|').each do |command|
+          command.split('|').each do |command_part|
             @binds.push(type: :privmsg, command: command_part, method: method, silent: silent)
           end
         end

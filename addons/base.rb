@@ -75,12 +75,12 @@ module Axial
           channel.message('no addons loaded.')
         else
           LOGGER.info("#{user.pretty_name} reloaded addons.")
-          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_list = @bot.addons.reject { |addon| addon[:name] == 'base' }
           addon_names = addon_list.collect { |addon| addon[:name] }
           channel.message("unloading addons: #{addon_names.join(', ')}")
           @bot.git_pull
           @bot.reload_addons
-          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_list = @bot.addons.reject { |addon| addon[:name] == 'base' }
           addon_names = addon_list.collect { |addon| addon[:name] }
           channel.message("loaded addons: #{addon_names.join(', ')}")
         end

@@ -19,7 +19,7 @@ module Axial
           end
 
           query = in_query.strip
-          params = Hash.new
+          params = {}
           params[:username]  = $geonames_user
           params[:q]         = query
           params[:maxRows]   = 1

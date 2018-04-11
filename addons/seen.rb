@@ -10,7 +10,6 @@ module Axial
   end
 end
 
-
 module Axial
   module Addons
     class Seen < Axial::Addon

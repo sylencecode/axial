@@ -1,6 +1,5 @@
 require 'logger'
 
-
 module Axial
   class Logger
     def initialize(dest)

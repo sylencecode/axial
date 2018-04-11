@@ -260,8 +260,8 @@ module Axial
               start_ingest(channel, nick)
               return
           else
-            send_help(channel, nick)
-            return
+              send_help(channel, nick)
+              return
           end
         rescue Exception => ex
           channel.message("#{self.class} error: #{ex.class}: #{ex.message}")

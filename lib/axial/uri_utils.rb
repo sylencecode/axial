@@ -24,7 +24,7 @@ module Axial
       url_array = []
       url_string = in_string.strip
       if (!url_string.empty?)
-        urls = URI.extract(url_string, ['http', 'https'])
+        urls = URI.extract(url_string, [ 'http', 'https' ])
         urls.each do |url|
           url = strip_extra_characters(url)
           url_array.push(url)
@@ -38,7 +38,7 @@ module Axial
         stripped_url = strip_extra_characters(in_url)
         if (stripped_url.empty?)
           raise(ArgumentError, 'Empty URI provided to URLShortenerAPI')
-        elsif (!(stripped_url =~ URI.regexp))
+        elsif (stripped_url !~ URI::DEFAULT_PARSER.make_regexp)
           raise(ArgumentError, "Invalid URI provided to URLShortenerAPI: #{in_url}")
         end
       else

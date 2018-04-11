@@ -12,7 +12,7 @@ module Axial
         @rest_api = 'https://www.googleapis.com/youtube/v3/videos'
 
         def self.get_video(id)
-          params = Hash.new
+          params = {}
           params[:part]    = 'snippet,contentDetails,statistics'
           params[:id]      = id
           params[:fields]  = 'items(id,contentDetails/duration,statistics/viewCount,snippet/title,snippet/description)'
@@ -52,15 +52,15 @@ module Axial
                 if (contentDetails.key?('duration') && contentDetails['duration'].is_a?(String) && !contentDetails['duration'].empty?)
                   duration = contentDetails['duration'].strip.downcase
                   if (duration =~ /^pt(.*)/)
-                    raw_duration = $1
+                    raw_duration = Regexp.last_match[1]
                     if (raw_duration =~ /(\d+)h/)
-                      video.duration.hours = $1.to_i
+                      video.duration.hours = Regexp.last_match[1].to_i
                     end
                     if (raw_duration =~ /(\d+)m/)
-                      video.duration.minutes = $1.to_i
+                      video.duration.minutes = Regexp.last_match[1].to_i
                     end
                     if (raw_duration =~ /(\d+)s/)
-                      video.duration.seconds = $1.to_i
+                      video.duration.seconds = Regexp.last_match[1].to_i
                     end
                   end
                 end

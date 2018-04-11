@@ -48,7 +48,6 @@ module Axial
         on_privmsg               'join',  :dcc_wrapper, :join_channel
         on_privmsg         'part|leave',  :dcc_wrapper, :part_channel
 
-
         on_dcc                  'lorem',  :dcc_wrapper, :lorem_ipsum
         on_dcc                   'join',  :dcc_wrapper, :join_channel
         on_dcc             'part|leave',  :dcc_wrapper, :part_channel

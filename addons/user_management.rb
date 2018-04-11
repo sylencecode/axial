@@ -479,7 +479,6 @@ module Axial
         end
       end
 
-
       def can_unban?(source, user, nick, ban_models, subject_mask, force)
         can_unban     = false
         possible_bans = Models::Ban.get_bans_from_overlap(subject_mask)
@@ -702,7 +701,6 @@ module Axial
           LOGGER.error(i)
         end
       end
-
 
       def dcc_user_list(dcc, command)
         if (!dcc.user.role.op?)

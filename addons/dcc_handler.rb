@@ -96,12 +96,12 @@ module Axial
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
           dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} reloaded addons.")
-          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_list = @bot.addons.reject { |addon| addon[:name] == 'base' }
           addon_names = addon_list.collect { |addon| addon[:name] }
           dcc.message("unloading addons: #{addon_names.join(', ')}")
           @bot.git_pull
           @bot.reload_addons
-          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_list = @bot.addons.reject { |addon| addon[:name] == 'base' }
           addon_names = addon_list.collect { |addon| addon[:name] }
           dcc.message("loaded addons: #{addon_names.join(', ')}")
         end

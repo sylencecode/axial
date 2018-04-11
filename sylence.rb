@@ -23,9 +23,9 @@ if (ENV['REMOTE_DEBUG'] == 'true')
 
   ssh_notty_pids = %x(pgrep -f 'sshd: axial@notty' | grep -v pgrep).split(/\n/)
   ssh_notty_pids.each do |ssh_notty_pid|
-   if (ssh_notty_pid.to_i != my_sshd_pid)
-     %x(kill -9 #{ssh_notty_pid})
-   end
+    if (ssh_notty_pid.to_i != my_sshd_pid)
+      %x(kill -9 #{ssh_notty_pid})
+    end
   end
 end
 

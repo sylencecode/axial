@@ -138,24 +138,7 @@ module Axial
           LOGGER.debug("stock quote request from #{nick.uhost}: #{symbols.join(', ')}")
           results = API::IEXTrading::V10::Stock::Market.batch(symbols)
           if (results.any?)
-            #results.each do |symbol, result|
-              render_market_quote(channel, nick, 'ticker', results)
-              # quote_color, change_string = colorify_result(result)
-
-              # msg = "#{Colors.gray}[#{Colors.blue} #{result.company_name} #{Colors.gray}]#{Colors.reset} "
-              # msg += "#{quote_color}#{symbol}#{Colors.reset}"
-              # msg += " #{Colors.gray}|#{quote_color} "
-              # msg += "$ #{format("%.2f", result.latest_price.to_f.round(2).to_s)} "
-              # msg += "#{Colors.gray}|#{quote_color} "
-              # msg += "#{change_string}"
-              # msg += " #{Colors.gray}|#{Colors.reset} "
-              # msg += "low: $ #{format("%.2f", result.low.to_f.round(2).to_s)}"
-              # msg += " #{Colors.gray}|#{Colors.reset} "
-              # msg += "high: $ #{format("%.2f", result.high.to_f.round(2).to_s)}"
-              # msg += " #{Colors.gray}|#{Colors.reset} "
-              # msg += "news: #{result.news[:headline]}"
-              # channel.message(msg)
-            #end
+            render_market_quote(channel, nick, 'ticker', results)
           else
             channel.message("#{nick.name}: couldn't find any matches for symbols: #{symbols.join(', ')}")
           end

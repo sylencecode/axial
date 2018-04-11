@@ -3,6 +3,8 @@
 # my preferred coding style.
 AllCops:
   TargetRubyVersion: 2.5.1
+Layout/AlignHash:
+  Enabled: false
 Layout/CaseIndentation:
   Enabled: false
 Layout/ExtraSpacing:
@@ -38,6 +40,8 @@ Style/RedundantReturn:
 Style/RedundantSelf:
   Enabled: false
 Style/RescueStandardError:
+  Enabled: false
+Style/TernaryParentheses:
   Enabled: false
 Style/WhileUntilModifier:
   Enabled: false

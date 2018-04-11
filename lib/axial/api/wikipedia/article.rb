@@ -4,7 +4,7 @@ require 'axial/uri_utils'
 module Axial
   module API
     module Wikipedia
-      WIKIPEDIA_PUBLIC_URL = 'https://en.wikipedia.org/'
+      WIKIPEDIA_PUBLIC_URL = 'https://en.wikipedia.org/'.freeze
 
       class Article
         attr_accessor :id, :extract, :json, :found
@@ -30,7 +30,7 @@ module Axial
           if (@id == '')
             return ''
           else
-            params = Hash.new
+            params = {}
             params[:curid] = @id.to_s
             url = URI.parse(WIKIPEDIA_PUBLIC_URL)
             url.query = URI.encode_www_form(params)

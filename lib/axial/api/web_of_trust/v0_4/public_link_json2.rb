@@ -9,7 +9,7 @@ require 'json'
 module Axial
   module API
     module WebOfTrust
-      REST_API = 'https://api.mywot.com'
+      REST_API = 'https://api.mywot.com'.freeze
       module V0_4
         REST_API = API::WebOfTrust::REST_API + '/0.4'
         class PublicLinkJSON2
@@ -21,7 +21,7 @@ module Axial
               uri = in_uri.strip
               if (uri.empty?)
                 raise(ArgumentError, "#{self.class}: empty uri")
-              elsif (!(uri =~ URI.regexp))
+              elsif (uri !~ URI::DEFAULT_PARSER.make_regexp)
                 raise(ArgumentError, "#{self.class}: invalid uri: #{in_uri.inspect}")
               end
             else
@@ -31,7 +31,7 @@ module Axial
             site_uri       = URI.parse(uri)
             site_host      = site_uri.host.downcase
 
-            params         = Hash.new
+            params         = {}
             params[:key]   = @api_key
             params[:hosts] = site_host + '/'
 

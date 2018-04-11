@@ -10,7 +10,7 @@ require 'axial/api/wikipedia/article'
 module Axial
   module API
     module Wikipedia
-     class W
+      class W
         @rest_api = 'https://en.wikipedia.org/w/api.php'
 
         def self.search(in_query)
@@ -19,7 +19,7 @@ module Axial
           end
 
           query = in_query.strip
-          params = Hash.new
+          params = {}
           params[:action]    = 'query'
           params[:prop]      = 'extracts'
           params[:format]    = 'json'

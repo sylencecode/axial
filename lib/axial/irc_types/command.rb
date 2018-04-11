@@ -34,7 +34,6 @@ module Axial
         return return_array
       end
 
-
       def two_arguments()
         return_array = []
         if (@split.empty?)
