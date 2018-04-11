@@ -27,19 +27,19 @@ module Axial
         json      = JSON.parse(response)
 
         result    = API::LinkPreviewResult.new
-        if (json.has_key?('title'))
+        if (json.key?('title'))
           result.title = Nokogiri::HTML(json['title']).text
         end
 
-        if (json.has_key?('description'))
+        if (json.key?('description'))
           result.description = Nokogiri::HTML(json['description']).text
         end
 
-        if (json.has_key?('image'))
+        if (json.key?('image'))
           result.image = Nokogiri::HTML(json['image']).text
         end
 
-        if (json.has_key?('url'))
+        if (json.key?('url'))
           result.url = json['url']
         end
 

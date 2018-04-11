@@ -1,7 +1,7 @@
 module Axial
   class TimeSpan
     attr_accessor :days, :hours, :minutes, :seconds
-    
+
     def self.empty()
       timespan = self.new(Time.now, Time.now)
       timespan.days = 0
@@ -23,7 +23,7 @@ module Axial
       minute = 60
       hour = minute * 60
       day = 24 * hour
-  
+
       remaining = 0
       @days = total_seconds / day
       remaining = total_seconds % day
@@ -33,7 +33,7 @@ module Axial
       remaining = total_seconds % minute
       @seconds = remaining
     end
-  
+
     def short_to_s()
       elapsed = "#{@seconds}s"
       if ( @hours > 0 || @minutes > 0)
@@ -47,15 +47,15 @@ module Axial
       end
       return elapsed
     end
-    
+
     def approximate_to_s()
       # order largest to smallest
-      elapsed = ""
+      elapsed = ''
       if (@days == 1)
         if (@hours >= 12)
-          elapsed = "about 2 days"
+          elapsed = 'about 2 days'
         else
-          elapsed = "about a day"
+          elapsed = 'about a day'
         end
       elsif (@days > 1)
         if (@days <= 3)
@@ -69,11 +69,11 @@ module Axial
         end
       elsif (@hours == 1)
         if (@minutes >= 40)
-          elapsed = "about 2 hours"
+          elapsed = 'about 2 hours'
         elsif (@minutes > 15)
-          elapsed = "about an hour and a half"
+          elapsed = 'about an hour and a half'
         else
-          elapsed = "about an hour"
+          elapsed = 'about an hour'
         end
       elsif (@hours > 1)
         if (@minutes > 30)
@@ -82,19 +82,19 @@ module Axial
           elapsed = "about #{@hours} hours"
         end
       elsif (@minutes >= 45)
-        elapsed = "about an hour"
+        elapsed = 'about an hour'
       elsif (@minutes > 37)
-        elapsed = "about 45 minutes"
+        elapsed = 'about 45 minutes'
       elsif (@minutes > 19)
-        elapsed = "about half an hour"
+        elapsed = 'about half an hour'
       elsif (@minutes > 10)
-        elapsed = "about 15 minutes"
+        elapsed = 'about 15 minutes'
       elsif (@minutes > 1)
         elapsed = "about #{@minutes} minutes"
       elsif (@minutes == 1)
-        elapsed = "about a minute"
+        elapsed = 'about a minute'
       else
-        elapsed = "less than a minute"
+        elapsed = 'less than a minute'
       end
       return elapsed
     end

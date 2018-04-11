@@ -20,7 +20,7 @@ module Axial
       end
 
       def self.broadcast(text, role = :friend)
-        @connections.each do |uuid, state_data|
+        @connections.values.each do |state_data|
           dcc = state_data[:dcc]
           begin
             if (dcc.user.role >= role)
@@ -33,4 +33,3 @@ module Axial
     end
   end
 end
-

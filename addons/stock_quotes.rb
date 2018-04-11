@@ -44,15 +44,15 @@ module Axial
 
       def render_market_quote(channel, nick, type_string, results, batch = false)
         if (batch)
-          symbol_length           = results.values.collect{ |result|                              get_symbol_name(result.symbol).length }.max
+          symbol_length           = results.values.collect { |result|                              get_symbol_name(result.symbol).length }.max
         else
-          symbol_length           = results.values.collect{ |result|                                               result.symbol.length }.max
-          company_symbol_length   = results.values.collect{ |result|                 "#{result.company_name} (#{result.symbol})".length }.max
+          symbol_length           = results.values.collect { |result|                                               result.symbol.length }.max
+          company_symbol_length   = results.values.collect { |result|                 "#{result.company_name} (#{result.symbol})".length }.max
         end
-        change_length             = results.values.collect{ |result|                                  colorify_result(result)[1].length }.max
-        latest_price_length       = results.values.collect{ |result| "#{format("%.2f", result.latest_price.to_f.round(2).to_s)}".length }.max
-        low_length                = results.values.collect{ |result| "#{format("%.2f",          result.low.to_f.round(2).to_s)}".length }.max
-        high_length               = results.values.collect{ |result| "#{format("%.2f",         result.high.to_f.round(2).to_s)}".length }.max
+        change_length             = results.values.collect { |result|                                  colorify_result(result)[1].length }.max
+        latest_price_length       = results.values.collect { |result| "#{format("%.2f", result.latest_price.to_f.round(2).to_s)}".length }.max
+        low_length                = results.values.collect { |result| "#{format("%.2f",          result.low.to_f.round(2).to_s)}".length }.max
+        high_length               = results.values.collect { |result| "#{format("%.2f",         result.high.to_f.round(2).to_s)}".length }.max
         type_string_length        =                                                                                        type_string.length
 
         if (results.any?)
@@ -114,16 +114,16 @@ module Axial
       end
 
       def colorify_result(result)
-        change_pct = format("%.2f", (result.change.to_f.abs / result.latest_price.to_f.abs).to_f * 100.0) + '%'
+        change_pct = format('%.2f', (result.change.to_f.abs / result.latest_price.to_f.abs).to_f * 100.0) + '%'
         if (result.change < 0)
           quote_color   = Colors.red
-          change_string = "\u2193 " + format("%.2f", result.change.to_f.round(2).to_s).gsub(/^-/, '') + " (#{change_pct})"
+          change_string = "\u2193 " + format('%.2f', result.change.to_f.round(2).to_s).gsub(/^-/, '') + " (#{change_pct})"
         elsif (result.change == 0)
           quote_color   = Colors.reset
-          change_string = format("%.2f", result.change.to_f.round(2).to_s) + " (#{change_pct})"
+          change_string = format('%.2f', result.change.to_f.round(2).to_s) + " (#{change_pct})"
         else
           quote_color   = Colors.green
-          change_string = "\u2191 " + format("%.2f", result.change.to_f.round(2).to_s) + " (#{change_pct})"
+          change_string = "\u2191 " + format('%.2f', result.change.to_f.round(2).to_s) + " (#{change_pct})"
         end
         return [quote_color, change_string]
       end

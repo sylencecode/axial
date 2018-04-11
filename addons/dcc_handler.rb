@@ -45,14 +45,14 @@ module Axial
         dcc.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         if (@bot.addons.count > 0)
           @bot.addons.each do |addon|
-            dcc_binds = addon[:object].binds.select{ |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
+            dcc_binds = addon[:object].binds.select { |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
             if (dcc_binds.count > 0)
-              commands = dcc_binds.collect{ |bind| bind[:command] }.sort_by{ |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect{ |command| @bot.dcc_command_character + command }
+              commands = dcc_binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.dcc_command_character + command }
               dcc.message("+ #{addon[:name]}: #{commands.join(', ')}")
             end
           end
         else
-          dcc.message("no addons loaded.")
+          dcc.message('no addons loaded.')
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -62,7 +62,7 @@ module Axial
       end
 
       def dcc_quit(dcc, command)
-        dcc.message("goodbye.")
+        dcc.message('goodbye.')
         dcc.status = :closed
         dcc.close
       rescue Exception => ex
@@ -73,7 +73,7 @@ module Axial
       end
 
       def dcc_who(dcc, command)
-        dcc.message("online users:")
+        dcc.message('online users:')
         @connections.each do |uuid, state_data|
           remote_dcc = state_data[:dcc]
           dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name_with_color} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
@@ -92,17 +92,17 @@ module Axial
         end
 
         if (@bot.addons.count == 0)
-          dcc.message("no addons loaded.")
+          dcc.message('no addons loaded.')
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
           dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} reloaded addons.")
-          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
-          addon_names = addon_list.collect{ |addon| addon[:name] }
+          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect { |addon| addon[:name] }
           dcc.message("unloading addons: #{addon_names.join(', ')}")
           @bot.git_pull
           @bot.reload_addons
-          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
-          addon_names = addon_list.collect{ |addon| addon[:name] }
+          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect { |addon| addon[:name] }
           dcc.message("loaded addons: #{addon_names.join(', ')}")
         end
       rescue Exception => ex
@@ -132,13 +132,13 @@ module Axial
         end
 
         next_port = nil
-  
+
         @port_monitor.synchronize do
           @ports_in_use.delete(next_port)
           available_ports = @dcc_ports - @ports_in_use
 
           if (available_ports.empty?)
-            nick.message("all dcc ports are currently in use. please wait a few seconds and try again.")
+            nick.message('all dcc ports are currently in use. please wait a few seconds and try again.')
           else
             next_port = available_ports.first
             @ports_in_use.push(next_port)
@@ -148,8 +148,8 @@ module Axial
         if (next_port.nil?)
           return
         end
-        
-        Thread.new do 
+
+        Thread.new do
           tcp_server = TCPServer.new(next_port)
           socket = nil
           begin
@@ -166,7 +166,7 @@ module Axial
             dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc chat offer to #{nick.uhost} timed out.", :director)
             LOGGER.error("connection attempt timed out attempting to dcc chat #{nick.name} (#{user.pretty_name})")
           end
-          
+
           tcp_server.close
           @port_monitor.synchronize do
             @ports_in_use.delete(next_port)
@@ -178,18 +178,18 @@ module Axial
               state_data = { remote_ip: remote_ip, status: :authenticating }
               dcc = IRCTypes::DCC.from_socket(state_data, @bot.server_interface, socket, user)
               state_data[:dcc] = dcc
-    
+
               @monitor.synchronize do
                 @connections[uuid] = state_data
               end
-    
+
               attempts = 0
               dcc.message("hello #{dcc.user.pretty_name_with_color}, please enter your password.")
               auth_timeout_timer = timer.in_15_seconds do
-                dcc.message("timeout.")
+                dcc.message('timeout.')
                 dcc.close
               end
-    
+
               while (text = socket.gets)
                 text.strip!
                 if (dcc.status == :authenticating)
@@ -202,7 +202,7 @@ module Axial
                     LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
                   else
                     if (attempts == 3)
-                      dcc.message("incorrect password after 3 attempts.")
+                      dcc.message('incorrect password after 3 attempts.')
                       dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
                       dcc.status = :failed
                       dcc.close

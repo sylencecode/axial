@@ -23,7 +23,7 @@ module Axial
       end
 
       def create(channel_name)
-        if (@channel_list.has_key?(channel_name.downcase))
+        if (@channel_list.key?(channel_name.downcase))
           raise(ChannelListError, "attempted to create a duplicate of channel '#{channel_name}'")
         end
         channel = IRCTypes::Channel.new(@server_interface, channel_name)
@@ -43,11 +43,11 @@ module Axial
         elsif (channel_or_name.is_a?(String))
           key = channel_or_name.downcase
         end
-        return @channel_list.has_key?(key)
+        return @channel_list.key?(key)
       end
 
       def get(channel_name)
-        if (@channel_list.has_key?(channel_name.downcase))
+        if (@channel_list.key?(channel_name.downcase))
           channel = @channel_list[channel_name.downcase]
           return channel
         else
@@ -57,7 +57,7 @@ module Axial
 
       def get_silent(channel_name)
         channel = nil
-        if (@channel_list.has_key?(channel_name.downcase))
+        if (@channel_list.key?(channel_name.downcase))
           channel = @channel_list[channel_name.downcase]
         end
         return channel
@@ -71,7 +71,7 @@ module Axial
           key = channel_or_name.downcase
         end
 
-        if (@channel_list.has_key?(key))
+        if (@channel_list.key?(key))
           @channel_list.delete(key)
         else
           raise(ChannelListError, "attempted to delete non-existent channel '#{channel_name}")

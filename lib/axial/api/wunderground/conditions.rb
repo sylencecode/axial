@@ -7,14 +7,14 @@ module Axial
           @feels_like_c = 0
           @feels_like_f = 0
           @found = false
-          @json = ""
-          @location = "unknown"
+          @json = ''
+          @location = 'unknown'
           @relative_humidity = 0
           @temp_c = 0
           @temp_f = 0
           @visibility_mi = 0
-          @weather = "unknown"
-          @wind_dir = "the unknown"
+          @weather = 'unknown'
+          @wind_dir = 'the unknown'
           @wind_gust_mph = 0
           @wind_mph = 0
         end

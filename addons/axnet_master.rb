@@ -30,7 +30,7 @@ module Axial
         @port                             = 34567
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
- 
+
         axnet.master = true
 
         on_startup                        :start_master_threads
@@ -82,7 +82,7 @@ module Axial
           else
             LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
             dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
-            if (!server.trying_to_join.has_key?(channel_name.downcase))
+            if (!server.trying_to_join.key?(channel_name.downcase))
               server.trying_to_join[channel_name.downcase] = password
             end
             server.join_channel(channel_name.downcase, password)
@@ -108,7 +108,7 @@ module Axial
           else
             LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
             dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
-            if (server.trying_to_join.has_key?(channel_name.downcase))
+            if (server.trying_to_join.key?(channel_name.downcase))
               server.trying_to_join.delete(channel_name.downcase)
             end
             server.part_channel(channel_name.downcase)
@@ -155,7 +155,7 @@ module Axial
       def pong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (!user.nil? && user.role.director?)
-          channel.message("pong! (axnet master)")
+          channel.message('pong! (axnet master)')
         end
         axnet.send("PING #{channel.name}")
       end
@@ -168,9 +168,9 @@ module Axial
           header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
           header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
           dcc.message(header)
-  
+
           if (system_info.nil?)
-            dcc.message("system information not yet available.")
+            dcc.message('system information not yet available.')
           else
             addons = system_info.addons.clone
             addon_chunks = []
@@ -181,12 +181,12 @@ module Axial
               end
               addon_chunks.push(chunk)
             end
-  
+
             if (addons.any?)
               addon_chunks.push(addons)
             end
-  
-            running_since = system_info.startup_time.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")
+
+            running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
             dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
             dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
             dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
@@ -221,14 +221,14 @@ module Axial
 
       def dcc_bot_status(dcc, command)
         if (@handlers.any?)
-          max_bot_name_length       = @handlers.values.collect{ |handler| handler.remote_cn.length }.max
+          max_bot_name_length       = @handlers.values.collect { |handler| handler.remote_cn.length }.max
         else
           max_bot_name_length       = @bot.local_cn.length
         end
 
         system_info                 = Axnet::SystemInfo.from_environment
         system_info.startup_time    = @bot.startup_time
-        system_info.addons          = @bot.addons.collect{ |addon| addon[:name] }
+        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
         if (!@bot.git.nil?)
           system_info.latest_commit = @bot.git.log.first
         end
@@ -239,7 +239,7 @@ module Axial
           bot_name          = handler.remote_cn
           system_info       = handler.system_info
 
-          connected_since   = handler.established_time.getlocal.strftime("%Y-%m-%d %l:%M:%S%p (%Z)")
+          connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
 
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
           dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} (from #{handler.remote_address})")
@@ -302,7 +302,7 @@ module Axial
       def receive_pong(handler, text)
         LOGGER.debug("PONG from #{handler.uuid} (#{handler.remote_cn})")
       end
-      
+
       def handle_axnet_command(dcc, command)
         begin
           if (command.args.strip.empty?)
@@ -338,10 +338,10 @@ module Axial
       def list_axnet_connections(dcc)
         bots = []
         @handler_monitor.synchronize do
-          bots = @handlers.values.collect{ |handler| handler.remote_cn }
+          bots = @handlers.values.collect { |handler| handler.remote_cn }
         end
         if (bots.empty?)
-          dcc.message("no axnet nodes connected.")
+          dcc.message('no axnet nodes connected.')
         else
           dcc.message("connected axnet nodes: #{bots.join(', ')}")
         end
@@ -446,7 +446,7 @@ module Axial
 
         while (@running)
           begin
-            @ssl_listener = OpenSSL::SSL::SSLServer::new(@tcp_listener, Axial::CertUtils.get_context)
+            @ssl_listener = OpenSSL::SSL::SSLServer.new(@tcp_listener, Axial::CertUtils.get_context)
             client_socket = @ssl_listener.accept
             handler = Axnet::SocketHandler.new(@bot, client_socket)
             handler.ssl_handshake
@@ -502,7 +502,7 @@ module Axial
       end
 
       def start_master_threads()
-        LOGGER.debug("starting axial master thread")
+        LOGGER.debug('starting axial master thread')
         @running = true
         @master_thread = Thread.new do
           while (@running)

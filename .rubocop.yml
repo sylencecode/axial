@@ -1,30 +1,49 @@
+---
+# I have some personal opinions that disagree with the Ruby Style Guide. These checks have been intentionally disabled to support
+# my preferred coding style.
 AllCops:
   TargetRubyVersion: 2.5.1
-Metrics/LineLength:
+Layout/CaseIndentation:
   Enabled: false
-#Style/GuardClause:
-#  Enabled: false
-Metrics/MethodLength:
-  Max: 20
-Style/NegatedIf:
+Layout/IndentArray:
   Enabled: false
-Style/ParenthesesAroundCondition:
+Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
-Style/RedundantParentheses:
-  Enabled: false
-Style/DefWithParentheses:
+Lint/HandleExceptions:
   Enabled: false
 Lint/RescueException:
   Enabled: false
-Style/ConditionalAssignment:
+Metrics/LineLength:
+  Max: 120
+Style/IfUnlessModifier:
   Enabled: false
-Metrics/AbcSize:
+Style/NegatedIf:
   Enabled: false
-Metrics/ClassLength:
+Style/DefWithParentheses:
   Enabled: false
-Style/SymbolArray:
+Style/RedundantParentheses:
   Enabled: false
-Layout/ExtraSpacing:
+Style/ParenthesesAroundCondition:
   Enabled: false
-Layout/SpaceBeforeFirstArg:
+Style/RedundantBegin:
   Enabled: false
+Style/RedundantReturn:
+  Enabled: false
+Style/RescueStandardError:
+  Enabled: false
+#Style/ConditionalAssignment:
+#  Enabled: false
+# Metrics/AbcSize:
+#   Enabled: false
+# Metrics/ClassLength:
+#   Enabled: false
+# Style/SymbolArray:
+#   Enabled: false
+# Layout/ExtraSpacing:
+#   Enabled: false
+# Layout/SpaceBeforeFirstArg:
+#   Enabled: false
+#Style/GuardClause:
+#  Enabled: false
+#Metrics/MethodLength:
+#  Max: 20

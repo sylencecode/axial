@@ -63,7 +63,7 @@ module Axial
 
       def rejoin(channel, kicker_nick, reason)
         wait_a_sec
-        if (!server.trying_to_join.has_key?(channel.name.downcase))
+        if (!server.trying_to_join.key?(channel.name.downcase))
           server.trying_to_join[channel.name.downcase] = ''
         end
         server.join_channel(channel.name)
@@ -182,7 +182,7 @@ module Axial
           if (myself.match_mask?(mask) || possible_users.any?)
             if (!bot_or_director?(user))
               if (possible_users.any?)
-                protected_user_names = possible_users.uniq.collect{ |user| user.name }
+                protected_user_names = possible_users.uniq.collect { |user| user.name }
                 channel.message("#{nick.name}: mask '#{ban_mask}' would potentially ban protected users: #{protected_user_names.join(', ')}")
               end
               response_mode.unban(mask)
@@ -426,12 +426,12 @@ module Axial
       end
 
       def stop_ban_cleanup_timer()
-        LOGGER.debug("stopping ban cleanup timer")
+        LOGGER.debug('stopping ban cleanup timer')
         timer.delete(@ban_cleanup_timer)
       end
 
       def start_ban_cleanup_timer()
-        LOGGER.debug("starting ban cleanup timer")
+        LOGGER.debug('starting ban cleanup timer')
         @ban_cleanup_timer = timer.every_minute(self, :cleanup_old_bans)
       end
 

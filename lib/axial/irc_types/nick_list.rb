@@ -16,11 +16,11 @@ module Axial
         old_key = old_nick_name.downcase
         new_key = new_nick_name.downcase
 
-        if (old_key.nil? || !@nick_list.has_key?(old_key))
+        if (old_key.nil? || !@nick_list.key?(old_key))
           raise(NickListError, "attempted to rename non-existent nick '#{old_key}'")
         elsif (new_key.nil?)
           raise(NickListError, "failed to rename '#{old_key}' to '#{new_key}'")
-        elsif (@nick_list.has_key?(new_key))
+        elsif (@nick_list.key?(new_key))
           raise(NickListError, "attempted to rename '#{old_key}' to already-existing nick '#{new_key}'")
         end
 
@@ -28,7 +28,7 @@ module Axial
       end
 
       def add(nick)
-        if (@nick_list.has_key?(nick.name.downcase))
+        if (@nick_list.key?(nick.name.downcase))
           raise(NickListError, "attempted to create a duplicate of nick '#{nick.name}'")
         end
         @nick_list[nick.name.downcase] = nick
@@ -37,7 +37,7 @@ module Axial
 
       def create_from_uhost(uhost)
         nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-        if (@nick_list.has_key?(nick.name.downcase))
+        if (@nick_list.key?(nick.name.downcase))
           raise(NickListError, "attempted to create a duplicate of nick '#{nick.name}'")
         end
         @nick_list[nick.name.downcase] = nick
@@ -66,7 +66,7 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
-        return @nick_list.has_key?(key)
+        return @nick_list.key?(key)
       end
 
       def get(nick_or_name)
@@ -76,7 +76,7 @@ module Axial
           key = nick_or_name.downcase
         end
 
-        if (@nick_list.has_key?(key))
+        if (@nick_list.key?(key))
           nick = @nick_list[key]
           return nick
         else
@@ -96,7 +96,7 @@ module Axial
         end
 
         nick = nil
-        if (@nick_list.has_key?(key))
+        if (@nick_list.key?(key))
           nick = @nick_list[key]
         end
         return nick
@@ -112,7 +112,7 @@ module Axial
 
         nick_to_delete = @nick_list[key]
 
-        if (!key.nil? && @nick_list.has_key?(key))
+        if (!key.nil? && @nick_list.key?(key))
           nick_to_delete.set_voiced(@channel, false)
           nick_to_delete.set_opped(@channel, false)
           @nick_list.delete(key)
@@ -134,7 +134,7 @@ module Axial
         nick_to_delete.set_voiced(@channel, false)
         nick_to_delete.set_opped(@channel, false)
 
-        if (!key.nil? && @nick_list.has_key?(key))
+        if (!key.nil? && @nick_list.key?(key))
           LOGGER.debug("removing #{key} from nicklist")
           @nick_list.delete(key)
         end

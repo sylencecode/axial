@@ -15,7 +15,7 @@ module Axial
       @verify_mode    = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
 
       @ciphers        = [
-                          [ "ECDHE-ECDSA-AES256-GCM-SHA384", "TLSv1/SSLv3", 256, 256 ]
+                          [ 'ECDHE-ECDSA-AES256-GCM-SHA384', 'TLSv1/SSLv3', 256, 256 ]
                         ]
 
       def self.generate_key_pair()
@@ -31,7 +31,7 @@ module Axial
       def self.get_cert_cn()
         cert              = OpenSSL::X509::Certificate.new(File.read("#{@key_path}/axnet.crt"))
         x509_array  = cert.subject.to_a
-        x509_fragments = x509_array.select{ |subject_fragment| subject_fragment[0] == 'CN' }.flatten
+        x509_fragments = x509_array.select { |subject_fragment| subject_fragment[0] == 'CN' }.flatten
         x509_cn_fragment = x509_fragments.flatten[1]
         return x509_cn_fragment
       end
@@ -40,7 +40,7 @@ module Axial
         key                     = OpenSSL::PKey::EC.new(File.read("#{@key_path}/axnet.key"))
         cert                    = OpenSSL::X509::Certificate.new(File.read("#{@key_path}/axnet.crt"))
 
-        context                 = OpenSSL::SSL::SSLContext::new
+        context                 = OpenSSL::SSL::SSLContext.new
         context.ssl_version     = @ssl_version
         context.ecdh_curves     = @curve
         context.ciphers         = @ciphers
@@ -85,10 +85,10 @@ module Axial
         extension_factory.issuer_certificate    = ca_cert
 
         ca_cert.extensions                      = [
-          extension_factory.create_extension("basicConstraints", "CA:TRUE", true),
-          extension_factory.create_extension("subjectKeyIdentifier", "hash"),
-          extension_factory.create_extension("keyUsage", "cRLSign,keyCertSign"),
-          extension_factory.create_extension('crlDistributionPoints', "URI:http://axnet-ca.axnet.local", false),
+          extension_factory.create_extension('basicConstraints', 'CA:TRUE', true),
+          extension_factory.create_extension('subjectKeyIdentifier', 'hash'),
+          extension_factory.create_extension('keyUsage', 'cRLSign,keyCertSign'),
+          extension_factory.create_extension('crlDistributionPoints', 'URI:http://axnet-ca.axnet.local', false),
         ]
 
         ca_cert.sign(private_key, OpenSSL::Digest::SHA512.new)
@@ -120,8 +120,8 @@ module Axial
         extension_factory.issuer_certificate    = ca_cert
 
         cert.extensions        = [
-          extension_factory.create_extension("subjectKeyIdentifier", "hash"),
-          extension_factory.create_extension("extendedKeyUsage", "serverAuth,clientAuth", false),
+          extension_factory.create_extension('subjectKeyIdentifier', 'hash'),
+          extension_factory.create_extension('extendedKeyUsage', 'serverAuth,clientAuth', false),
           extension_factory.create_extension('authorityKeyIdentifier', 'keyid:always,issuer:always')
         ]
 

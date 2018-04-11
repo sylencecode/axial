@@ -46,7 +46,7 @@ module Axial
           key = channel.downcase
         end
 
-        if (@requests.has_key?(key))
+        if (@requests.key?(key))
           @requests.delete(key)
         end
       end
@@ -58,7 +58,7 @@ module Axial
           key = channel.downcase
         end
 
-        if (@requests.has_key?(key))
+        if (@requests.key?(key))
           @requests[key].delete(type.to_sym)
         end
       end
@@ -70,7 +70,7 @@ module Axial
           key = channel.downcase
         end
 
-        if (!@requests.has_key?(key))
+        if (!@requests.key?(key))
           @requests[key] = [ type.to_sym ]
         elsif (!@requests[key].include?(type.to_sym))
           @requests[key].push(type.to_sym)
@@ -86,7 +86,7 @@ module Axial
         end
 
         if (myself.uhost.empty?)
-          LOGGER.warn("cannot dispatch assistance request, bot uhost is unknown")
+          LOGGER.warn('cannot dispatch assistance request, bot uhost is unknown')
         else
           bot_nick = IRCTypes::Nick.new(nil)
           bot_nick.uhost = myself.uhost
@@ -146,7 +146,7 @@ module Axial
         possible_user = get_bot_or_user(nick)
         if (bot_or_director?(possible_user))
           clear_pending(channel_name, :invite)
-          if (!server.trying_to_join.has_key?(channel_name.downcase))
+          if (!server.trying_to_join.key?(channel_name.downcase))
             server.trying_to_join[channel_name.downcase] = ''
           end
           server.join_channel(channel_name)
@@ -213,7 +213,7 @@ module Axial
       end
 
       def handle_keyword_response(channel_name, keyword)
-        if (server.trying_to_join.has_key?(channel_name.downcase))
+        if (server.trying_to_join.key?(channel_name.downcase))
           server.trying_to_join[channel_name.downcase] = keyword
         end
       end
@@ -323,12 +323,12 @@ module Axial
       end
 
       def stop_request_timer()
-        LOGGER.debug("stopping request timer")
+        LOGGER.debug('stopping request timer')
         timer.delete(@request_timer)
       end
 
       def start_request_timer()
-        LOGGER.debug("starting request timer")
+        LOGGER.debug('starting request timer')
         @request_timer = timer.every_30_seconds(self, :check_for_requests)
       end
 

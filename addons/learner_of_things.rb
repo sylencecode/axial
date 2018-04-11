@@ -44,7 +44,7 @@ module Axial
           channel.message("#{nick.name}: try ?learn <thing> = <explanation> instead of whatever you just did.")
           return
         end
-        
+
         if (thing.length > 64)
           channel.message("#{nick.name}: your thing name is too long (<= 64 characters).")
           return

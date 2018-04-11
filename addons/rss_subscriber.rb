@@ -31,18 +31,18 @@ module Axial
       end
 
       def stop_ingest_timer()
-        LOGGER.debug("stopping ingest timer")
+        LOGGER.debug('stopping ingest timer')
         timer.delete(@ingest_timer)
       end
 
       def start_ingest_timer()
-        LOGGER.debug("starting ingest timer")
+        LOGGER.debug('starting ingest timer')
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
         @ingest_timer = timer.every_minute(self, :ingest)
       end
 
       def ingest()
-        LOGGER.debug("RSS: running feed check")
+        LOGGER.debug('RSS: running feed check')
         Models::RssFeed.where(enabled: true).each do |feed|
           ingested = 0
           begin
@@ -70,7 +70,7 @@ module Axial
             if (!summary.empty?)
               text += " #{Colors.gray}|#{Colors.reset} "
               if (summary.length > 299)
-                text += summary[0..296] + "..."
+                text += summary[0..296] + '...'
               else
                 text += summary
               end
@@ -115,7 +115,7 @@ module Axial
           channel.message("#{nick.name}: try ?rss add <name> = <url> instead of whatever you just did.")
           return
         end
-        
+
         if (feed_name.length > 32)
           channel.message("#{nick.name}: your feed name is too long (<= 32 characters).")
           return
@@ -145,7 +145,7 @@ module Axial
         feeds = Models::RssFeed.all
         if (feeds.count > 0)
           LOGGER.debug("RSS: #{nick.uhost} listed feeds")
-          channel.message("rss feeds:")
+          channel.message('rss feeds:')
           feeds.each do |feed|
             msg  = "#{Colors.gray}[#{Colors.reset} "
             msg += feed.pretty_name
@@ -160,15 +160,15 @@ module Axial
             msg += "last: #{last.short_to_s} ago"
             msg += " #{Colors.gray}|#{Colors.reset} "
             if (feed.enabled)
-              msg += "enabled"
+              msg += 'enabled'
             else
-              msg += "disabled"
+              msg += 'disabled'
             end
             msg += " #{Colors.gray}]#{Colors.reset}"
             channel.message(msg)
           end
         else
-          channel.message("no feeds.")
+          channel.message('no feeds.')
         end
       end
 

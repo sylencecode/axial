@@ -32,7 +32,7 @@ module Axial
               params[:range]      = 1
               params[:last]       = 1
 
-              rest_endpoint       = URI::parse(rest_api)
+              rest_endpoint       = URI.parse(rest_api)
               rest_endpoint.query = URI.encode_www_form(params)
               response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
               json = JSON.parse(response)
@@ -42,45 +42,45 @@ module Axial
               json.each do |symbol, data|
                 result = API::IEXTrading::V10::Stock::StockResult.new
 
-                if (data.has_key?('quote'))
+                if (data.key?('quote'))
                   quote = data['quote']
-                  if (quote.has_key?('latestPrice'))
+                  if (quote.key?('latestPrice'))
                     result.latest_price = quote['latestPrice'].to_f
                   end
-                  if (quote.has_key?('high'))
+                  if (quote.key?('high'))
                     result.high = quote['high'].to_f
                   end
-                  if (quote.has_key?('low'))
+                  if (quote.key?('low'))
                     result.low = quote['low'].to_f
                   end
-                  if (quote.has_key?('change'))
+                  if (quote.key?('change'))
                     result.change = quote['change'].to_f
                   end
-                  if (quote.has_key?('open'))
+                  if (quote.key?('open'))
                     result.last_open = quote['open'].to_f
                   end
-                  if (quote.has_key?('close'))
+                  if (quote.key?('close'))
                     result.last_close = quote['close'].to_f
                   end
                 end
 
-                if (data.has_key?('news') && data['news'].is_a?(Array) && data['news'].any?)
+                if (data.key?('news') && data['news'].is_a?(Array) && data['news'].any?)
                   news = data['news'].first
-                  if (news.has_key?('headline'))
+                  if (news.key?('headline'))
                     result.news[:headline] = news['headline']
                   end
-                  if (news.has_key?('datetime'))
+                  if (news.key?('datetime'))
                     result.news[:date_time] = Time.parse(news['datetime'])
                   end
                 end
 
-                if (data.has_key?('peers'))
+                if (data.key?('peers'))
                   result.peers = data['peers']
                 end
 
-                if (data.has_key?('company'))
+                if (data.key?('company'))
                   company = data['company']
-                  if (company.has_key?('companyName'))
+                  if (company.key?('companyName'))
                     result.company_name = company['companyName']
                   end
                 end

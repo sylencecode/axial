@@ -32,7 +32,7 @@ module Axial
             json = JSON.parse(response)
 
             translation = nil
-            if (json.has_key?('text'))
+            if (json.key?('text'))
               text = json['text']
               if (text.is_a?(Array) && text.count > 0)
                 translation = text.first
@@ -63,7 +63,7 @@ module Axial
             json = JSON.parse(response)
 
             detected_language = nil
-            if (json.has_key?('lang'))
+            if (json.key?('lang'))
               lang = json['lang']
               if (lang.is_a?(String) && !lang.empty?)
                 detected_language = lang

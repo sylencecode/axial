@@ -85,14 +85,14 @@ module Axial
 
     def reload_axnet()
       @axnet.stop
-      class_name = "Axial::Interfaces::AxnetInterface"
+      class_name = 'Axial::Interfaces::AxnetInterface'
       LOGGER.debug("removing class definition for #{class_name}")
       if (Object.constants.include?(:Axial))
         if (Axial.constants.include?(:Interfaces))
           if (Axial::Interfaces.constants.include?(class_name.to_sym))
-            LOGGER.debug("axnet interface found")
+            LOGGER.debug('axnet interface found')
             Axial::Interfaces.send(:remove_const, class_name.to_sym)
-            LOGGER.debug("axnet interface definition deleted")
+            LOGGER.debug('axnet interface definition deleted')
           end
         end
       end
@@ -125,7 +125,7 @@ module Axial
 
     def load_addons()
       if (@addon_list.count == 0)
-        LOGGER.debug("No addons specified.")
+        LOGGER.debug('No addons specified.')
       else
         @addon_list.each do |addon|
           begin
@@ -136,13 +136,13 @@ module Axial
               if (bind[:type] == :mode)
                 @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])
               elsif (bind[:type] == :channel_leftover)
-                if (bind.has_key?(:args) && bind[:args].any?)
+                if (bind.key?(:args) && bind[:args].any?)
                   @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], args: bind[:args], silent: bind[:silent])
                 else
                   @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], silent: bind[:silent])
                 end
               else
-                if (bind.has_key?(:args) && bind[:args].any?)
+                if (bind.key?(:args) && bind[:args].any?)
                   @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
                 else
                   @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
@@ -199,10 +199,10 @@ module Axial
 
     def auto_join_channels()
       @config['channels'].each do |channel_name|
-        if (!channel_name.has_key?('password') || channel_name['password'].nil? || channel_name['password'].empty?)
+        if (!channel_name.key?('password') || channel_name['password'].nil? || channel_name['password'].empty?)
           channel_name['password'] = ''
         end
-        if (!@server_interface.trying_to_join.has_key?(channel_name['name'].downcase))
+        if (!@server_interface.trying_to_join.key?(channel_name['name'].downcase))
           @server_interface.trying_to_join[channel_name['name'].downcase] = channel_name['password']
         end
         @server_interface.join_channel(channel_name['name'].downcase, channel_name['password'])
@@ -244,7 +244,7 @@ module Axial
       @dcc_command_character      = @config['dcc_command_character']     || '.'
       @channel_command_character  = @config['channel_command_character'] || '?'
       @trying_nick                = @config['bot']['nick']               || 'unnamed'
-      if (!@config.has_key?('channels') || @config['channels'].empty?)
+      if (!@config.key?('channels') || @config['channels'].empty?)
         @config['channels'] = []
       end
 
@@ -257,13 +257,13 @@ module Axial
     private :load_config
 
     def add_channel(channel_name, password = '')
-      @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
+      @config['channels'].delete_if { |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
       @config['channels'].push({ 'name' => channel_name, 'password' => password })
       save_config
     end
 
     def delete_channel(channel_name)
-      @config['channels'].delete_if{ |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
+      @config['channels'].delete_if { |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
       save_config
     end
   end

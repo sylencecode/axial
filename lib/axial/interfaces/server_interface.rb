@@ -138,11 +138,11 @@ module Axial
       end
 
       def send_ison()
-        LOGGER.debug("ison timer called")
+        LOGGER.debug('ison timer called')
         if (!@bot.real_nick.casecmp(@bot.nick).zero?)
           @bot.connection_handler.send_raw("ISON #{@bot.nick}")
         else
-          LOGGER.warn("regain_nick timer called, but bot already has the right nick")
+          LOGGER.warn('regain_nick timer called, but bot already has the right nick')
         end
       end
 
@@ -168,7 +168,7 @@ module Axial
             @bot.trying_nick = rotate_nick_characters(nick_name)
             @bot.connection_handler.try_nick
           else
-            LOGGER.warn("unable to secure a valid nickname on the server. giving up.")
+            LOGGER.warn('unable to secure a valid nickname on the server. giving up.')
           end
         end
       end

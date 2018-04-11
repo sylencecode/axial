@@ -27,7 +27,7 @@ module Axial
       end
 
       def include?(mask)
-        return @ban_list.select{ |ban| ban.mask.casecmp(mask).zero? }.any?
+        return @ban_list.select { |ban| ban.mask.casecmp(mask).zero? }.any?
       end
 
       def add(ban)
@@ -38,9 +38,9 @@ module Axial
 
       def remove(ban)
         if (ban.is_a?(String))
-          @ban_list.delete_if{ |tmp_ban| tmp_ban.mask.casecmp(ban).zero? }
+          @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban).zero? }
         else
-          @ban_list.delete_if{ |tmp_ban| tmp_ban.mask.casecmp(ban.mask).zero? }
+          @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban.mask).zero? }
         end
       end
     end

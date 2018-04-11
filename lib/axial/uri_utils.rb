@@ -32,13 +32,13 @@ module Axial
       end
       return url_array.uniq
     end
- 
+
     def self.shorten(in_url)
       if (in_url.is_a?(String))
         stripped_url = strip_extra_characters(in_url)
         if (stripped_url.empty?)
-          raise(ArgumentError, "Empty URI provided to URLShortenerAPI")
-        elsif (!(stripped_url =~ URI::regexp))
+          raise(ArgumentError, 'Empty URI provided to URLShortenerAPI')
+        elsif (!(stripped_url =~ URI.regexp))
           raise(ArgumentError, "Invalid URI provided to URLShortenerAPI: #{in_url}")
         end
       else

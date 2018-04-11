@@ -10,7 +10,7 @@ module Axial
 
     def initialize(repeat, interval, *args, &block)
       if (interval <= 0)
-        raise(TimerError, "invalid duration")
+        raise(TimerError, 'invalid duration')
       end
 
       @uuid               = SecureRandom.uuid

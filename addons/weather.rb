@@ -17,7 +17,7 @@ module Axial
 
         on_channel  'weather|w',  :handle_weather
       end
-      
+
       def weather_color(temp)
         if (temp >= 90)
           temp_color = Colors.red
@@ -73,7 +73,7 @@ module Axial
                   msg += " (gusts up to #{conditions.wind_gust_mph}mph)"
                 end
               else
-                msg += "winds: calm"
+                msg += 'winds: calm'
               end
               channel.message(msg)
             else

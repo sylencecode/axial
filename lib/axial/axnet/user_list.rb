@@ -36,20 +36,20 @@ module Axial
       end
 
       def delete(user_name)
-        @user_list.delete_if{ |tmp_user| tmp_user.name.casecmp(user_name).zero? }
+        @user_list.delete_if { |tmp_user| tmp_user.name.casecmp(user_name).zero? }
       end
 
       def include?(user_name)
-        return @user_list.select{ |tmp_user| tmp_user.name.casecmp(user_name).zero? }.any?
+        return @user_list.select { |tmp_user| tmp_user.name.casecmp(user_name).zero? }.any?
       end
 
       def get_from_name(user_name)
-        return @user_list.select{ |tmp_user| tmp_user.name.casecmp(user_name) }.first
+        return @user_list.select { |tmp_user| tmp_user.name.casecmp(user_name) }.first
       end
 
       def get_from_nick_object(nick)
         if (!nick.is_a?(IRCTypes::Nick))
-          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick.")
+          raise(UserObjectError, 'Attempted to query a user record for an object type other than IRCTypes::Nick.')
         end
 
         user = get_user_from_mask(nick.uhost)
@@ -60,7 +60,7 @@ module Axial
         in_mask = MaskUtils.ensure_wildcard(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
-          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name_with_color} .join(', ')}")
+          raise(AxnetError, "mask #{in_mask} returns more than one user: #{possible_users.collect { |user| user.pretty_name_with_color} .join(', ')}")
         end
         return possible_users.uniq.first
       end

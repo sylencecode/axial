@@ -5,7 +5,7 @@ module Axial
     class Ban
       attr_reader :mask, :user_name, :reason, :set_at
       def initialize(in_mask, user, reason, set_at)
-        @mask = MaskUtils::ensure_wildcard(in_mask)
+        @mask = MaskUtils.ensure_wildcard(in_mask)
         if (user.nil?)
           @user = 'someone'
         elsif (user.is_a?(Axnet::User))

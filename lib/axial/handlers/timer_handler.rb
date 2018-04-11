@@ -33,10 +33,10 @@ module Axial
       def remove(dead_timer)
         if (!dead_timer.nil?)
           @timers.select { |timer| timer.uuid == dead_timer.uuid }.each do |timer|
-           if (!timer.thread.nil?)
-             timer.thread.kill
-           end
-         end
+            if (!timer.thread.nil?)
+              timer.thread.kill
+            end
+          end
           @timers.delete_if { |timer| timer.uuid == dead_timer.uuid }
         end
       end

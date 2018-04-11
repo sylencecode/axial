@@ -63,15 +63,15 @@ module Axial
         model_name    = 'unknown'
         total         = 'unknown'
         mhz           = 'unknown'
-        if (cpu_hash.has_key?('total'))
+        if (cpu_hash.key?('total'))
           total       = cpu_hash['total'].to_i
         else
           total       = 1
         end
-        if (cpu_hash.has_key?('0'))
+        if (cpu_hash.key?('0'))
           mhz         = cpu_hash['0']['mhz'].to_i
           model_name  = cpu_hash['0']['model_name']
-        elsif (cpu_hash.has_key?('model_name'))
+        elsif (cpu_hash.key?('model_name'))
           mhz         = cpu_hash['mhz'].to_i
           model_name  = cpu_hash['model_name']
         end
@@ -80,9 +80,9 @@ module Axial
       end
 
       def self.get_os_string(ohai_hash)
-        if (ohai_hash.has_key?('hostnamectl') && ohai_hash['hostnamectl'].has_key?('operating_system'))
+        if (ohai_hash.key?('hostnamectl') && ohai_hash['hostnamectl'].key?('operating_system'))
           os_string = "#{ohai_hash['hostnamectl']['operating_system']}"
-        elsif (ohai_hash.has_key?('hardware') && ohai_hash['hardware'].has_key?('operating_system'))
+        elsif (ohai_hash.key?('hardware') && ohai_hash['hardware'].key?('operating_system'))
           os_string = "#{ohai_hash['hardware']['operating_system']} #{ohai_hash['hardware']['operating_system_version']}"
         else
           os_string = "#{ohai_hash['platform']} #{ohai_hash['platform_version']}"
@@ -92,7 +92,7 @@ module Axial
 
       def self.parse_memory(memory_hash)
         total = convert_memory_to_mb(memory_hash['total'])
-        if (memory_hash.has_key?('available'))
+        if (memory_hash.key?('available'))
           free = convert_memory_to_mb(memory_hash['available'])
         else
           free = convert_memory_to_mb(memory_hash['free'])
@@ -105,13 +105,13 @@ module Axial
         name = 'unknown'
         release = 'unknown'
         machine = 'unknown'
-        if (kernel_hash.has_key?('name'))
+        if (kernel_hash.key?('name'))
           name = kernel_hash['name']
         end
-        if (kernel_hash.has_key?('release'))
+        if (kernel_hash.key?('release'))
           release = kernel_hash['release']
         end
-        if (kernel_hash.has_key?('machine'))
+        if (kernel_hash.key?('machine'))
           machine = kernel_hash['machine']
         end
         new_kernel_hash = { name: name, release: release, machine: machine }

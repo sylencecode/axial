@@ -65,11 +65,11 @@ module Axial
       def self.get_user_from_mask(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
-          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect{ |user| user.pretty_name }.join(', ')}")
+          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect { |user| user.pretty_name }.join(', ')}")
         end
         return possible_users.first
       end
-    
+
 
       def set_password(plaintext_password)
         encrypted_password = BCrypt::Password.create(plaintext_password)
@@ -110,7 +110,7 @@ module Axial
 
       def self.get_from_nick_object(nick)
         if (!nick.is_a?(IRCTypes::Nick))
-          raise(UserObjectError, "Attempted to query a user record for an object type other than IRCTypes::Nick")
+          raise(UserObjectError, 'Attempted to query a user record for an object type other than IRCTypes::Nick')
         end
 
         user_model = self[name: nick.name.downcase]

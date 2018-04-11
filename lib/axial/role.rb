@@ -36,7 +36,7 @@ module Axial
     end
 
     def self.from_possible_name(role_name)
-      if (!@numerics.has_key?(role_name.to_sym))
+      if (!@numerics.key?(role_name.to_sym))
         return nil
       else
         return new(role_name)
@@ -97,15 +97,15 @@ module Axial
       case @name
         when 'root'
           role_color = Colors.red
-        when 'director' 
+        when 'director'
           role_color = Colors.yellow
-        when 'manager' 
+        when 'manager'
           role_color = Colors.cyan
-        when 'op' 
+        when 'op'
           role_color = Colors.blue
-        when 'friend' 
+        when 'friend'
           role_color = Colors.green
-        when 'basic' 
+        when 'basic'
           role_color = Colors.gray
       end
     end
@@ -119,19 +119,19 @@ module Axial
         when 'root'
           role_color = Colors.red
           plural_name = 'root users'
-        when 'director' 
+        when 'director'
           role_color = Colors.yellow
           plural_name = 'directors'
-        when 'manager' 
+        when 'manager'
           role_color = Colors.cyan
           plural_name = 'managers'
-        when 'op' 
+        when 'op'
           role_color = Colors.blue
           plural_name = 'ops'
-        when 'friend' 
+        when 'friend'
           role_color = Colors.reset
           plural_name = 'friends'
-        when 'basic' 
+        when 'basic'
           role_color = Colors.gray
           plural_name = 'basic users'
       end

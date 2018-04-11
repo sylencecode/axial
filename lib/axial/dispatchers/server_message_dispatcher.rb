@@ -74,9 +74,9 @@ module Axial
           when Server::ISON_REPLY
             @bot.server_handler.handle_ison_reply(Regexp.last_match[1])
           when Server::MOTD_BEGIN
-            LOGGER.info("begin motd")
+            LOGGER.info('begin motd')
           when Server::MOTD_END, Server::MOTD_ERROR
-            LOGGER.info("end of motd, performing autojoin")
+            LOGGER.info('end of motd, performing autojoin')
             @bot.server_interface.set_invisible
             @bot.server_interface.whois_myself
             @bot.auto_join_channels

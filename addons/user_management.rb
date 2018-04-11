@@ -90,7 +90,7 @@ module Axial
       def complex_password?(source, nick, password)
         complex_password = false
         if (password.length < 8)
-          reply(source, nick, "password too short. please use at least 8 characters.")
+          reply(source, nick, 'password too short. please use at least 8 characters.')
         else
           points = 0
 
@@ -112,7 +112,7 @@ module Axial
           end
 
           if (points < 3)
-            reply(source, nick, "password is too simple. please include at least 3 of the 4 following: lowercase letters, uppercase letters, numbers, and/or special characters.")
+            reply(source, nick, 'password is too simple. please include at least 3 of the 4 following: lowercase letters, uppercase letters, numbers, and/or special characters.')
           else
             complex_password = true
           end
@@ -215,7 +215,7 @@ module Axial
             if (complex_password?(source, nick, new_password))
               user_model.set_password(new_password)
               update_user_list
-              reply(source, nick, "password set.")
+              reply(source, nick, 'password set.')
               dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has set an initial password.", :director)
             end
           end
@@ -228,11 +228,11 @@ module Axial
               if (complex_password?(source, nick, new_password))
                 user_model.set_password(new_password)
                 update_user_list
-                reply(source, nick, "password changed.")
+                reply(source, nick, 'password changed.')
                 dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has changed his/her password.", :director)
               end
             else
-              reply(source, nick, "old password is incorrect.")
+              reply(source, nick, 'old password is incorrect.')
               dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.reset} failed password change attempt for #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
             end
           end
@@ -328,7 +328,7 @@ module Axial
           if (can_change_self)
             can_modify = true
           else
-            reply(source, nick, "you may not modify your own attributes.")
+            reply(source, nick, 'you may not modify your own attributes.')
           end
         elsif (subject_model.role.root?)
           if (can_root_change_root)
@@ -642,7 +642,7 @@ module Axial
               channel.nick_list.all_nicks.each do |nick|
                 possible_user = user_list.get_from_nick_object(nick)
                 if (!possible_user.nil? && possible_user.id == user_model.id)
-                  if (!on_channels.has_key?(channel))
+                  if (!on_channels.key?(channel))
                     on_channels[channel] = []
                   end
                   on_channels[channel].push(nick)
@@ -652,7 +652,7 @@ module Axial
 
             if (dcc.user.role.op?)
               dcc.message('')
-              dcc.message("associated masks:")
+              dcc.message('associated masks:')
               dcc.message('')
               user_model.masks.each do |mask|
                 dcc.message("  #{mask.mask}")
@@ -661,12 +661,12 @@ module Axial
 
             if (on_channels.any?)
               dcc.message('')
-              dcc.message("currently active on:")
+              dcc.message('currently active on:')
               dcc.message('')
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
                   if (!nick.last_spoke.nil?)
-                    if (!nick.last_spoke.has_key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
+                    if (!nick.last_spoke.key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
                       last_spoke = TimeSpan.new(channel.joined_at, Time.now)
                       dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
                     else
@@ -681,7 +681,7 @@ module Axial
             else
               dcc.message('')
               if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
-                dcc.message("never seen before.")
+                dcc.message('never seen before.')
               else
                 dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
               end
@@ -713,7 +713,7 @@ module Axial
         user_models        = Models::User.all
         users              = []
         pretty_name_length = user_models.collect { |user_model| user_model.pretty_name.length }.max + 2
-        created_length     = user_models.collect { |user_model| user_model.created.strftime("%m/%d/%Y").length }.max + 2
+        created_length     = user_models.collect { |user_model| user_model.created.strftime('%m/%d/%Y').length }.max + 2
         role_length        = user_models.collect { |user_model| user_model.role.name.length }.max + 2
 
         note_length = user_models.collect do |user_model|
@@ -727,13 +727,13 @@ module Axial
         seen_length = 0
 
         user_models.each do |user_model|
-          if (user_model.name == "unknown")
+          if (user_model.name == 'unknown')
             next
           end
 
           user = {}
 
-          user[:created]     = user_model.created.strftime("%m/%d/%Y")
+          user[:created]     = user_model.created.strftime('%m/%d/%Y')
           user[:pretty_name] = user_model.pretty_name
           user[:role]        = user_model.role.name
           user[:role_color]  = user_model.role.color
@@ -751,7 +751,7 @@ module Axial
             channel.nick_list.all_nicks.each do |nick|
               possible_user = user_list.get_from_nick_object(nick)
               if (!possible_user.nil? && possible_user.id == user_model.id)
-                if (!on_channels.has_key?(channel))
+                if (!on_channels.key?(channel))
                   on_channels[channel] = []
                 end
                 on_channels[channel].push(nick)
@@ -762,9 +762,9 @@ module Axial
           if (on_channels.any?)
             user[:seen] = "active (#{on_channels.keys.collect { |channel| channel.name }.join(', ')})"
           elsif (user_model.seen.nil?)
-            user[:seen] = "never"
+            user[:seen] = 'never'
           elsif (user_model.seen.status =~ /^for the first time/i)
-            user[:seen] = "never"
+            user[:seen] = 'never'
           else
             user[:seen] = TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s + ' ago'
           end
@@ -792,9 +792,9 @@ module Axial
         bottom_bar = "#{Colors.gray}`#{'-' * (pretty_name_length + 2)}'#{'-' * (role_length + 2)}'#{'-' * (created_length + 2)}'#{'-' * (seen_length + 2)}'#{'-' * (note_length + 2)}'#{Colors.reset}"
 
         if (users.empty?)
-          dcc.message("user list is empty.")
+          dcc.message('user list is empty.')
         else
-          dcc.message("current user list".center(top_bar.length))
+          dcc.message('current user list'.center(top_bar.length))
           dcc.message(top_bar)
           dcc.message("#{Colors.gray}|#{Colors.reset} #{'username'.center(pretty_name_length)} #{Colors.gray}|#{Colors.reset} #{'role'.center(role_length)} #{Colors.gray}|#{Colors.reset} #{'created'.center(created_length)} #{Colors.gray}|#{Colors.reset} #{'last seen'.center(seen_length)} #{Colors.gray}|#{Colors.reset} #{'notes'.center(note_length)} #{Colors.gray}|#{Colors.reset}")
           dcc.message(middle_bar)
@@ -838,9 +838,9 @@ module Axial
         bottom_bar = "#{Colors.gray}`#{'-' * (mask_length + 2)}'#{'-' * (set_at_length + 2)}'#{'-' * (set_by_length + 2)}'#{'-' * (reason_length + 2)}'#{Colors.reset}"
 
         if (ban_models.empty?)
-          dcc.message("ban list is empty.")
+          dcc.message('ban list is empty.')
         else
-          dcc.message("current ban list".center(top_bar.length))
+          dcc.message('current ban list'.center(top_bar.length))
           dcc.message(top_bar)
           msg  = "#{Colors.gray}|#{Colors.reset} #{Colors.blue}#{'mask'.center(mask_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} "
           msg += "#{'created'.center(set_at_length)} #{Colors.gray}|#{Colors.reset} "

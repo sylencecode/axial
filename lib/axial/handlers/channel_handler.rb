@@ -159,7 +159,7 @@ module Axial
 
       def handle_self_quit(reason)
         if (reason.empty?)
-          LOGGER.debug("I quit IRC.")
+          LOGGER.debug('I quit IRC.')
         else
           LOGGER.debug("I quit IRC. (#{reason})")
         end
@@ -323,7 +323,7 @@ module Axial
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
-        if (@server_interface.trying_to_join.has_key?(channel_name.downcase))
+        if (@server_interface.trying_to_join.key?(channel_name.downcase))
           @server_interface.trying_to_join.delete(channel_name.downcase)
         end
         @server_interface.set_channel_mode(channel_name, '')

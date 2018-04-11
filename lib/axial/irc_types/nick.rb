@@ -24,7 +24,7 @@ module Axial
           end
         else
           if (opped_on?(channel))
-            @opped_channels.delete_if{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+            @opped_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
           end
         end
       end
@@ -36,18 +36,18 @@ module Axial
           end
         else
           if (voiced_on?(channel))
-            @voiced_channels.delete_if{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+            @voiced_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
           end
         end
       end
 
       def opped_on?(channel)
-        opped_channels = @opped_channels.select{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+        opped_channels = @opped_channels.select { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
         return opped_channels.any?
       end
 
       def voiced_on?(channel)
-        voiced_channels = @voiced_channels.select{ |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
+        voiced_channels = @voiced_channels.select { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
         return voiced_channels.any?
       end
 

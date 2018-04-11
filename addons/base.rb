@@ -22,9 +22,9 @@ module Axial
       end
 
       def channel_emote(channel, nick, emote)
-        if (emote.split(/\s+/).collect{ |words| words.downcase }.include?(@bot.real_nick))
+        if (emote.split(/\s+/).collect { |words| words.downcase }.include?(@bot.real_nick))
           wait_a_sec
-          channel.emote("ducks")
+          channel.emote('ducks')
         end
       end
 
@@ -54,11 +54,11 @@ module Axial
             if (addon[:name] == 'base')
               next
             end
-            channel_binds = addon[:object].binds.select{ |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
-            bind_string = ""
+            channel_binds = addon[:object].binds.select { |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
+            bind_string = ''
             if (channel_binds.count > 0)
-              commands = channel_binds.collect{ |bind| @bot.channel_command_character + bind[:command] }
-              bind_string = " (" + commands.sort.join(', ') + ")"
+              commands = channel_binds.collect { |bind| @bot.channel_command_character + bind[:command] }
+              bind_string = ' (' + commands.sort.join(', ') + ')'
             end
             channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{bind_string}")
           end
@@ -72,16 +72,16 @@ module Axial
         end
 
         if (@bot.addons.count == 0)
-          channel.message("no addons loaded.")
+          channel.message('no addons loaded.')
         else
           LOGGER.info("#{user.pretty_name} reloaded addons.")
-          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
-          addon_names = addon_list.collect{ |addon| addon[:name] }
+          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect { |addon| addon[:name] }
           channel.message("unloading addons: #{addon_names.join(', ')}")
           @bot.git_pull
           @bot.reload_addons
-          addon_list = @bot.addons.select{ |addon| addon[:name] != 'base' }
-          addon_names = addon_list.collect{ |addon| addon[:name] }
+          addon_list = @bot.addons.select { |addon| addon[:name] != 'base' }
+          addon_names = addon_list.collect { |addon| addon[:name] }
           channel.message("loaded addons: #{addon_names.join(', ')}")
         end
       rescue Exception => ex

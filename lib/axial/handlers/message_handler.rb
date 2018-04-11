@@ -15,7 +15,7 @@ module Axial
           @bot.server_handler.handle_server_notice(uhost)
         elsif (uhost.casecmp(@bot.server.real_address).zero? || !uhost.include?('!'))
           @bot.server_handler.handle_server_notice(text)
-        elsif (dest.start_with?("#"))
+        elsif (dest.start_with?('#'))
           nick_name = uhost.split('!').first
           channel = @server_interface.channel_list.get(dest)
           nick = channel.nick_list.get(nick_name)
@@ -36,7 +36,7 @@ module Axial
       end
 
       def dispatch_privmsg(uhost, dest, text)
-        if (dest.start_with?("#"))
+        if (dest.start_with?('#'))
           nick_name = uhost.split('!').first
           channel = @server_interface.channel_list.get(dest)
           nick = channel.nick_list.get(nick_name)

@@ -21,24 +21,23 @@ require_relative '../lib/axial/models/init.rb'
 require_relative '../lib/axial/models/user.rb'
 require_relative '../lib/axial/models/mask.rb'
 
- DB_CONNECTION.alter_table(:users) do
-   add_column :created_by, String, size: 32, default: 'unknown'
-#   add_column :password, String, size: 128
-#   add_column :created, DateTime, default: Time.now
-#   add_column :note, String, size: 255
-#   rename_column :role, :role_name
- end
+DB_CONNECTION.alter_table(:users) do
+  add_column :created_by, String, size: 32, default: 'unknown'
+  # add_column :password, String, size: 128
+  # add_column :created, DateTime, default: Time.now
+  # add_column :note, String, size: 255
+  # rename_column :role, :role_name
+end
 
 # Axial::Models::User[name: 'sylence'].update(role_name: 'root')
 
 exit 1
 
-
-#if (DB_CONNECTION.adapter_scheme == :postgres)
+# if (DB_CONNECTION.adapter_scheme == :postgres)
 #  DB_CONNECTION.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users, cacade: true)
-#else
+# else
 #  DB_CONNECTION.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users)
-#end
+# end
 
 DB_CONNECTION.drop_table?(:bans)
 DB_CONNECTION.create_table :bans do
@@ -47,7 +46,7 @@ DB_CONNECTION.create_table :bans do
   String :mask, size: 255
   String :reason, size: 255
   DateTime :set_at, default: Time.now
- end
+end
 
 DB_CONNECTION.create_table :users do
   primary_key :id

@@ -27,7 +27,7 @@ module Axial
 
       ident.gsub!(/^~/, '*')
       if (!ident.start_with?('*'))
-        ident = "*" + ident
+        ident = '*' + ident
       end
       return "#{nick}!#{ident}@#{host}"
     end

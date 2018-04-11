@@ -27,7 +27,7 @@ module Axial
 
       def start()
         if (@transmitter_object.nil? || @transmitter_method.nil?)
-          raise(ConsumerError, "No callback object/method registered.")
+          raise(ConsumerError, 'No callback object/method registered.')
         end
 
         @thread = Thread.new do

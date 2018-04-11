@@ -31,24 +31,23 @@ module Axial
         @chat_consumer.start
         LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
           Timeout.timeout(@connect_timeout) do
-          if (@server.ssl?)
-            context = OpenSSL::SSL::SSLContext::new
-            context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-            tcp_socket = ::TCPSocket.new(@server.address, @server.port)
-            @conn = OpenSSL::SSL::SSLSocket::new(tcp_socket, context)
-            @conn.connect
-          else
-            @conn = TCPSocket.new(@server.address, @server.port)
+            if (@server.ssl?)
+              context = OpenSSL::SSL::SSLContext.new
+              context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+              tcp_socket = ::TCPSocket.new(@server.address, @server.port)
+              @conn = OpenSSL::SSL::SSLSocket.new(tcp_socket, context)
+              @conn.connect
+            else
+              @conn = TCPSocket.new(@server.address, @server.port)
+            end
           end
-        end
-
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
         @bot.timer.delete(@uhost_timer)
         @bot.timer.delete(@auto_join_timer)
         @bot.timer.delete(@nick_regain_timer)
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
-        LOGGER.info("reconnecting in 30 seconds...")
+        LOGGER.info('reconnecting in 30 seconds...')
         sleep 30
         retry
       rescue Exception => ex
@@ -59,7 +58,7 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
-        LOGGER.info("reconnecting in 30 seconds...")
+        LOGGER.info('reconnecting in 30 seconds...')
         sleep 30
         retry
       end
@@ -98,7 +97,7 @@ module Axial
       def login()
         direct_send("USER #{@bot.user} 0 * :#{@bot.real_name}")
         try_nick
-        LOGGER.info("sent credentials to server")
+        LOGGER.info('sent credentials to server')
       end
       private :login
 

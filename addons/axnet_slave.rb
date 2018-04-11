@@ -27,7 +27,7 @@ module Axial
         @bot_user                         = Axnet::User.new
 
         if (axnet.master?)
-          raise(AddonError, "attempted to load both the axnet master and slave addons")
+          raise(AddonError, 'attempted to load both the axnet master and slave addons')
         end
 
         on_startup                        :start_slave_thread
@@ -68,7 +68,7 @@ module Axial
       def join_channel(handler, command)
         channel_name, password = command.two_arguments
         LOGGER.info("received orders to join #{channel_name} from #{handler.remote_cn}")
-        if (!server.trying_to_join.has_key?(channel_name.downcase))
+        if (!server.trying_to_join.key?(channel_name.downcase))
           server.trying_to_join[channel_name.downcase] = password
         end
         server.join_channel(channel_name.downcase, password)
@@ -78,7 +78,7 @@ module Axial
       def part_channel(handler, command)
         channel_name = command.first_argument
         LOGGER.info("received orders to part #{channel_name} from #{handler.remote_cn}")
-        if (server.trying_to_join.has_key?(channel_name.downcase))
+        if (server.trying_to_join.key?(channel_name.downcase))
           server.trying_to_join.delete(channel_name.downcase)
         end
         server.part_channel(channel_name.downcase)
@@ -114,7 +114,7 @@ module Axial
 
         system_info                 = Axnet::SystemInfo.from_environment
         system_info.startup_time    = @bot.startup_time
-        system_info.addons          = @bot.addons.collect{ |addon| addon[:name] }
+        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
         if (!@bot.git.nil?)
           system_info.latest_commit = @bot.git.log.first
         end
@@ -159,7 +159,7 @@ module Axial
         @bot.git_pull
         @bot.reload_axnet
         @bot.reload_addons
-        LOGGER.info("axnet reload complete.")
+        LOGGER.info('axnet reload complete.')
       end
 
       def update_user_list(handler, command)
@@ -191,7 +191,7 @@ module Axial
         while (@running)
           begin
             tcp_socket = TCPSocket.new(@master_address, @port)
-            ssl_socket = OpenSSL::SSL::SSLSocket::new(tcp_socket, Axial::CertUtils.get_context)
+            ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket, Axial::CertUtils.get_context)
             server_socket = ssl_socket.connect
             @handler = Axnet::SocketHandler.new(@bot, server_socket)
             @handler.ssl_handshake
@@ -217,13 +217,13 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
-        LOGGER.error("retry executes in 5 seconds...")
+        LOGGER.error('retry executes in 5 seconds...')
         sleep 5
         retry
       end
 
       def start_slave_thread()
-        LOGGER.debug("starting axial slave thread")
+        LOGGER.debug('starting axial slave thread')
 
         @running        = true
         @refresh_timer  = timer.every_minute(self, :auth_to_axnet)
@@ -245,7 +245,7 @@ module Axial
       end
 
       def stop_slave_thread()
-        LOGGER.debug("slave thread exiting")
+        LOGGER.debug('slave thread exiting')
         @running = false
         @handler.close
         if (!@slave_thread.nil?)

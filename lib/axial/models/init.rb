@@ -16,7 +16,7 @@ DB_OPTIONS = {
   password: ENV['AXIAL_DB_PASSWORD'].freeze
 }.freeze
 
-if (ENV.has_key?('USE_SQLITE') && ENV['USE_SQLITE'].casecmp('true').zero?)
+if (ENV.key?('USE_SQLITE') && ENV['USE_SQLITE'].casecmp('true').zero?)
   sqlite_db = File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..')), 'test.db')
   DB_CONNECTION = Sequel.sqlite(sqlite_db)
 else

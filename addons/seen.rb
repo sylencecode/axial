@@ -20,7 +20,7 @@ module Axial
         @name                                 = 'last seen'
         @author                               = 'sylence <sylence@sylence.org>'
         @version                              = '1.1.0'
-  
+
         on_channel   'seen|lastspoke|last',   :dcc_wrapper, :seen
         on_dcc       'seen|lastspoke|last',   :dcc_wrapper, :seen
         on_privmsg   'seen|lastspoke|last',   :dcc_wrapper, :seen
@@ -37,7 +37,7 @@ module Axial
       def populate_last_spoke(channel, nick)
         if (nick.last_spoke.nil?)
           nick.last_spoke = {}
-        elsif (!nick.last_spoke.has_key?(channel.name))
+        elsif (!nick.last_spoke.key?(channel.name))
           nick.last_spoke[channel.name] = {}
         end
       end
@@ -55,7 +55,7 @@ module Axial
           reply(source, nick, "usage: #{command.command} <nick>")
           return
         elsif (subject_nick_name.casecmp(nick.name.downcase).zero?)
-          reply(source, nick, "trying to find yourself?")
+          reply(source, nick, 'trying to find yourself?')
           return
         elsif (subject_nick_name.casecmp(myself.name.downcase).zero?)
           reply(source, nick, "i'm one handsome guy.")
@@ -78,7 +78,7 @@ module Axial
               # check for nicks associated with a known user
               possible_user = user_list.get_from_nick_object(nick)
               if (!possible_user.nil? && possible_user.id == subject_model.id)
-                if (!on_channels.has_key?(channel))
+                if (!on_channels.key?(channel))
                   on_channels[channel] = []
                 end
                 on_channels[channel].push(nick)
@@ -87,7 +87,7 @@ module Axial
           else
             if (channel.nick_list.include?(subject_nick_name))
               seen_nick = channel.nick_list.get(subject_nick_name)
-              if (!on_channels.has_key?(channel))
+              if (!on_channels.key?(channel))
                 on_channels[channel] = []
               end
               on_channels[channel].push(seen_nick)
@@ -110,7 +110,7 @@ module Axial
               if (tmp_nick.last_spoke.nil?)
                 tmp_nick.last_spoke = {}
               end
-              if (tmp_nick.last_spoke.has_key?(channel.name))
+              if (tmp_nick.last_spoke.key?(channel.name))
                 last_spoke = tmp_nick.last_spoke[channel.name][:time]
                 if (!last_spoke.nil?)
                   if (latest_message.nil? || latest_message > last_spoke)
@@ -239,7 +239,7 @@ module Axial
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
-            status = "quitting IRC"
+            status = 'quitting IRC'
           else
             status = "quitting IRC (#{reason})"
           end
