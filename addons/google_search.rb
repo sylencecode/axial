@@ -41,7 +41,7 @@ module Axial
           end
 
           msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-          msg += result.irc_snippet
+          msg += result.snippet
           msg += " #{Colors.gray}|#{Colors.reset} "
           if (warnings.any?)
             msg += result.link
