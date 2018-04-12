@@ -638,13 +638,13 @@ module Axial
             on_channels = {}
 
             channel_list.all_channels.each do |channel|
-              channel.nick_list.all_nicks.each do |nick|
-                possible_user = user_list.get_from_nick_object(nick)
+              channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
+                possible_user = user_list.get_from_nick_object(subject_nick)
                 if (!possible_user.nil? && possible_user.id == user_model.id)
                   if (!on_channels.key?(channel))
                     on_channels[channel] = []
                   end
-                  on_channels[channel].push(nick)
+                  on_channels[channel].push(subject_nick)
                 end
               end
             end
@@ -746,13 +746,13 @@ module Axial
           on_channels = {}
 
           channel_list.all_channels.each do |channel|
-            channel.nick_list.all_nicks.each do |nick|
-              possible_user = user_list.get_from_nick_object(nick)
+            channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
+              possible_user = user_list.get_from_nick_object(subject_nick)
               if (!possible_user.nil? && possible_user.id == user_model.id)
                 if (!on_channels.key?(channel))
                   on_channels[channel] = []
                 end
-                on_channels[channel].push(nick)
+                on_channels[channel].push(subject_nick)
               end
             end
           end

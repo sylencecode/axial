@@ -105,12 +105,12 @@ module Axial
         response_mode = IRCTypes::Mode.new(server)
         kicks = []
         ban_list.all_bans.each do |ban|
-          channel.nick_list.all_nicks.each do |nick|
-            if (ban.match_mask?(nick.uhost))
+          channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
+            if (ban.match_mask?(subject_nick.uhost))
               if (!response_mode.bans.include?(ban.mask))
                 response_mode.ban(ban.mask)
               end
-              kicks.push(nick: nick, reason: ban.long_reason)
+              kicks.push(nick: subject_nick, reason: ban.long_reason)
             end
           end
         end
@@ -131,7 +131,7 @@ module Axial
         wait_a_sec
 
         response_mode = IRCTypes::Mode.new(server)
-        channel.nick_list.all_nicks.each do |subject_nick|
+        channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
           possible_user = get_bot_or_user(subject_nick)
           if (!possible_user.nil?)
             if (bot_or_op?(possible_user))
@@ -191,9 +191,9 @@ module Axial
               end
             end
           else
-            channel.nick_list.all_nicks.each do |tmp_nick|
-              if (MaskUtils.masks_match?(ban_mask, tmp_nick.uhost))
-                kicks.push(nick: tmp_nick, reason: "banned by #{nick.name}")
+            channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
+              if (MaskUtils.masks_match?(ban_mask, subject_nick.uhost))
+                kicks.push(nick: subject_nick, reason: "banned by #{nick.name}")
               end
             end
           end

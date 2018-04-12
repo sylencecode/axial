@@ -73,14 +73,14 @@ module Axial
 
         scan_channels.each do |channel|
           if (!subject_model.nil?)
-            channel.nick_list.all_nicks.each do |nick|
+            channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
               # check for nicks associated with a known user
-              possible_user = user_list.get_from_nick_object(nick)
+              possible_user = user_list.get_from_nick_object(subject_nick)
               if (!possible_user.nil? && possible_user.id == subject_model.id)
                 if (!on_channels.key?(channel))
                   on_channels[channel] = []
                 end
-                on_channels[channel].push(nick)
+                on_channels[channel].push(subject_nick)
               end
             end
           else
@@ -139,33 +139,33 @@ module Axial
             if (latest_message.nil?)
               last_spoke = TimeSpan.new(channel.joined_at, Time.now)
               if (same)
-                reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+                reply(source, subject_nick, "#{seen_name} is in channel #{channel.name} (idle since i joined #{last_spoke.approximate_to_s} ago)")
               else
-                reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle since i joined #{last_spoke.approximate_to_s} ago)")
+                reply(source, subject_nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle since i joined #{last_spoke.approximate_to_s} ago)")
               end
             else
               last_spoke = TimeSpan.new(latest_message, Time.now)
               if (same)
-                reply(source, nick, "#{seen_name} is in channel #{channel.name} (idle for #{last_spoke.approximate_to_s})")
+                reply(source, subject_nick, "#{seen_name} is in channel #{channel.name} (idle for #{last_spoke.approximate_to_s})")
               else
-                reply(source, nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle for #{last_spoke.approximate_to_s})")
+                reply(source, subject_nick, "#{seen_name} is in channel #{channel.name} as #{nick_string} (idle for #{last_spoke.approximate_to_s})")
               end
             end
           end
         else
           if (subject_model.nil?)
-            reply(source, nick, "i don't know anything about #{subject_nick_name}")
+            reply(source, subject_nick, "i don't know anything about #{subject_nick_name}")
           else
             seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
             if (subject_model.seen.status =~ /^for the first time/i)
-              reply(source, nick, "i haven't seen #{subject_model.pretty_name_with_color} since his/her account was created #{seen_at.approximate_to_s} ago.")
+              reply(source, subject_nick, "i haven't seen #{subject_model.pretty_name_with_color} since his/her account was created #{seen_at.approximate_to_s} ago.")
             else
-              reply(source, nick, "#{subject_model.pretty_name_with_color} was last seen #{subject_model.seen.status} #{TimeSpan.new(Time.now, subject_model.seen.last).approximate_to_s} ago")
+              reply(source, subject_nick, "#{subject_model.pretty_name_with_color} was last seen #{subject_model.seen.status} #{TimeSpan.new(Time.now, subject_model.seen.last).approximate_to_s} ago")
             end
           end
         end
       rescue Exception => ex
-        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        reply(source, subject_nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
