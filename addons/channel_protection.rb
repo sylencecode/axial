@@ -208,16 +208,6 @@ module Axial
               channel.opped = true
               check_channel_bans(channel)
               check_channel_users(channel)
-            else
-              subject_nick = channel.nick_list.get(op)
-              possible_user = get_bot_or_user(subject_nick)
-              if (possible_user.nil? || !possible_user.role.op?)
-                if (!bot_or_director?(user))
-                  if (subject_nick.opped_on?(channel))
-                    response_mode.deop(subject_nick)
-                  end
-                end
-              end
             end
           end
         end
