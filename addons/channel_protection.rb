@@ -144,20 +144,6 @@ module Axial
               if (!subject_nick.voiced_on?(channel))
                 response_mode.voice(subject_nick.name)
               end
-            else
-              # paranoia - deop non-ops, device non-friends
-              if (subject_nick.opped_on?(channel))
-                response_mode.deop(subject_nick)
-              elsif (subject_nick.voiced_on?(channel))
-                response_mode.devoice(subject_nick)
-              end
-            end
-          else
-            # paranoia - deop non-ops, device non-friends
-            if (subject_nick.opped_on?(channel))
-              response_mode.deop(subject_nick)
-            elsif (subject_nick.voiced_on?(channel))
-              response_mode.devoice(subject_nick)
             end
           end
         end
