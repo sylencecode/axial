@@ -653,8 +653,9 @@ module Axial
               dcc.message('')
               dcc.message('associated masks:')
               dcc.message('')
-              user_model.masks.each do |mask|
-                dcc.message("  #{mask.mask}")
+              mask_length   = user_model.masks.collect { |mask_model| mask_model.mask.length }.max + 2
+              user_model.masks.each do |mask_model|
+                dcc.message("  #{mask_model.mask.ljust(mask_length)} - added #{mask_model.created.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')}")
               end
             end
 
@@ -662,20 +663,25 @@ module Axial
               dcc.message('')
               dcc.message('currently active on:')
               dcc.message('')
+              on_channels_output = []
               on_channels.each do |channel, nicks|
                 nicks.each do |nick|
                   if (!nick.last_spoke.nil?)
                     if (!nick.last_spoke.key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
                       last_spoke = TimeSpan.new(channel.joined_at, Time.now)
-                      dcc.message("  - #{channel.name} as #{nick.name} (idle since I joined #{last_spoke.approximate_to_s} ago)")
+                      on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle since I joined #{last_spoke.approximate_to_s} ago")
                     else
                       last_spoke = TimeSpan.new(nick.last_spoke[channel.name][:time], Time.now)
-                      dcc.message("  - #{channel.name} as #{nick.name} (idle for #{last_spoke.approximate_to_s})")
+                      on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle for #{last_spoke.approximate_to_s}")
                     end
                   else
-                    dcc.message("  - #{channel.name} as #{nick.name}")
+                    on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: '- status unknown')
                   end
                 end
+              end
+              channel_string_length = on_channels_output.collect { |left_right| left_right[:left].length }.max + 2
+              on_channels_output.each do |left_right|
+                dcc.message("#{left_right[:left].ljust(channel_string_length)}#{left_right[:right].nil? ? '' : ' ' + left_right[:right]}")
               end
             else
               dcc.message('')

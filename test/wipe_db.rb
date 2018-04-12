@@ -21,17 +21,29 @@ require_relative '../lib/axial/models/init.rb'
 require_relative '../lib/axial/models/user.rb'
 require_relative '../lib/axial/models/mask.rb'
 
-DB_CONNECTION.alter_table(:users) do
-  add_column :created_by, String, size: 32, default: 'unknown'
-  # add_column :password, String, size: 128
-  # add_column :created, DateTime, default: Time.now
-  # add_column :note, String, size: 255
-  # rename_column :role, :role_name
-end
+# DB_CONNECTION.alter_table(:masks) do
+#   add_column :created, DateTime, default: Time.now
+# end
 
-# Axial::Models::User[name: 'sylence'].update(role_name: 'root')
+# Axial::Models::User.all.each do |user_model|
+#   puts user_model.created.inspect
+#   user_model.masks.each do |mask_model|
+#     puts mask_model.created.inspect
+#     mask_model.update(created: user_model.created)
+#   end
+# end
 
 exit 1
+
+# DB_CONNECTION.alter_table(:users) do
+#   add_column :created_by, String, size: 32, default: 'unknown'
+#   add_column :password, String, size: 128
+#   add_column :created, DateTime, default: Time.now
+#   add_column :note, String, size: 255
+#   rename_column :role, :role_name
+# end
+
+# Axial::Models::User[name: 'sylence'].update(role_name: 'root')
 
 # if (DB_CONNECTION.adapter_scheme == :postgres)
 #  DB_CONNECTION.drop_table?(:bans, :seens, :masks, :things, :rss_feeds, :users, cacade: true)
