@@ -264,7 +264,7 @@ module Axial
           LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
-        @refresh_timer  = timer.every_5_minutes(self, :auth_to_axnet)
+        @refresh_timer  = timer.every_3_minutes(self, :auth_to_axnet)
         timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
           LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
