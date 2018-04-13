@@ -246,7 +246,7 @@ module Axial
 
       def handle_full_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel&.opped? || !channel&.limit?)
+        if (!channel&.opped? || !channel&.mode&.limit?)
           return
         end
 

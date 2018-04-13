@@ -173,8 +173,8 @@ module Axial
       end
 
       def update_seen_kick(channel, kicker_nick, kicked_nick, reason)
-        if (!nick.last_spoke.nil?)
-          nick.last_spoke.delete(channel.name)
+        if (!kicked_nick.last_spoke.nil?)
+          kicked_nick.last_spoke.delete(channel.name)
         end
         user = Models::User.get_from_nick_object(kicked_nick)
         if (!user.nil?)
@@ -183,7 +183,6 @@ module Axial
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
         end
       rescue Exception => ex
-        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -232,9 +231,6 @@ module Axial
       end
 
       def update_seen_quit(nick, reason)
-        if (!nick.last_spoke.nil?)
-          nick.last_spoke.delete(channel.name)
-        end
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
           if (reason.empty?)
