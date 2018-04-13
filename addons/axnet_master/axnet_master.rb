@@ -67,7 +67,19 @@ module Axial
 
       def update_bot_system_info(handler, command)
         system_info_yaml    = command.args.gsub(/\0/, "\n")
-        system_info         = YAML.safe_load(system_info_yaml, [ Axnet::SystemInfo ])
+        safe_classes        = [
+          Axnet::SystemInfo,
+          Git::Author,
+          Git::Base,
+          Git::Index,
+          Git::Lib,
+          Git::Repository,
+          Git::WorkingDirectory,
+          Git::Object::Commit,
+          Git::Object::Tree,
+          Time
+        ]
+        system_info         = YAML.safe_load(system_info_yaml, safe_classes, [], true)
         handler.system_info = system_info
       end
 
@@ -260,11 +272,18 @@ module Axial
       end
 
       def add_bot(handler, command)
-        bot_yaml = command.args.gsub(/\0/, "\n")
-        new_bot = YAML.safe_load(bot_yaml, [ Axnet::User ])
+        bot_yaml      = command.args.tr("\0", "\n")
+        safe_classes  = [
+            Axnet::User,
+            Axial::Role,
+            Time
+        ]
+        new_bot       = YAML.safe_load(bot_yaml, safe_classes, [], true)
+
         if (bot_list.include?(new_bot.name))
           bot_list.delete(new_bot.name)
         end
+
         bot_list.add(new_bot)
         LOGGER.info("updating bot_user info for #{new_bot.pretty_name}")
         send_bot_list

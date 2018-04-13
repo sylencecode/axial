@@ -146,13 +146,17 @@ module Axial
         end
       end
 
-      def handle_assistance_request(handler, command)
-        serialized_yaml = command.args.gsub(/\0/, "\n")
+      def handle_assistance_request(handler, command) # rubocop:disable Metrics/MethodLength
+        request_yaml  = command.args.tr("\0", "\n")
         if (axnet.master?)
-          axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
+          axnet.relay(handler, 'ASSISTANCE_REQUEST ' + request_yaml)
         end
 
-        request       = YAML.safe_load(serialized_yaml, [ Axnet::AssistanceRequest ])
+        safe_classes  = [
+            Axnet::AssistanceRequest
+        ]
+        request       = YAML.safe_load(request_yaml, safe_classes, [], true)
+
         channel_name  = request.channel_name
         bot_nick      = request.bot_nick
 
@@ -180,12 +184,15 @@ module Axial
       end
 
       def handle_assistance_response(handler, command)
-        serialized_yaml = command.args
+        response_yaml   = command.args.tr("\0", "\n")
         if (axnet.master?)
-          axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + serialized_yaml)
+          axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + response_yaml)
         end
 
-        response = YAML.safe_load(serialized_yaml.gsub(/\0/, "\n"), [ Axnet::AssistanceResponse ])
+        safe_classes    = [
+            Axnet::AssistanceResponse
+        ]
+        response        = YAML.safe_load(request_yaml, safe_classes, [], true)
 
         case response.type
           when :keyword
