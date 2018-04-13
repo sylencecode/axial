@@ -132,6 +132,7 @@ module Axial
             Axnet::UserList,
             Axnet::User,
             Axial::Role,
+            Monitor,
             Time
         ]
         new_bot_list    = YAML.safe_load(bot_list_yaml, safe_classes, [], true)
@@ -175,6 +176,7 @@ module Axial
             Axnet::UserList,
             Axnet::User,
             Axial::Role,
+            Monitor,
             Time
         ]
         new_user_list   = YAML.safe_load(user_list_yaml, safe_classes, [], true)
@@ -195,6 +197,7 @@ module Axial
             Axnet::Ban,
             Axnet::User,
             Axial::Role,
+            Monitor,
             Time
         ]
         new_ban_list    = YAML.safe_load(ban_list_yaml, safe_classes, [], true)
