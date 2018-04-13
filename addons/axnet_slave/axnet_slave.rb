@@ -49,7 +49,6 @@ module Axial
       end
 
       def send_axnet_heartbeat()
-        @heartbeat_timer = timer.every_minute(self, :send_axnet_heartbeat)
         axnet.send('HEARTBEAT')
       end
 
