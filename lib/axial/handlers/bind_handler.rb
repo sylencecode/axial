@@ -155,9 +155,9 @@ module Axial
             begin
               if (bind[:object].respond_to?(bind[:method]))
                 if (bind.key?(:args) && bind[:args].any?)
-                  bind[:object].public_send(bind[:method], channel_name, *bind[:args])
+                  bind[:object].public_send(bind[:method], nick, channel_name, *bind[:args])
                 else
-                  bind[:object].public_send(bind[:method], channel_name)
+                  bind[:object].public_send(bind[:method], nick, channel_name)
                 end
               else
                 LOGGER.error("#{bind[:object].class} configured to call back #{bind[:method]} but does not respond to it publicly.")
