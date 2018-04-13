@@ -260,7 +260,17 @@ module Axial
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
           dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} (from #{handler.remote_address})")
         end
-        dcc.message("#{@handlers.count} bots connected.")
+        dcc.message('')
+        case @handlers.count
+          when 0
+            bots_string = 'no bots'
+          when 1
+            bots_string = '1 bot'
+          else
+            bots_string = "#{@handlers.count} bots"
+        end
+
+        dcc.message("#{bots_string} connected.")
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
