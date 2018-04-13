@@ -119,15 +119,15 @@ module Axial
           system_info.latest_commit = @bot.git.log.first
         end
 
-        auth_yaml                   = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        system_info_yaml            = YAML.dump(system_info).gsub(/\n/, "\0")
+        auth_yaml                   = YAML.dump(@bot_user).tr("\n", "\0")
+        system_info_yaml            = YAML.dump(system_info).tr("\n", "\0")
 
         axnet.send('BOT_AUTH '      + auth_yaml)
         axnet.send('SYSTEM_INFO '   + system_info_yaml)
       end
 
       def update_bot_list(handler, command)
-        bot_list_yaml   = command.args.gsub(/\0/, "\n")
+        bot_list_yaml   = command.args.tr("\0", "\n")
         safe_classes    = [
             Axnet::UserList,
             Axnet::User,
@@ -173,7 +173,7 @@ module Axial
       end
 
       def update_user_list(handler, command)
-        user_list_yaml  = command.args.gsub(/\0/, "\n")
+        user_list_yaml  = command.args.tr("\0", "\n")
         safe_classes    = [
             Axnet::UserList,
             Axnet::User,
@@ -195,7 +195,7 @@ module Axial
       end
 
       def update_ban_list(handler, command)
-        ban_list_yaml   = command.args.gsub(/\0/, "\n")
+        ban_list_yaml   = command.args.tr("\0", "\n")
         safe_classes    = [
             Axnet::BanList,
             Axnet::Ban,

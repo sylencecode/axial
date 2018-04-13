@@ -147,9 +147,11 @@ module Axial
       end
 
       def handle_assistance_request(handler, command) # rubocop:disable Metrics/MethodLength
-        request_yaml  = command.args.gsub(/\0/, "\n")
+        request_yaml_raw  = command.args
+        request_yaml      = request_yaml_raw.tr("\0", "\n")
+
         if (axnet.master?)
-          axnet.relay(handler, 'ASSISTANCE_REQUEST ' + request_yaml)
+          axnet.relay(handler, 'ASSISTANCE_REQUEST ' + request_yaml_raw)
         end
 
         safe_classes  = [
@@ -186,9 +188,11 @@ module Axial
       end
 
       def handle_assistance_response(handler, command)
-        response_yaml   = command.args.gsub(/\0/, "\n")
+        response_yaml_raw = command.args
+        response_yaml     = response_yaml_raw.tr("\0", "\n")
+
         if (axnet.master?)
-          axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + response_yaml)
+          axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + response_yaml_raw)
         end
 
         safe_classes    = [
@@ -278,13 +282,13 @@ module Axial
 
       def send_request(request)
         LOGGER.debug("sending assistance request: #{request.type}, #{request.channel_name}, #{request.bot_nick.uhost}")
-        serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
+        serialized_yaml = YAML.dump(request).tr("\n", "\0")
         axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
       end
 
       def send_response(response)
         LOGGER.debug("sending asssistance response: #{response.type}, #{response.channel_name}, #{response.response}")
-        serialized_yaml = YAML.dump(response).gsub(/\n/, "\0")
+        serialized_yaml = YAML.dump(response).tr("\n", "\0")
         axnet.send('ASSISTANCE_RESPONSE ' + serialized_yaml)
       end
 

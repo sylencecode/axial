@@ -66,7 +66,7 @@ module Axial
       end
 
       def update_bot_system_info(handler, command)
-        system_info_yaml    = command.args.gsub(/\0/, "\n")
+        system_info_yaml    = command.args.tr("\0", "\n")
         safe_classes        = [
           Axnet::SystemInfo,
           Git::Author,
@@ -273,7 +273,7 @@ module Axial
       end
 
       def add_bot(handler, command)
-        bot_yaml      = command.args.gsub(/\0/, "\n")
+        bot_yaml      = command.args.tr("\0", "\n")
         safe_classes  = [
             Axnet::User,
             Axial::Role,
@@ -307,7 +307,7 @@ module Axial
         end
         bot_list.add(@bot_user)
 
-        serialized_yaml         = YAML.dump(bot_list).gsub(/\n/, "\0")
+        serialized_yaml         = YAML.dump(bot_list).tr("\n", "\0")
         axnet.send("BOTS #{serialized_yaml}")
       end
 
@@ -378,7 +378,7 @@ module Axial
 
       def send_user_list(handler, command)
         LOGGER.debug("user list requested from #{handler.remote_cn}")
-        user_list_yaml = YAML.dump(user_list).gsub(/\n/, "\0")
+        user_list_yaml = YAML.dump(user_list).tr("\n", "\0")
         handler.send('USERLIST_RESPONSE ' + user_list_yaml)
         LOGGER.debug("sent user list to #{handler.remote_cn}")
       rescue Exception => ex
@@ -390,7 +390,7 @@ module Axial
 
       def send_ban_list(handler, command)
         LOGGER.debug("ban list requested from #{handler.remote_cn}")
-        ban_list_yaml = YAML.dump(ban_list).gsub(/\n/, "\0")
+        ban_list_yaml = YAML.dump(ban_list).tr("\n", "\0")
         handler.send('BANLIST_RESPONSE ' + ban_list_yaml)
         LOGGER.debug("sent ban list to #{handler.remote_cn}")
       rescue Exception => ex
