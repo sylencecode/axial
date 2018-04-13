@@ -102,6 +102,10 @@ module Axial
       end
 
       def auth_to_axnet()
+        LOGGER.debug("authenticating to axnet")
+        timer.all_timers.each do |a_timer|
+          puts timer.inspect
+        end
         @bot_user.name              = @bot.local_cn
         @bot_user.pretty_name       = @bot.local_cn
         @bot_user.role_name         = 'bot'

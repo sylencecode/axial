@@ -10,6 +10,10 @@ module Axial
         @timers = []
       end
 
+      def all_timers()
+        return @timers.clone
+      end
+
       def include?(timer)
         if (timer.nil?)
           return false
