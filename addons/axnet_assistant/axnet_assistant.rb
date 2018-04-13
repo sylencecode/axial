@@ -196,7 +196,7 @@ module Axial
             IRCTypes::Nick,
             Symbol
         ]
-        response        = YAML.safe_load(request_yaml, safe_classes, [], true)
+        response        = YAML.safe_load(response_yaml, safe_classes, [], true)
 
         case response.type
           when :keyword
