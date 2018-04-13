@@ -199,6 +199,8 @@ module Axial
             end
 
             running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
+            dcc.message("#{Colors.gray}|#{Colors.reset}            uhost: #{system_info.uhost}")
+            dcc.message("#{Colors.gray}|#{Colors.reset}     connected to: #{system_info.server_info}")
             dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
             dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
             dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
@@ -239,6 +241,8 @@ module Axial
         end
 
         system_info                 = Axnet::SystemInfo.from_environment
+        system_info.server_info     = @bot.server.real_address + ':' + @bot.server.port
+        system_info.uhost           = server.myself.uhost
         system_info.startup_time    = @bot.startup_time
         system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
         if (!@bot.git.nil?)
@@ -256,6 +260,7 @@ module Axial
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
           dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} (from #{handler.remote_address})")
         end
+        dcc.message("#{@handlers.count} bots connected.")
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -536,7 +541,17 @@ module Axial
             end
           end
         end
-        @refresh_timer = timer.every_minute(self, :send_bot_list)
+
+        timer.get_from_callback_method(:send_bot_list).each do |tmp_timer|
+          LOGGER.debug("removing previous axnet send_bot_list timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
+        @refresh_timer  = timer.every_5_minutes(self, :send_bot_list)
+
+        timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
+          LOGGER.debug("removing previous axnet check_for_uhost_change timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
         @uhost_timer   = timer.every_second(self, :check_for_uhost_change)
       end
 

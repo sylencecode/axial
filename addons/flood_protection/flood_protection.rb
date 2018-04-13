@@ -313,6 +313,10 @@ module Axial
 
       def start_flood_reset_timer()
         LOGGER.debug('starting flood reset timer')
+        timer.get_from_callback_method(:reset_flood_counters).each do |tmp_timer|
+          LOGGER.debug("removing previous reset_flood_counters timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
         @flood_reset_timer = timer.every_second(self, :reset_flood_counters)
       end
 

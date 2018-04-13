@@ -14,6 +14,10 @@ module Axial
         return @timers.clone
       end
 
+      def get_from_callback_method(method)
+        return @timers.select { |tmp_timer| tmp_timer.callback_method == method }
+      end
+
       def include?(timer)
         if (timer.nil?)
           return false

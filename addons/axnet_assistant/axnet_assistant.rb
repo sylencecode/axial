@@ -17,6 +17,8 @@ module Axial
 
         @request_timer                    = nil
         @requests                         = {}
+        @request_transmit_count           = 0
+        @last_request                     = Time.now
 
         on_startup                        :start_request_timer
         on_reload                         :start_request_timer
@@ -48,11 +50,20 @@ module Axial
       def clear_channel_after_part(channel)
         key = get_channel_name(channel)
         @requests.delete(key)
+
+        reset_request_count
+      end
+
+      def reset_request_count()
+        @request_transmit_count = 0
+        @request_timer.interval = 3 ** @request_transmit_count
       end
 
       def cancel_request(channel, request_type)
         key = get_channel_name(channel)
         @requests.dig(key)&.delete(request_type)
+
+        reset_request_count
       end
 
       def queue_request(channel, request_type)
@@ -64,6 +75,8 @@ module Axial
           @requests[key].push(request_type)
           request(key, request_type)
         end
+
+        reset_request_count
       end
 
       def request(channel, request_type)
@@ -84,6 +97,8 @@ module Axial
         cancel_request(channel, :full)
         cancel_request(channel, :invite)
         cancel_request(channel, :banned)
+
+        reset_request_count
       end
 
       # Queues an axnet assistance request for the bot to be opped by any available peers.
@@ -134,11 +149,21 @@ module Axial
       end
 
       def check_for_requests()
+        if (@requests.empty?)
+          return
+        elsif (@request_transmit_count > 5)
+          @request_transmit_count = 0
+        end
+
         @requests.each do |channel_name, pending_requests|
           pending_requests.each do |pending_request|
             request(channel_name, pending_request)
           end
         end
+
+        # adjust interval by 3 to the power of transmit count
+        @request_transmit_count += 1
+        @request_timer.interval = 3 ** @request_transmit_count
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -299,7 +324,11 @@ module Axial
 
       def start_request_timer()
         LOGGER.debug('starting request timer')
-        @request_timer = timer.every_30_seconds(self, :check_for_requests)
+        timer.get_from_callback_method(:check_for_requests).each do |tmp_timer|
+          LOGGER.debug("removing previous request timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
+        @request_timer = timer.every_second(self, :check_for_requests)
       end
 
       def bot_or_director?(user)

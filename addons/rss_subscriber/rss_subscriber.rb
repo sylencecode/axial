@@ -38,6 +38,10 @@ module Axial
       def start_ingest_timer()
         LOGGER.debug('starting ingest timer')
         DB_CONNECTION[:rss_feeds].update(last_ingest: Time.now)
+        timer.get_from_callback_method(:ingest).each do |tmp_timer|
+          LOGGER.debug("removing previous ingest timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
         @ingest_timer = timer.every_minute(self, :ingest)
       end
 

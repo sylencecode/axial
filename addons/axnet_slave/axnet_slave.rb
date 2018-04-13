@@ -114,6 +114,8 @@ module Axial
         end
 
         system_info                 = Axnet::SystemInfo.from_environment
+        system_info.server_info     = @bot.server.real_address + ':' + @bot.server.port
+        system_info.uhost           = server.myself.uhost
         system_info.startup_time    = @bot.startup_time
         system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
         if (!@bot.git.nil?)
@@ -258,7 +260,15 @@ module Axial
         LOGGER.debug('starting axial slave thread')
 
         @running        = true
-        @refresh_timer  = timer.every_minute(self, :auth_to_axnet)
+        timer.get_from_callback_method(:auth_to_axnet).each do |tmp_timer|
+          LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
+        @refresh_timer  = timer.every_5_minutes(self, :auth_to_axnet)
+        timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
+          LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
         @uhost_timer    = timer.every_second(self, :check_for_uhost_change)
 
         @slave_thread   = Thread.new do

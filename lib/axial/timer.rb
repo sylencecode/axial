@@ -5,8 +5,8 @@ module Axial
   end
 
   class Timer
-    attr_reader     :uuid, :last, :type, :interval
-    attr_accessor   :thread
+    attr_reader     :uuid, :last, :type, :callback_method
+    attr_accessor   :thread, :interval
     attr_writer     :expired, :repeat
 
     def initialize(repeat, interval, *args, &block)

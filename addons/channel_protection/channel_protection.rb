@@ -408,6 +408,10 @@ module Axial
 
       def start_ban_cleanup_timer()
         LOGGER.debug('starting ban cleanup timer')
+        timer.get_from_callback_method(:cleanup_old_bans).each do |tmp_timer|
+          LOGGER.debug("removing previous ban cleanup timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
         @ban_cleanup_timer = timer.every_minute(self, :cleanup_old_bans)
       end
 
