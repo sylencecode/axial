@@ -114,7 +114,7 @@ module Axial
         end
 
         system_info                 = Axnet::SystemInfo.from_environment
-        system_info.server_info     = @bot.server.real_address + ':' + @bot.server.port
+        system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
         system_info.uhost           = server.myself.uhost
         system_info.startup_time    = @bot.startup_time
         system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
