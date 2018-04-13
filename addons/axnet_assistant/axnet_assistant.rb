@@ -154,6 +154,7 @@ module Axial
 
         safe_classes  = [
             Axnet::AssistanceRequest,
+            IRCTypes::Nick,
             Symbol
         ]
         request       = YAML.safe_load(request_yaml, safe_classes, [], true)
@@ -192,6 +193,7 @@ module Axial
 
         safe_classes    = [
             Axnet::AssistanceResponse,
+            IRCTypes::Nick,
             Symbol
         ]
         response        = YAML.safe_load(request_yaml, safe_classes, [], true)
