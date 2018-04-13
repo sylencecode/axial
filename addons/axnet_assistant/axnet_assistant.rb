@@ -147,7 +147,7 @@ module Axial
       end
 
       def handle_assistance_request(handler, command) # rubocop:disable Metrics/MethodLength
-        request_yaml  = command.args.tr("\0", "\n")
+        request_yaml  = command.args.gsub(/\0/, "\n")
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + request_yaml)
         end
@@ -186,7 +186,7 @@ module Axial
       end
 
       def handle_assistance_response(handler, command)
-        response_yaml   = command.args.tr("\0", "\n")
+        response_yaml   = command.args.gsub(/\0/, "\n")
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + response_yaml)
         end

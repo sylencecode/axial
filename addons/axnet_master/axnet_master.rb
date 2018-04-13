@@ -273,7 +273,7 @@ module Axial
       end
 
       def add_bot(handler, command)
-        bot_yaml      = command.args.tr("\0", "\n")
+        bot_yaml      = command.args.gsub(/\0/, "\n")
         safe_classes  = [
             Axnet::User,
             Axial::Role,
