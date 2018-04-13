@@ -16,6 +16,7 @@ module Axial
         @version = '1.1.0'
 
         @last_uhost                       = myself.uhost
+        @heartbeat_timer                  = nil
         @uhost_timer                      = nil
         @refresh_timer                    = nil
         @slave_thread                     = nil
@@ -45,6 +46,11 @@ module Axial
         on_axnet                 'PING',  :pong_channel
 
         axnet.register_transmitter(self, :send)
+      end
+
+      def send_axnet_heartbeat()
+        @heartbeat_timer = timer.every_minute(self, :send_axnet_heartbeat)
+        axnet.send('HEARTBEAT')
       end
 
       def lorem_ipsum(handler, command)
@@ -260,13 +266,20 @@ module Axial
         LOGGER.debug('starting axial slave thread')
 
         @running        = true
-        timer.get_from_callback_method(:auth_to_axnet).each do |tmp_timer|
-          LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
+        timer.get_from_callback_method(:send_axnet_heartbeat).each do |tmp_timer|
+          LOGGER.debug("removing previous slave send_axnet_heartbeat timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
-        @refresh_timer  = timer.every_3_minutes(self, :auth_to_axnet)
+        @heartbeat_timer = timer.every_minute(self, :send_axnet_heartbeat)
+
+        timer.get_from_callback_method(:auth_to_axnet).each do |tmp_timer|
+          LOGGER.debug("removing previous slave auth_to_axnet timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
+        @refresh_timer  = timer.every_5_minutes(self, :auth_to_axnet)
+
         timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
-          LOGGER.debug("removing previous slave timer #{tmp_timer.callback_method}")
+          LOGGER.debug("removing previous slave check_for_uhost_change timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @uhost_timer    = timer.every_second(self, :check_for_uhost_change)
@@ -294,6 +307,7 @@ module Axial
           @slave_thread.kill
         end
         @slave_thread = nil
+        timer.delete(@heartbeat_timer)
         timer.delete(@refresh_timer)
         timer.delete(@uhost_timer)
       rescue Exception => ex

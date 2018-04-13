@@ -40,6 +40,7 @@ module Axial
         on_axnet             'BOT_AUTH',  :add_bot
         on_axnet             'USERLIST',  :send_user_list
         on_axnet          'SYSTEM_INFO',  :update_bot_system_info
+        on_axnet            'HEARTBEAT',  :log_heartbeat
 
         on_axnet_disconnect               :remove_bot
         on_axnet_connect                  :announce_bot
@@ -59,6 +60,10 @@ module Axial
 
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
+      end
+
+      def log_heartbeat(handler, _command)
+        LOGGER.debug("received heartbeat from #{handler.remote_cn}")
       end
 
       def announce_bot(handler)
