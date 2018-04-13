@@ -41,7 +41,7 @@ module Axial
       end
 
       def get_channel_name(channel_or_name)
-        key = channel_or_name.is_a?(IRCTypes::Channel) ? channel.name.downcase : channel&.downcase
+        key = channel_or_name.is_a?(IRCTypes::Channel) ? channel_or_name.name.downcase : channel_or_name.downcase
         return key
       end
 
@@ -147,7 +147,7 @@ module Axial
       end
 
       def handle_assistance_request(handler, command)
-        serialized_yaml = command.args.tr(/\0/, "\n")
+        serialized_yaml = command.args.gsub(/\0/, "\n")
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         end
@@ -185,7 +185,7 @@ module Axial
           axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + serialized_yaml)
         end
 
-        response = YAML.safe_load(serialized_yaml.tr(/\0/, "\n"), [ Axnet::AssistanceResponse ])
+        response = YAML.safe_load(serialized_yaml.gsub(/\0/, "\n"), [ Axnet::AssistanceResponse ])
 
         case response.type
           when :keyword

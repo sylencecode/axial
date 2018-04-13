@@ -66,7 +66,7 @@ module Axial
       end
 
       def update_bot_system_info(handler, command)
-        system_info_yaml    = command.args.tr(/\0/, "\n")
+        system_info_yaml    = command.args.gsub(/\0/, "\n")
         system_info         = YAML.safe_load(system_info_yaml, [ Axnet::SystemInfo ])
         handler.system_info = system_info
       end
@@ -260,7 +260,7 @@ module Axial
       end
 
       def add_bot(handler, command)
-        bot_yaml = command.args.tr(/\0/, "\n")
+        bot_yaml = command.args.gsub(/\0/, "\n")
         new_bot = YAML.safe_load(bot_yaml, [ Axnet::User ])
         if (bot_list.include?(new_bot.name))
           bot_list.delete(new_bot.name)
