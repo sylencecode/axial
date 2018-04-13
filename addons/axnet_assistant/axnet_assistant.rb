@@ -278,13 +278,13 @@ module Axial
 
       def send_request(request)
         LOGGER.debug("sending assistance request: #{request.type}, #{request.channel_name}, #{request.bot_nick.uhost}")
-        serialized_yaml = YAML.dump(request).tr("\n", "\0")
+        serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
         axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
       end
 
       def send_response(response)
         LOGGER.debug("sending asssistance response: #{response.type}, #{response.channel_name}, #{response.response}")
-        serialized_yaml = YAML.dump(response).tr("\n", "\0")
+        serialized_yaml = YAML.dump(response).gsub(/\n/, "\0")
         axnet.send('ASSISTANCE_RESPONSE ' + serialized_yaml)
       end
 

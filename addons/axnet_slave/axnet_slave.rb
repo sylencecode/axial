@@ -119,8 +119,8 @@ module Axial
           system_info.latest_commit = @bot.git.log.first
         end
 
-        auth_yaml                   = YAML.dump(@bot_user).tr("\n", "\0")
-        system_info_yaml            = YAML.dump(system_info).tr("\n", "\0")
+        auth_yaml                   = YAML.dump(@bot_user).gsub(/\n/, "\0")
+        system_info_yaml            = YAML.dump(system_info).gsub(/\n/, "\0")
 
         axnet.send('BOT_AUTH '      + auth_yaml)
         axnet.send('SYSTEM_INFO '   + system_info_yaml)
