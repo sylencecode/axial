@@ -77,6 +77,7 @@ module Axial
           Git::WorkingDirectory,
           Git::Object::Commit,
           Git::Object::Tree,
+          Symbol,
           Time
         ]
         system_info         = YAML.safe_load(system_info_yaml, safe_classes, [], true)
@@ -276,6 +277,7 @@ module Axial
         safe_classes  = [
             Axnet::User,
             Axial::Role,
+            Symbol,
             Time
         ]
         new_bot       = YAML.safe_load(bot_yaml, safe_classes, [], true)

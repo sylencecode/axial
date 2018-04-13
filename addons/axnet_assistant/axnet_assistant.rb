@@ -153,7 +153,8 @@ module Axial
         end
 
         safe_classes  = [
-            Axnet::AssistanceRequest
+            Axnet::AssistanceRequest,
+            Symbol
         ]
         request       = YAML.safe_load(request_yaml, safe_classes, [], true)
 
@@ -190,7 +191,8 @@ module Axial
         end
 
         safe_classes    = [
-            Axnet::AssistanceResponse
+            Axnet::AssistanceResponse,
+            Symbol
         ]
         response        = YAML.safe_load(request_yaml, safe_classes, [], true)
 

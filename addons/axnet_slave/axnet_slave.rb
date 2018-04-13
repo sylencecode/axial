@@ -133,6 +133,7 @@ module Axial
             Axnet::User,
             Axial::Role,
             Monitor,
+            Symbol,
             Thread::Mutex,
             Time
         ]
@@ -178,6 +179,7 @@ module Axial
             Axnet::User,
             Axial::Role,
             Monitor,
+            Symbol,
             Thread::Mutex,
             Time
         ]
@@ -200,6 +202,7 @@ module Axial
             Axnet::User,
             Axial::Role,
             Monitor,
+            Symbol,
             Thread::Mutex,
             Time
         ]
