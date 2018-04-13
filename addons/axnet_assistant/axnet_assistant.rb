@@ -47,7 +47,9 @@ module Axial
       def check_initial_requests()
         server.retry_joins
         channel_list.all_channels.each do |channel|
-          create_op_request(channel)
+          if (!channel.opped?)
+            create_op_request(channel)
+          end
         end
       end
 
