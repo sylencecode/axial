@@ -42,7 +42,7 @@ module Axial
         on_dcc              'exec', :dcc_wrapper, :handle_exec
       end
 
-      def handle_kick(channel, kicker_nick, kicked_nick, reason)
+      def handle_kick(channel, kicker_nick, kicked_nick, _reason)
         user = get_bot_or_user(kicker_nick)
         possible_user = get_bot_or_user(kicked_nick)
         if (bot_or_op?(possible_user))
@@ -62,6 +62,7 @@ module Axial
       end
 
       def rejoin(channel, kicker_nick, reason)
+        LOGGER.warn("kicked from #{channel.name} by #{kicker_nick.uhost}: #{reason}")
         wait_a_sec
         if (!server.trying_to_join.key?(channel.name.downcase))
           server.trying_to_join[channel.name.downcase] = ''
@@ -208,6 +209,8 @@ module Axial
               channel.opped = true
               check_channel_bans(channel)
               check_channel_users(channel)
+              set_enforced_modes(channel, channel.mode)
+              unset_prevented_modes(channel, channel.mode)
             end
           end
         end
@@ -243,25 +246,43 @@ module Axial
       def handle_prevent_modes(channel, nick, mode)
         if (!channel.opped? || nick == myself)
           return
+        elsif (bot_or_director?(get_bot_or_user(nick)))
+          return
         end
 
-        user = get_bot_or_user(nick)
-        if (bot_or_director?(user))
+        unset_prevented_modes(channel, mode)
+      end
+
+      def unset_prevented_modes(channel, mode)
+        if (!channel.opped?)
           return
         end
 
         response_mode = IRCTypes::Mode.new(server)
-        mode.channel_modes.each do |channel_mode|
-          mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
-          if (mode_set)
-            if (channel_mode == :keyword)
-              response_mode.unset_keyword(mode.keyword)
-            elsif (channel_mode == :limit)
-              response_mode.limit = 0
-            else
-              response_mode.public_send((channel_mode.to_s + '=').to_sym, false)
-            end
+        prevent_modes = @prevent_modes.select { |prevent_mode| mode.channel_modes.include?(prevent_mode) }
+        prevent_modes.each do |channel_mode|
+          if (channel_mode == :keyword)
+            response_mode.unset_keyword(mode.keyword)
+          elsif (channel_mode == :limit)
+            response_mode.limit = 0
+          else
+            response_mode.public_send((channel_mode.to_s + '=').to_sym, false)
           end
+        end
+
+        if (response_mode.any?)
+          channel.set_mode(response_mode)
+        end
+      end
+
+      def set_enforced_modes(channel, mode)
+        if (!channel.opped?)
+          return
+        end
+        response_mode = IRCTypes::Mode.new(server)
+        enforce_modes = @enforce_modes.reject { |enforce_mode| mode.channel_modes.include?(enforce_mode) }
+        enforce_modes.each do |channel_mode|
+          response_mode.public_send((channel_mode.to_s + '=').to_sym, true)
         end
 
         if (response_mode.any?)
@@ -272,24 +293,11 @@ module Axial
       def handle_enforce_modes(channel, nick, mode)
         if (!channel.opped? || nick == myself)
           return
-        end
-
-        user = get_bot_or_user(nick)
-        if (bot_or_director?(user))
+        elsif (bot_or_director?(get_bot_or_user(nick)))
           return
         end
 
-        response_mode = IRCTypes::Mode.new(server)
-        mode.channel_modes.each do |channel_mode|
-          mode_set = mode.public_send((channel_mode.to_s + '?').to_sym)
-          if (!mode_set)
-            response_mode.public_send((channel_mode.to_s + '=').to_sym, true)
-          end
-        end
-
-        if (response_mode.any?)
-          channel.set_mode(response_mode)
-        end
+        set_enforced_modes(channel, mode)
       end
 
       def auto_op_voice(channel, nick)
