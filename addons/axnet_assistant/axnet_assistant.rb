@@ -21,7 +21,9 @@ module Axial
         @last_request                     = Time.now
 
         on_startup                        :start_request_timer
+        on_startup                        :check_initial_requests
         on_reload                         :start_request_timer
+        on_reload                         :check_initial_requests
 
         on_axnet    'ASSISTANCE_REQUEST', :handle_assistance_request
         on_axnet   'ASSISTANCE_RESPONSE', :handle_assistance_response
@@ -42,6 +44,13 @@ module Axial
         on_invite                         :handle_invite
       end
 
+      def check_initial_requests()
+        server.retry_joins
+        channel_list.all_channels.each do |channel|
+          create_op_request(channel)
+        end
+      end
+
       def get_channel_name(channel_or_name)
         key = channel_or_name.is_a?(IRCTypes::Channel) ? channel_or_name.name.downcase : channel_or_name.downcase
         return key
@@ -56,7 +65,7 @@ module Axial
 
       def reset_request_count()
         @request_transmit_count = 0
-        @request_timer.interval = 3 ** @request_transmit_count
+        @request_timer&.interval = 3 ** @request_transmit_count
       end
 
       def cancel_request(channel, request_type)
@@ -151,8 +160,6 @@ module Axial
       def check_for_requests()
         if (@requests.empty?)
           return
-        elsif (@request_transmit_count > 5)
-          @request_transmit_count = 0
         end
 
         @requests.each do |channel_name, pending_requests|
@@ -161,8 +168,13 @@ module Axial
           end
         end
 
-        # adjust interval by 3 to the power of transmit count
-        @request_transmit_count += 1
+        if (@request_transmit_count >= 5)
+          @request_transmit_count = 0
+        else
+          @request_transmit_count += 1
+        end
+
+        # adjust interval by 3 to the power of transmit count for variable frequency
         @request_timer.interval = 3 ** @request_transmit_count
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
