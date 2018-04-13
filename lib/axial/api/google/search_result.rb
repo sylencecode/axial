@@ -1,4 +1,5 @@
 require 'axial/uri_utils'
+require 'json'
 
 module Axial
   module API
@@ -12,6 +13,7 @@ module Axial
         end
 
         def self.from_json(json)
+          json                  = JSON.parse(json)
           link                  = json.dig('items')&.first&.dig('link') || 'no link found'
 
           twitter_description   = json.dig('items')&.first&.dig('pagemap', 'metatags')&.first&.dig('twitter:description')

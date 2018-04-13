@@ -3,7 +3,6 @@ gem 'nokogiri'
 require 'rest-client'
 require 'nokogiri'
 require 'uri'
-require 'json'
 require 'axial/api/google/search_result'
 require 'axial/api/web_of_trust/v0_4/public_link_json2'
 
@@ -42,9 +41,7 @@ module Axial
           def self.execute_search(params)
             rest_endpoint = URI.parse(@rest_api)
             rest_endpoint.query = URI.encode_www_form(params)
-            response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
-
-            json = JSON.parse(response)
+            json = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
 
             result = API::Google::SearchResult.from_json(json)
             return result

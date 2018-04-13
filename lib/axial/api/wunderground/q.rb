@@ -19,7 +19,7 @@ module Axial
           end
 
           location = in_location.strip
-          location.gsub!(/ /, '_')
+          location.tr!(' ', '_')
 
           rest_endpoint = URI.parse(@rest_api + '/' + location + '.json')
           response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)

@@ -119,16 +119,16 @@ module Axial
           system_info.latest_commit = @bot.git.log.first
         end
 
-        auth_yaml                   = YAML.dump(@bot_user).gsub(/\n/, "\0")
-        system_info_yaml            = YAML.dump(system_info).gsub(/\n/, "\0")
+        auth_yaml                   = YAML.dump(@bot_user).tr("\n", "\0")
+        system_info_yaml            = YAML.dump(system_info).tr("\n", "\0")
 
         axnet.send('BOT_AUTH '      + auth_yaml)
         axnet.send('SYSTEM_INFO '   + system_info_yaml)
       end
 
       def update_bot_list(handler, command)
-        bot_list_yaml = command.args.gsub(/\0/, "\n")
-        new_bot_list = YAML.load(bot_list_yaml)
+        bot_list_yaml = command.args.tr(/\0/, "\n")
+        new_bot_list = YAML.safe_load(bot_list_yaml, [ Axnet::UserList ])
         bot_list.reload(new_bot_list)
         LOGGER.info("successfully downloaded new botlist from #{@handler.remote_cn}")
       rescue Exception => ex
@@ -163,8 +163,8 @@ module Axial
       end
 
       def update_user_list(handler, command)
-        user_list_yaml = command.args.gsub(/\0/, "\n")
-        new_user_list = YAML.load(user_list_yaml)
+        user_list_yaml = command.args.tr(/\0/, "\n")
+        new_user_list = YAML.safe_load(user_list_yaml, [ Axnet::UserList ])
         axnet.update_user_list(new_user_list)
         LOGGER.info("successfully downloaded new userlist from #{handler.remote_cn}")
       rescue Exception => ex
@@ -175,8 +175,8 @@ module Axial
       end
 
       def update_ban_list(handler, command)
-        ban_list_yaml = command.args.gsub(/\0/, "\n")
-        new_ban_list = YAML.load(ban_list_yaml)
+        ban_list_yaml = command.args.tr(/\0/, "\n")
+        new_ban_list = YAML.safe_load(ban_list_yaml, [ Axnet::BanList ])
         axnet.update_ban_list(new_ban_list)
         LOGGER.info("successfully downloaded new banlist from #{handler.remote_cn}")
       rescue Exception => ex

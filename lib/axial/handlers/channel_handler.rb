@@ -557,9 +557,9 @@ module Axial
             handle_channel_emote(channel, nick, text)
           when /\x01(\S+)(.*)\x01{0,1}/
             ctcp_command, ctcp_args = Regexp.last_match.captures
-            ctcp_command.gsub!(/\x01/, '')
+            ctcp_command.delete!("\u0001")
             ctcp_command.strip!
-            ctcp_args.gsub!(/\x01/, '')
+            ctcp_args.delete!("\u0001")
             ctcp_args.strip!
             @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
           else

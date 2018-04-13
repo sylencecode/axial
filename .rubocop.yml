@@ -27,8 +27,18 @@ Lint/HandleExceptions:
   Enabled: false
 Lint/RescueException:
   Enabled: false
+Lint/UnusedMethodArgument:
+  Enabled: false
+Metrics/AbcSize:
+  Max: 20
+Metrics/CyclomaticComplexity:
+  Max: 10
 Metrics/LineLength:
   Max: 120
+Metrics/MethodLength:
+  Max: 20
+Style/FrozenStringLiteralComment:
+  Enabled: false
 Style/IfUnlessModifier:
   Enabled: false
 Style/NegatedIf:

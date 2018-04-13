@@ -86,7 +86,7 @@ module Axial
       def broadcast_user_list()
         if (master?)
           LOGGER.info('transmitting new userlist to axnet...')
-          user_list_yaml = YAML.dump(@bot.user_list).gsub(/\n/, "\0")
+          user_list_yaml = YAML.dump(@bot.user_list).tr("\n", "\0")
           send('USERLIST_RESPONSE ' + user_list_yaml)
         else
           LOGGER.error('attempted to broadcast userlist, but this is not an axnet master')
@@ -96,7 +96,7 @@ module Axial
       def broadcast_ban_list()
         if (master?)
           LOGGER.info('transmitting new banlist to axnet...')
-          ban_list_yaml = YAML.dump(@bot.ban_list).gsub(/\n/, "\0")
+          ban_list_yaml = YAML.dump(@bot.ban_list).tr("\n", "\0")
           send('BANLIST_RESPONSE ' + ban_list_yaml)
         else
           LOGGER.error('attempted to broadcast banlist, but this is not an axnet master')

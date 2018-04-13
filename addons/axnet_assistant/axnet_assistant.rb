@@ -3,6 +3,7 @@ require 'axial/mask_utils'
 require 'axial/irc_types/nick'
 require 'axial/axnet/assistance_request'
 require 'axial/axnet/assistance_response'
+require 'yaml'
 
 module Axial
   module Addons
@@ -28,102 +29,83 @@ module Axial
         on_channel_full                   :request_limit_increase
         on_channel_keyword                :request_keyword
 
-        on_mode :deops,                   :check_if_deopped
-        on_mode :ops,                     :check_if_opped
+        on_mode :deops,                   :create_op_request
+        on_mode :ops,                     :cancel_op_request
 
-        on_self_join                      :check_if_opped
+        on_self_join                      :create_op_request
         on_self_join                      :clear_pending_join_requests
 
-        on_self_part                      :clear_channel
+        on_self_part                      :clear_channel_after_part
 
         on_invite                         :handle_invite
       end
 
-      def clear_channel(channel)
-        if (channel.is_a?(IRCTypes::Channel))
-          key = channel.name.downcase
-        else
-          key = channel.downcase
-        end
-
-        if (@requests.key?(key))
-          @requests.delete(key)
-        end
+      def get_channel_name(channel_or_name)
+        key = channel_or_name.is_a?(IRCTypes::Channel) ? channel.name.downcase : channel&.downcase
+        return key
       end
 
-      def clear_pending(channel, type)
-        if (channel.is_a?(IRCTypes::Channel))
-          key = channel.name.downcase
-        else
-          key = channel.downcase
-        end
-
-        if (@requests.key?(key))
-          @requests[key].delete(type.to_sym)
-        end
+      def clear_channel_after_part(channel)
+        key = get_channel_name(channel)
+        @requests.delete(key)
       end
 
-      def queue_request(channel, type)
-        if (channel.is_a?(IRCTypes::Channel))
-          key = channel.name.downcase
-        else
-          key = channel.downcase
-        end
+      def cancel_request(channel, request_type)
+        key = get_channel_name(channel)
+        @requests.dig(key)&.delete(request_type)
+      end
+
+      def queue_request(channel, request_type)
+        key = get_channel_name(channel)
 
         if (!@requests.key?(key))
-          @requests[key] = [ type.to_sym ]
-        elsif (!@requests[key].include?(type.to_sym))
-          @requests[key].push(type.to_sym)
-          request(key, type.to_sym)
+          @requests[key] = [ request_type ]
+        elsif (!@requests[key].include?(request_type))
+          @requests[key].push(request_type)
+          request(key, request_type)
         end
       end
 
-      def request(channel, type)
-        if (channel.is_a?(IRCTypes::Channel))
-          channel_name = channel.name.downcase
-        else
-          channel_name = channel.downcase
-        end
+      def request(channel, request_type)
+        channel_name = get_channel_name(channel)
 
         if (myself.uhost.empty?)
           LOGGER.warn('cannot dispatch assistance request, bot uhost is unknown')
         else
           bot_nick = IRCTypes::Nick.new(nil)
           bot_nick.uhost = myself.uhost
-          request = Axnet::AssistanceRequest.new(bot_nick, channel_name, type.to_sym)
+          request = Axnet::AssistanceRequest.new(bot_nick, channel_name, request_type)
           send_request(request)
         end
       end
 
       def clear_pending_join_requests(channel)
-        clear_pending(channel, :keyword)
-        clear_pending(channel, :full)
-        clear_pending(channel, :invite)
-        clear_pending(channel, :banned)
+        cancel_request(channel, :keyword)
+        cancel_request(channel, :full)
+        cancel_request(channel, :invite)
+        cancel_request(channel, :banned)
       end
 
-      def check_if_deopped(channel, nick, mode)
-        if (mode.deops.any?)
-          mode.deops.each do |deop|
-            if (deop == myself.name)
-              queue_request(channel, :op)
-            end
-          end
+      # Queues an axnet assistance request for the bot to be opped by any available peers.
+      # @param channel [String] url to preview
+      # @param _nick [IRCTypes::Nick] unused, in method signature to allow response to channel_mode event
+      # @param mode [IRCTypes::Mode] channel modes from an on_mode event, nil when invoked by self_join event
+      def create_op_request(channel, _nick = nil, mode = nil)
+        deopped_self = (mode.nil? || mode.deops.select { |deop| deop.casecmp(myself.name).zero? }.any?)
+
+        if (!deopped_self)
+          return
         end
+
+        queue_request(channel, :op)
       end
 
-      def check_if_opped(channel, nick = nil, mode = nil)
-        if (mode.nil?)
-          if (!channel.opped?)
-            queue_request(channel, :op)
-          end
-        elsif (mode.ops.any?)
-          mode.ops.each do |op|
-            if (op == myself.name)
-              clear_pending(channel, :op)
-            end
-          end
+      def cancel_op_request(channel, _nick, mode)
+        if (mode.ops.select { |op| op.casecmp(myself.name).zero? }.empty?)
+          return
         end
+
+        cancel_request(channel, :op)
       end
 
       def request_unban(channel_name)
@@ -143,15 +125,12 @@ module Axial
       end
 
       def handle_invite(nick, channel_name)
-        possible_user = get_bot_or_user(nick)
-        if (bot_or_director?(possible_user))
-          clear_pending(channel_name, :invite)
-          if (!server.trying_to_join.key?(channel_name.downcase))
-            server.trying_to_join[channel_name.downcase] = ''
-          end
-          server.join_channel(channel_name)
+        LOGGER.debug("invited to join #{channel_name} by #{nick.uhost}")
+        if (!server.trying_to_join.key?(channel_name.downcase))
+          return
         end
-        return possible_user
+
+        server.join_channel(channel_name)
       end
 
       def check_for_requests()
@@ -168,32 +147,36 @@ module Axial
       end
 
       def handle_assistance_request(handler, command)
-        serialized_yaml = command.args
+        serialized_yaml = command.args.tr(/\0/, "\n")
         if (axnet.master?)
           axnet.relay(handler, 'ASSISTANCE_REQUEST ' + serialized_yaml)
         end
 
-        request = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+        request       = YAML.safe_load(serialized_yaml, [ Axnet::AssistanceRequest ])
+        channel_name  = request.channel_name
+        bot_nick      = request.bot_nick
 
         case request.type
           when :op
-            handle_op_request(request.channel_name, request.bot_nick)
+            handle_op_request(channel_name, bot_nick)
           when :invite
-            handle_invite_request(request.channel_name, request.bot_nick)
+            handle_invite_request(channel_name, bot_nick)
           when :full
-            handle_full_request(request.channel_name, request.bot_nick)
+            handle_full_request(channel_name, bot_nick)
           when :keyword
-            handle_keyword_request(request.channel_name, request.bot_nick)
+            handle_keyword_request(channel_name, bot_nick)
           when :banned
-            handle_banned_request(request.channel_name, request.bot_nick)
+            handle_banned_request(channel_name, bot_nick)
         end
       end
 
       def handle_invite_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil? && channel.opped?)
-          channel.invite(bot_nick.name)
+        if (!channel&.opped?)
+          return
         end
+
+        channel.invite(bot_nick.name)
       end
 
       def handle_assistance_response(handler, command)
@@ -202,7 +185,7 @@ module Axial
           axnet.relay(handler, 'ASSISTANCE_RESPONSE ' + serialized_yaml)
         end
 
-        response = YAML.load(serialized_yaml.gsub(/\0/, "\n"))
+        response = YAML.safe_load(serialized_yaml.tr(/\0/, "\n"), [ Axnet::AssistanceResponse ])
 
         case response.type
           when :keyword
@@ -213,61 +196,58 @@ module Axial
       end
 
       def handle_keyword_response(channel_name, keyword)
-        if (server.trying_to_join.key?(channel_name.downcase))
-          server.trying_to_join[channel_name.downcase] = keyword
+        if (!server.trying_to_join.key?(channel_name.downcase))
+          return
         end
+
+        server.trying_to_join[channel_name.downcase] = keyword
       end
 
       def handle_banned_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil?)
-          if (channel.opped?)
-            response_mode = IRCTypes::Mode.new(server)
-            channel.ban_list.all_bans.each do |ban|
-              if (MaskUtils.masks_match?(ban.mask, bot_nick.uhost))
-                response_mode.unban(ban.mask)
-              end
-            end
+        if (!channel&.opped?)
+          return
+        end
 
-            if (response_mode.any?)
-              channel.set_mode(response_mode)
-            end
-
-            channel.invite(bot_nick.name)
+        response_mode = IRCTypes::Mode.new(server)
+        channel.ban_list.all_bans.each do |ban|
+          if (MaskUtils.masks_match?(ban.mask, bot_nick.uhost))
+            response_mode.unban(ban.mask)
           end
         end
+
+        if (response_mode.any?)
+          channel.set_mode(response_mode)
+        end
+
+        channel.invite(bot_nick.name)
       end
 
       def handle_keyword_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil?)
-          if (channel.mode.keyword?)
-            response = Axnet::AssistanceResponse.new(channel.name, :keyword, channel.mode.keyword)
-            send_response(response)
-          end
+        if (!channel&.mode&.keyword?)
+          return
         end
+
+        response = Axnet::AssistanceResponse.new(channel.name, :keyword, channel.mode.keyword)
+        send_response(response)
       end
 
       def handle_full_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil? && channel.opped?)
-          if (channel.mode.limit?)
-            response_mode = IRCTypes::Mode.new(server)
-            response_mode.limit = channel.nick_list.count + 1
-            channel.set_mode(response_mode)
-            channel.invite(bot_nick.name)
-          end
+        if (!channel&.opped? || !channel&.limit?)
+          return
         end
+
+        response_mode = IRCTypes::Mode.new(server)
+        response_mode.limit = channel.nick_list.count + 1
+        channel.set_mode(response_mode)
+        channel.invite(bot_nick.name)
       end
 
       def handle_op_request(channel_name, bot_nick)
         channel = channel_list.get_silent(channel_name)
-
-        if (channel.nil?)
-          return
-        elsif (!channel.synced?)
-          return
-        elsif (!channel.opped?)
+        if (!channel&.synced? || !channel&.opped?)
           return
         end
 
@@ -278,48 +258,23 @@ module Axial
 
         wait_a_sec
 
-        if (!channel_nick.opped_on?(channel))
-          channel.op(channel_nick)
+        if (channel_nick.opped_on?(channel))
+          return
         end
+
+        channel.op(channel_nick)
       end
 
       def send_request(request)
         LOGGER.debug("sending assistance request: #{request.type}, #{request.channel_name}, #{request.bot_nick.uhost}")
-        serialized_yaml = YAML.dump(request).gsub(/\n/, "\0")
+        serialized_yaml = YAML.dump(request).tr("\n", "\0")
         axnet.send('ASSISTANCE_REQUEST ' + serialized_yaml)
       end
 
       def send_response(response)
         LOGGER.debug("sending asssistance response: #{response.type}, #{response.channel_name}, #{response.response}")
-        serialized_yaml = YAML.dump(response).gsub(/\n/, "\0")
+        serialized_yaml = YAML.dump(response).tr("\n", "\0")
         axnet.send('ASSISTANCE_RESPONSE ' + serialized_yaml)
-      end
-
-      def get_bot_or_user(nick)
-        possible_user = user_list.get_from_nick_object(nick)
-        if (possible_user.nil?)
-          possible_user = bot_list.get_from_nick_object(nick)
-        end
-        return possible_user
-      end
-
-      def get_bot_or_user_mask(mask)
-        possible_user = user_list.get_user_from_mask(mask)
-        if (possible_user.nil?)
-          possible_user = bot_list.get_user_from_mask(mask)
-        end
-        return possible_user
-      end
-
-      def get_bots_or_users_mask(mask)
-        bots_or_users = []
-        user_list.get_users_from_mask(mask).each do |tmp_mask|
-          bots_or_users.push(tmp_mask)
-        end
-        bot_list.get_users_from_mask(mask).each do |tmp_mask|
-          bots_or_users.push(tmp_mask)
-        end
-        return bots_or_users
       end
 
       def stop_request_timer()
@@ -342,7 +297,7 @@ module Axial
         stop_request_timer
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

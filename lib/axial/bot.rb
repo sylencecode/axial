@@ -129,7 +129,7 @@ module Axial
       else
         @addon_list.each do |addon|
           begin
-            load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', "#{addon.underscore}.rb")
+            load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', addon.underscore, "#{addon.underscore}.rb")
             addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
             @addons.push({ name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object })
             addon_object.binds.each do |bind|
