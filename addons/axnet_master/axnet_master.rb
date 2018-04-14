@@ -225,7 +225,7 @@ module Axial
               commit_string = "#{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
               dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
             end
-            dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since}")
+            dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since} [#{TimeSpan.new(Time.now, system_info.startup_time).short_to_s}]")
           end
         end
       rescue Exception => ex
@@ -261,7 +261,7 @@ module Axial
           connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
 
           print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} (from #{handler.remote_address})")
+          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
         end
         dcc.message('')
         case @handlers.count
