@@ -195,7 +195,7 @@ module Axial
         end
       end
 
-      def perform_initial_scan(channel, _nick, _mode)
+      def perform_initial_scan(channel, _nick, mode)
         mode.ops.select { |tmp_op| tmp_op.casecmp(myself.name).zero? }.each do |tmp_channel|
           if (channel.opped?)
             next

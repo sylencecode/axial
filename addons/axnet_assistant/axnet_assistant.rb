@@ -38,7 +38,8 @@ module Axial
         on_mode :deops,                   :create_op_request
         on_mode :ops,                     :cancel_op_request
 
-        on_self_join                      :create_op_request
+        on_channel_sync                   :create_op_request
+
         on_self_join                      :clear_pending_join_requests
 
         on_self_part                      :clear_channel_after_part
@@ -123,9 +124,9 @@ module Axial
       # @param _nick [IRCTypes::Nick] unused, in method signature to allow response to channel_mode event
       # @param mode [IRCTypes::Mode] channel modes from an on_mode event, nil when invoked by self_join event
       def create_op_request(channel, _nick = nil, mode = nil)
-        deopped_self = (mode.nil? || mode.deops.select { |deop| deop.casecmp(myself.name).zero? }.any?)
-
-        if (!deopped_self)
+        if (channel.opped?)
+          return
+        elsif (mode&.deops&.select { |deop| deop.casecmp(myself.name).zero? })&.empty?
           return
         end
 
