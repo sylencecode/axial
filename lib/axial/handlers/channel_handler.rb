@@ -320,12 +320,10 @@ module Axial
       end
 
       def handle_self_join(channel_name)
+        @server_interface.trying_to_join.delete(channel_name.downcase)
         LOGGER.info("joined channel #{channel_name}")
         channel = @server_interface.channel_list.create(channel_name)
         channel.sync_begin
-        if (@server_interface.trying_to_join.key?(channel_name.downcase))
-          @server_interface.trying_to_join.delete(channel_name.downcase)
-        end
         @server_interface.set_channel_mode(channel_name, '')
         @server_interface.set_channel_mode(channel_name, '+b')
         @bot.bind_handler.dispatch_self_join_binds(channel)
@@ -336,10 +334,15 @@ module Axial
         end
       end
 
-      def dispatch_mode(uhost, channel_name, mode)
+      def dispatch_mode(uhost, channel_name, mode_string)
         channel = @server_interface.channel_list.get(channel_name)
         if (uhost == @bot.server.real_address)
-          handle_mode(@bot.server, channel, mode)
+          LOGGER.debug("#{uhost} set #{channel_name} mode: #{mode_string}")
+          fake_server_nick = IRCTypes::Nick.new(nil)
+          fake_server_nick.name = "server"
+          fake_server_nick.ident = "server"
+          fake_server_nick.host = "server@#{@bot.server.real_address}"
+          handle_mode(fake_server_nick, channel, mode_string)
         else
           if (uhost == @server_interface.myself.uhost)
             nick = @server_interface.myself
@@ -347,7 +350,7 @@ module Axial
             nick_name = uhost.split('!').first
             nick = channel.nick_list.get(nick_name)
           end
-          handle_mode(nick, channel, mode)
+          handle_mode(nick, channel, mode_string)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -359,7 +362,7 @@ module Axial
       def handle_mode(nick, channel, raw_mode_string)
         channel.mode.merge_string(raw_mode_string)
 
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode_string = raw_mode_string.strip
         mode.parse_string(mode_string)
 

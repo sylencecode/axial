@@ -6,8 +6,8 @@ module Axial
     class Mode
       attr_reader   :bans, :unbans, :ops, :deops, :voices, :devoices
 
-      def initialize(server_interface)
-        @max_modes            = server_interface.max_modes
+      def initialize(max_modes)
+        @max_modes            = max_modes || 4
         @bans                 = []
         @unbans               = []
         @invite_only          = :unknown
@@ -182,7 +182,9 @@ module Axial
       end
 
       def ban(mask)
-        @bans.push(mask)
+        if (!@bans.include?(mask))
+          @bans.push(mask)
+        end
       end
 
       def unban(mask)
@@ -407,7 +409,7 @@ module Axial
         end
       end
 
-      def emoty?()
+      def empty?()
         return to_string_array.empty?
       end
 

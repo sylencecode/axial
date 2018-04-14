@@ -31,6 +31,10 @@ module Axial
         @bot.connection_handler.send_raw("WHOIS #{@bot.real_nick}")
       end
 
+      def cancel_pending_joins()
+        @trying_to_join.clear
+      end
+
       def retry_joins()
         @trying_to_join.each do |channel_name, keyword|
           if (keyword.nil? || keyword.empty?)

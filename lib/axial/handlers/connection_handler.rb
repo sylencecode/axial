@@ -48,12 +48,16 @@ module Axial
         @bot.timer.delete(@nick_regain_timer)
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
         LOGGER.info('reconnecting in 30 seconds...')
+        @bot.server_interface.cancel_pending_joins
+        @bot.bind_handler.dispatch_server_disconnect_binds
         sleep 30
         retry
       rescue Exception => ex
         @bot.timer.delete(@uhost_timer)
         @bot.timer.delete(@auto_join_timer)
         @bot.timer.delete(@nick_regain_timer)
+        @bot.server_interface.cancel_pending_joins
+        @bot.bind_handler.dispatch_server_disconnect_binds
         LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -102,7 +106,7 @@ module Axial
       private :login
 
       def pong(ping)
-        direct_send("PONG #{ping}")
+        #direct_send("PONG #{ping}")
       end
       private :pong
 
@@ -140,6 +144,8 @@ module Axial
         end
       rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, Errno::ENETDOWN, EOFError => ex
         LOGGER.error("lost server connection: #{ex.class}: #{ex.message}")
+        @bot.server_interface.cancel_pending_joins
+        @bot.bind_handler.dispatch_server_disconnect_binds
         sleep @server.timeout
         retry
       end

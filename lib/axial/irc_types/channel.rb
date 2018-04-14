@@ -15,7 +15,7 @@ module Axial
         @server_interface     = server_interface
         @name                 = channel_name
         @topic                = ''
-        @mode                 = IRCTypes::Mode.new(@server_interface)
+        @mode                 = IRCTypes::Mode.new(@server_interface.max_modes)
         @nick_list            = IRCTypes::NickList.new(@server_interface, self)
         @synced               = false
         @opped                = false
@@ -43,7 +43,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.ban(mask)
         set_mode(mode)
       end
@@ -52,7 +52,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.unban(mask)
         set_mode(mode)
       end
@@ -61,7 +61,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.op(nick.name)
         set_mode(mode)
       end
@@ -70,7 +70,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.deop(nick)
         set_mode(mode)
       end
@@ -79,7 +79,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.devoice(nick.name)
         set_mode(mode)
       end
@@ -88,7 +88,7 @@ module Axial
         if (!opped?)
           return
         end
-        mode = IRCTypes::Mode.new(@server_interface)
+        mode = IRCTypes::Mode.new(@server_interface.max_modes)
         mode.voice(nick.name)
         set_mode(mode)
       end
@@ -106,6 +106,8 @@ module Axial
       def set_mode(mode)
         if (!mode.is_a?(IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
+        elsif (mode.empty?)
+          return
         end
         if (opped?)
           @server_interface.set_channel_mode(@name, mode)

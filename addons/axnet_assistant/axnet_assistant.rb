@@ -25,6 +25,8 @@ module Axial
         on_reload                         :start_request_timer
         on_reload                         :check_initial_requests
 
+        on_server_disconnect              :cancel_all_requests
+
         on_axnet    'ASSISTANCE_REQUEST', :handle_assistance_request
         on_axnet   'ASSISTANCE_RESPONSE', :handle_assistance_response
 
@@ -63,6 +65,10 @@ module Axial
         @requests.delete(key)
 
         reset_request_count
+      end
+
+      def cancel_all_requests()
+        @requests&.clear
       end
 
       def reset_request_count()
@@ -263,7 +269,7 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new(server)
+        response_mode = IRCTypes::Mode.new(server.max_modes)
         channel.ban_list.all_bans.each do |ban|
           if (MaskUtils.masks_match?(ban.mask, bot_nick.uhost))
             response_mode.unban(ban.mask)
@@ -293,7 +299,7 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new(server)
+        response_mode = IRCTypes::Mode.new(server.max_modes)
         response_mode.limit = channel.nick_list.count + 1
         channel.set_mode(response_mode)
         channel.invite(bot_nick.name)
@@ -333,6 +339,7 @@ module Axial
 
       def stop_request_timer()
         LOGGER.debug('stopping request timer')
+        cancel_all_requests
         timer.delete(@request_timer)
       end
 

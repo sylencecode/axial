@@ -265,6 +265,23 @@ module Axial
       LOGGER.debug("addon reload will invoke method '#{self.class}.#{method}'")
     end
 
+    def on_server_disconnect(*args)
+      if (args.nil? || args.flatten.empty?)
+        raise(AddonError, "#{self.class}.on_server_disconnect called without a callback method")
+      end
+
+      args = args.flatten
+      method = args.shift
+
+      if (args.any?)
+        @binds.push(type: :server_disconnect, method: method, args: args)
+      else
+        @binds.push(type: :server_disconnect, method: method)
+      end
+
+      LOGGER.debug("server disconnect will invoke method '#{self.class}.#{method}'")
+    end
+
     def on_mode(*in_args)
       if (in_args.nil? || in_args.count < 2)
         raise(AddonError, "#{self.class}.on_mode called without at least one mode and a callback method")

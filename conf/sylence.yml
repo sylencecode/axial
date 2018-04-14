@@ -10,6 +10,8 @@ bot:
 channels:
 - name: "#lulz"
   password: ''
+- name: "#rimjob"
+  password: ''
 addons:
 - AxnetAssistant
 - AxnetMaster
