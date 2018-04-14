@@ -336,8 +336,8 @@ module Axial
 
       def dispatch_mode(uhost, channel_name, mode_string)
         channel = @server_interface.channel_list.get(channel_name)
-        if (uhost == @bot.server.real_address || uhost.include?('.'))
-          LOGGER.debug("#{uhost} set #{channel_name} mode: #{mode_string}")
+        if (uhost == @bot.server.real_address || !uhost.include?('!'))
+          LOGGER.debug("server #{uhost} set #{channel_name} mode: #{mode_string}")
           fake_server_nick = IRCTypes::Nick.new(nil)
           fake_server_nick.name = "server"
           fake_server_nick.ident = "server"
