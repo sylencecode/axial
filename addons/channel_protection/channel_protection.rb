@@ -34,8 +34,9 @@ module Axial
         on_mode @prevent_modes,     :handle_prevent_modes
         on_mode @enforce_modes,     :handle_enforce_modes
         on_mode :deops,             :handle_deop
-        on_mode :ops,               :perform_initial_scan
+        on_mode :ops,               :handle_op
         on_mode :bans,              :protect_banned_users
+        on_channel_sync             :perform_initial_scan
 
         on_user_list                :check_for_new_users
         on_ban_list                 :check_for_new_bans
@@ -195,18 +196,25 @@ module Axial
         end
       end
 
-      def perform_initial_scan(channel, _nick, mode)
-        mode.ops.select { |tmp_op| tmp_op.casecmp(myself.name).zero? }.each do |tmp_channel|
-          if (channel.opped?)
-            next
-          end
-
-          tmp_channel.opped = true
-          check_channel_bans(channel)
-          check_channel_users(channel)
-          set_enforced_modes(channel, channel.mode)
-          unset_prevented_modes(channel, channel.mode)
+      def handle_op(channel, _nick, mode)
+        if (mode.ops.select { |tmp_op| tmp_op.casecmp(myself.name).zero? }.empty?)
+          return
+        elsif (channel.opped?)
+          return
         end
+
+        perform_initial_scan(channel)
+      end
+
+      def perform_initial_scan(channel)
+        if (!channel.opped?)
+          return
+        end
+
+        check_channel_bans(channel)
+        check_channel_users(channel)
+        set_enforced_modes(channel, channel.mode)
+        unset_prevented_modes(channel, channel.mode)
       end
 
       def handle_deop(channel, nick, mode)
