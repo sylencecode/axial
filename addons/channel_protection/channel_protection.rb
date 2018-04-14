@@ -13,8 +13,8 @@ module Axial
         @version = '1.1.0'
 
         # :bans, :unbans, :invite_only, :keyword, :limit, :moderated, :no_outside_messages, :ops, :deops, :secret, :topic_ops_only, :voices, :devoices
-        @enforce_modes              = %i[  no_outside_messages ]
-        @prevent_modes              = %i[ invite_only limit keyword moderated  topic_ops_only ]
+        @enforce_modes              = %i[ topic_ops_only no_outside_messages ]
+        @prevent_modes              = %i[ invite_only limit keyword moderated ]
         @op_deop_modes              = %i[ ops deops ]
 
         @ban_cleanup_timer          = nil

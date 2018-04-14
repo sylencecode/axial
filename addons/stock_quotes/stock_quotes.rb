@@ -44,19 +44,19 @@ module Axial
 
       def render_market_quote(channel, nick, type_string, results, batch = false)
         if (batch)
-          symbol_length           = results.values.collect { |result|                              get_symbol_name(result.symbol).length }.max
+          symbol_length           = results.collect { |result| get_symbol_name(result.symbol).length }.max
         else
-          symbol_length           = results.values.collect { |result|                                               result.symbol.length }.max
-          company_symbol_length   = results.values.collect { |result|                 "#{result.company_name} (#{result.symbol})".length }.max
+          symbol_length           = results.collect { |result| result.symbol.length }.max
+          company_symbol_length   = results.collect { |result| "#{result.company_name} (#{result.symbol})".length }.max
         end
-        change_length             = results.values.collect { |result|                                  colorify_result(result)[1].length }.max
-        latest_price_length       = results.values.collect { |result| (format('%.2f', result.latest_price.to_f.round(2).to_s)).to_s.length }.max
-        low_length                = results.values.collect { |result| (format('%.2f',          result.low.to_f.round(2).to_s)).to_s.length }.max
-        high_length               = results.values.collect { |result| (format('%.2f',         result.high.to_f.round(2).to_s)).to_s.length }.max
-        type_string_length        =                                                                                        type_string.length
+        change_length             = results.collect { |result| colorify_result(result)[1].length }.max
+        latest_price_length       = results.collect { |result| (format('%.2f', result.latest_price.to_f.round(2).to_s)).to_s.length }.max
+        low_length                = results.collect { |result| (format('%.2f', result.low.to_f.round(2).to_s)).to_s.length }.max
+        high_length               = results.collect { |result| (format('%.2f', result.high.to_f.round(2).to_s)).to_s.length }.max
+        type_string_length        = type_string.length
 
         if (results.any?)
-          results.each do |symbol, result|
+          results.each do |result|
             type_string       = "#{Colors.blue}#{              type_string.center(type_string_length)}#{Colors.reset}"
             quote_color, change = colorify_result(result)
             if (batch)
@@ -87,7 +87,7 @@ module Axial
         end
       end
 
-      def market_quote(channel, nick, command)
+      def market_quote(channel, nick, _command)
         symbols               = %w[DIA SPY QQQ IWM]
         LOGGER.debug("market quote request from #{nick.uhost}: #{symbols.join(', ')}")
         results = API::IEXTrading::V10::Stock::Market.batch(symbols)

@@ -29,34 +29,10 @@ module Axial
 
           rest_endpoint       = URI.parse(rest_api)
           rest_endpoint.query = URI.encode_www_form(params)
-          response            = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
-          json                = JSON.parse(response)
+          json                = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, headers: headers, verify_ssl: false)
 
-          results = {}
-
-          if (json.key?('RAW'))
-            raw = json['RAW']
-          end
-          raw.each do |symbol, tsym|
-            quote = tsym['USD']
-            result = API::CryptoCompare::CryptoResult.new
-
-            if (quote.key?('PRICE'))
-              result.latest_price = quote['PRICE'].to_f
-            end
-            if (quote.key?('HIGHDAY'))
-              result.high = quote['HIGHDAY'].to_f
-            end
-            if (quote.key?('LOWDAY'))
-              result.low = quote['LOWDAY'].to_f
-            end
-            if (quote.key?('CHANGEDAY'))
-              result.change = quote['CHANGEDAY'].to_f
-            end
-            result.symbol = symbol
-            results[symbol] = result
-          end
-          return results
+          results_array       = API::CryptoCompare::CryptoResult.array_from_json(json)
+          return results_array
         end
       end
     end
