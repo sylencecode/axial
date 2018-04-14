@@ -121,8 +121,10 @@ module Axial
         system_info.uhost           = server.myself.uhost
         system_info.startup_time    = @bot.startup_time
         system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
-        if (!@bot.git.nil?)
-          system_info.latest_commit = @bot.git.log.first
+        system_info.latest_commit   = @bot.git&.log&.first
+
+        if (!@bot.server.connected?)
+          system_info.server_info += " (disconnected)"
         end
 
         auth_yaml                   = YAML.dump(@bot_user).tr("\n", "\0")

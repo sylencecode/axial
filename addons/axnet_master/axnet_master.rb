@@ -236,32 +236,62 @@ module Axial
         end
       end
 
+      def print_brief_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
+        msg  = "#{bot_name.ljust(max_bot_name_length)} #{Colors.gray}|#{Colors.reset} "
+        msg += "#{system_info.server_info.ljust(max_server_info_length)} #{Colors.gray}|#{Colors.reset} "
+        msg += "#{system_info.uhost}"
+
+        dcc.message(msg)
+      end
+
       def dcc_bot_status(dcc, command)
+        brief = false
+        if (command.first_argument.casecmp('brief').zero?)
+          brief = true
+        end
+
+        system_info                     = Axnet::SystemInfo.from_environment
+        system_info.server_info         = "#{@bot.server.real_address}:#{@bot.server.port}"
+        system_info.uhost               = server.myself.uhost
+        system_info.startup_time        = @bot.startup_time
+        system_info.addons              = @bot.addons.collect { |addon| addon[:name] }
+        system_info.latest_commit       = @bot.git&.log&.first
+
+        if (!@bot.server.connected?)
+          system_info.server_info += " (disconnected)"
+        end
+
         if (@handlers.any?)
           max_bot_name_length       = @handlers.values.collect { |handler| handler.remote_cn.length }.max
+          if (@bot.local_cn.length > max_bot_name_length)
+            max_bot_name_length     = @bot.local_cn.length
+          end
+          max_server_info_length    = @handlers.values.collect { |handler| handler.system_info&.server_info&.length }.max
+          if (system_info.server_info.length > max_server_info_length)
+            max_server_info_length  = system_info.server_info.length
+          end
         else
           max_bot_name_length       = @bot.local_cn.length
+          max_server_info_length    = system_info.server_info.length
         end
 
-        system_info                 = Axnet::SystemInfo.from_environment
-        system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
-        system_info.uhost           = server.myself.uhost
-        system_info.startup_time    = @bot.startup_time
-        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
-        if (!@bot.git.nil?)
-          system_info.latest_commit = @bot.git.log.first
+        if (brief)
+          print_brief_status(dcc, @bot.local_cn, max_bot_name_length, system_info, max_server_info_length)
+        else
+          print_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
         end
-
-        print_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
 
         @handlers.values.each do |handler|
           bot_name          = handler.remote_cn
           system_info       = handler.system_info
 
           connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
-
-          print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-          dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
+          if (brief)
+            print_brief_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
+          else
+            print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
+            dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
+          end
         end
         dcc.message('')
         case @handlers.count

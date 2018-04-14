@@ -41,8 +41,10 @@ module Axial
             @conn = TCPSocket.new(@server.address, @server.port)
           end
         end
+        @server.connected = true
         LOGGER.info("connected to #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
+        @server.connected = false
         @bot.timer.delete(@uhost_timer)
         @bot.timer.delete(@auto_join_timer)
         @bot.timer.delete(@nick_regain_timer)
@@ -53,6 +55,7 @@ module Axial
         sleep 30
         retry
       rescue Exception => ex
+        @server.connected = false
         @bot.timer.delete(@uhost_timer)
         @bot.timer.delete(@auto_join_timer)
         @bot.timer.delete(@nick_regain_timer)
@@ -144,6 +147,7 @@ module Axial
         end
       rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, Errno::ENETDOWN, EOFError => ex
         LOGGER.error("lost server connection: #{ex.class}: #{ex.message}")
+        @server.connected = false
         @bot.server_interface.cancel_pending_joins
         @bot.bind_handler.dispatch_server_disconnect_binds
         sleep @server.timeout
