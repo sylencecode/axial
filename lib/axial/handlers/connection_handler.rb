@@ -106,7 +106,7 @@ module Axial
       private :login
 
       def pong(ping)
-        #direct_send("PONG #{ping}")
+        direct_send("PONG #{ping}")
       end
       private :pong
 
