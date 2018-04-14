@@ -109,16 +109,16 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
+        
+        if (key.nil? || !@nick_list.key?(key))
+          raise(NickListError, "attempted to delete non-existent nick '#{key}' from #{@channel.name}")
+        end
 
         nick_to_delete = @nick_list[key]
-
-        if (!key.nil? && @nick_list.key?(key))
-          nick_to_delete.set_voiced(@channel, false)
-          nick_to_delete.set_opped(@channel, false)
-          @nick_list.delete(key)
-        else
-          raise(NickListError, "attempted to delete non-existent nick '#{key}")
-        end
+        nick_to_delete&.set_voiced(@channel, false)
+        nick_to_delete&.set_opped(@channel, false)
+        LOGGER.debug("removing #{key} from #{@channel.name} nicklist")
+        @nick_list.delete(key)
         return nick_to_delete
       end
 
@@ -129,15 +129,16 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
+        
+        if (key.nil? || !@nick_list.key?(key))
+          return
+        end
 
         nick_to_delete = @nick_list[key]
-        nick_to_delete.set_voiced(@channel, false)
-        nick_to_delete.set_opped(@channel, false)
-
-        if (!key.nil? && @nick_list.key?(key))
-          LOGGER.debug("removing #{key} from nicklist")
-          @nick_list.delete(key)
-        end
+        nick_to_delete&.set_voiced(@channel, false)
+        nick_to_delete&.set_opped(@channel, false)
+        LOGGER.debug("removing #{key} from #{@channel.name} nicklist")
+        @nick_list.delete(key)
         return nick_to_delete
       end
 
