@@ -29,7 +29,7 @@ module Axial
 
         throttle                  10
 
-        on_dcc          'help',   :silent, :dcc_help
+        on_dcc          'help',   :silent, :send_help
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who
         on_dcc          'quit',   :silent, :dcc_quit
@@ -41,20 +41,44 @@ module Axial
       def check_for_user_updates()
       end
 
-      def dcc_help(dcc, command)
-        dcc.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+      def send_help(dcc, command)
+        dcc.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        dcc.message(' ')
         if (@bot.addons.any?)
+          addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
+          all_string_commands = @bot.addons.collect { |tmp_addon| tmp_addon[:object].binds.collect { |tmp_bind| (tmp_bind[:type] == :dcc && tmp_bind[:command].is_a?(String)) ? tmp_bind[:command] : nil } }.flatten
+          all_string_commands.delete_if { |command| command.nil? }
+          max_command_length = all_string_commands.collect{ |tmp_command| tmp_command.length }.max + 2
           @bot.addons.each do |addon|
-            dcc_binds = addon[:object].binds.select { |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
-            if (dcc_binds.any?)
-              commands = dcc_binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.dcc_command_character + command }
-              dcc.message("+ #{addon[:name]}: #{commands.join(', ')}")
+            binds = addon[:object].binds.select { |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
+            commands = binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.dcc_command_character + command }
+            command_chunks = []
+            while (commands.count >= 6)
+              chunk = []
+              6.times do
+                tmp_command = commands.shift.ljust(max_command_length)
+                chunk.push(tmp_command)
+              end
+              command_chunks.push(chunk)
+            end
+
+            if (commands.any?)
+              command_chunks.push(commands.collect { |tmp_command| tmp_command.ljust(max_command_length) })
+            end
+
+            command_chunks.each_with_index do |chunk, i|
+              if (i.zero?)
+                dcc.message("#{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+              else
+                dcc.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+              end
             end
           end
         else
           dcc.message('no addons loaded.')
         end
       rescue Exception => ex
+        dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)

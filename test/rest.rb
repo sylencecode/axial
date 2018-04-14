@@ -4,6 +4,7 @@ $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../lib'))
 require 'axial/models/init'
 require 'axial/models/user'
 require 'axial/models/mask'
+require 'axial/models/rss_feed'
 
 require 'json'
 require 'sinatra/base'
@@ -16,34 +17,37 @@ module Axial
     end
     get '/users' do
       response['Access-Control-Allow-Origin'] = '*'
-      dump_user_json
+      dump_users_json
+    end
+    get '/rss_feeds' do
+      response['Access-Control-Allow-Origin'] = '*'
+      dump_rss_feeds_json
     end
 
-    def dump_user_json()
+    def dump_rss_feeds_json()
+      rss_feeds = []
+      Models::RssFeed.all.each do |rss_feed|
+        rss_feeds.push(JSON.parse(rss_feed.to_json))
+      end
+
+      return rss_feeds.to_json
+    end
+
+    def dump_users_json()
+      includes = {
+        masks: { except: :user_id },
+        seen: { except: :user_id }
+      }
+
       users = []
       Models::User.all.each do |user|
-        if (user.name.downcase == 'unknown')
+        if (user.name.casecmp('unknown').zero?)
           next
         end
 
-        hash = {}
-        hash['id'] = user.id
-        hash['name'] = user.name
-        hash['pretty_name'] = user.pretty_name
-        hash['created'] = user.created
-        hash['note'] = user.note || ''
-        hash['masks'] = []
-        hash['role_name'] = user.role_name
-        user.masks.each do |mask|
-          hash['masks'].push mask.to_hash
-        end
-        if (!user.seen.nil?)
-          hash['seen'] = user.seen.to_hash
-        else
-          hash['seen'] = {}
-        end
-        users.push(hash)
+        users.push(JSON.parse(user.to_json(include: includes, except: :password)))
       end
+
       return users.to_json
     end
   end

@@ -15,7 +15,6 @@ module Axial
         on_channel    'help',   :send_help
         on_channel   'about',   :send_help
         on_channel  'reload',   :reload_addons
-        on_channel   'topic',   :change_topic
         on_channel_emote        :channel_emote
         on_topic                :handle_topic_change
       end
@@ -47,20 +46,51 @@ module Axial
       end
 
       def send_help(channel, nick, command)
-        channel.message("#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        exclude_addons = [ 'axnet master', 'axnet slave', 'base' ]
+        channel.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        channel.message(' ')
         if (@bot.addons.any?)
+          addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
+          all_string_commands = @bot.addons.collect { |tmp_addon| tmp_addon[:object].binds.collect { |tmp_bind| (tmp_bind[:type] == :channel && tmp_bind[:command].is_a?(String)) ? tmp_bind[:command] : nil } }.flatten
+          all_string_commands.delete_if { |command| command.nil? }
+          max_command_length = all_string_commands.collect{ |tmp_command| tmp_command.length }.max + 2
           @bot.addons.each do |addon|
-            if (addon[:name] == 'base')
+            if (exclude_addons.include?(addon[:name].downcase))
               next
             end
-            channel_binds = addon[:object].binds.select { |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
-            bind_string = ''
-            if (channel_binds.any?)
-              commands = channel_binds.collect { |bind| @bot.channel_command_character + bind[:command] }
-              bind_string = ' (' + commands.sort.join(', ') + ')'
+
+            binds = addon[:object].binds.select { |bind| bind[:type] == :channel && bind[:command].is_a?(String) }
+            commands = binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.channel_command_character + command }
+            command_chunks = []
+            while (commands.count >= 6)
+              chunk = []
+              6.times do
+                tmp_command = commands.shift.ljust(max_command_length)
+                chunk.push(tmp_command)
+              end
+              command_chunks.push(chunk)
             end
-            channel.message(" + #{addon[:name]} version #{addon[:version]} by #{addon[:author]}#{bind_string}")
+
+            if (commands.any?)
+              command_chunks.push(commands.collect { |tmp_command| tmp_command.ljust(max_command_length) })
+            end
+
+            command_chunks.each_with_index do |chunk, i|
+              if (i.zero?)
+                channel.message("#{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+              else
+                channel.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+              end
+            end
           end
+        else
+          channel.message('no addons loaded.')
+        end
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
