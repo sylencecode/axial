@@ -41,8 +41,7 @@ module Axial
             @conn = TCPSocket.new(@server.address, @server.port)
           end
         end
-        @server.connected = true
-        LOGGER.info("connected to #{@server.address}:#{@server.port}")
+        LOGGER.info("established tcp connection with #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
         @server.connected = false
         @bot.timer.delete(@uhost_timer)
@@ -116,6 +115,7 @@ module Axial
       def dispatch(raw)
         if (raw =~ /^:(\S+)\s+001\s+(#{@bot.trying_nick})/)
           @server.real_address = Regexp.last_match[1]
+          @server.connected = true
           if (!@bot.trying_nick.casecmp(@bot.nick).zero?)
             @regaining_nick = true
             @nick_regain_timer = @bot.timer.every_60_seconds(@bot.server_interface, :send_ison)
@@ -140,6 +140,7 @@ module Axial
       private :dispatch
 
       def loop()
+        sleep 5
         connect
         login
         while (raw = @conn.readline)
