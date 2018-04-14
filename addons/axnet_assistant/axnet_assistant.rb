@@ -277,10 +277,7 @@ module Axial
           end
         end
 
-        if (response_mode.any?)
-          channel.set_mode(response_mode)
-        end
-
+        channel.set_mode(response_mode)
         channel.invite(bot_nick.name)
       end
 
@@ -317,13 +314,11 @@ module Axial
           return
         end
 
-        wait_a_sec
-
-        if (channel_nick.opped_on?(channel))
-          return
+        timer.in_a_bit do
+          if (!channel_nick.opped_on?(channel))
+            channel.op(channel_nick)
+          end
         end
-
-        channel.op(channel_nick)
       end
 
       def send_request(request)

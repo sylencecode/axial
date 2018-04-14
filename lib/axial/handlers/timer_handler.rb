@@ -55,7 +55,7 @@ module Axial
         @thread  = Thread.new do
           while (@running)
             begin
-              sleep 1
+              sleep 0.1
               @timers.each do |timer|
                 # execute <= time.now
                 # remove it or reset the time on it if repeating
@@ -107,6 +107,12 @@ module Axial
             timer = Timer.new(true, 3600, *args, &block)
           when /^every_(\d+)_hours$/
             timer = Timer.new(true, Regexp.last_match[1].to_i * 3600, *args, &block)
+          when /^in_a_tiny_bit$/
+            random_fractional_secs = (SecureRandom.random_number(400) / 100.to_f)
+            timer = Timer.new(false, random_fractional_secs, *args, &block)
+          when /^in_a_bit$/
+            random_fractional_secs = (SecureRandom.random_number(800) / 100.to_f) + 2.0
+            timer = Timer.new(false, random_fractional_secs, *args, &block)
           when /^in_second$/, /^in_1_second$/
             timer = Timer.new(false, 1, *args, &block)
           when /^in_(\d+)_seconds$/

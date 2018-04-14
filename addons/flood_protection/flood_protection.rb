@@ -107,9 +107,8 @@ module Axial
                   channel.ban(ban_mask)
                   channel.kick(nick, "text flood: #{message_count} lines in #{flood_limit[:time]} seconds")
                   timer.in_5_minutes do
-                    if (channel.opped?)
-                      wait_a_sec
-                      if (channel.ban_list.include?(ban_mask))
+                    timer.in_a_bit do
+                      if (channel.opped? && channel.ban_list.include?(ban_mask))
                         channel.unban(ban_mask)
                       end
                     end
@@ -135,9 +134,8 @@ module Axial
                     channel.set_mode(response_mode)
 
                     timer.in_30_seconds do
-                      if (channel.opped?)
-                        wait_a_sec
-                        if (channel.mode.moderated?)
+                      timer.in_a_bit do
+                        if (channel.opped? && channel.mode.moderated?)
                           response_mode = IRCTypes::Mode.new(server.max_modes)
                           response_mode.moderated = false
                           channel.set_mode(response_mode)
@@ -187,9 +185,8 @@ module Axial
                   channel.set_mode(response_mode)
 
                   timer.in_30_seconds do
-                    if (channel.opped?)
-                      wait_a_sec
-                      if (channel.mode.invite_only?)
+                    timer.in_a_bit do
+                      if (channel.opped? && channel.mode.invite_only?)
                         response_mode = IRCTypes::Mode.new(server.max_modes)
                         response_mode.invite_only = false
                         channel.set_mode(response_mode)
@@ -214,9 +211,8 @@ module Axial
                   ban_mask = MaskUtils.ensure_wildcard(nick.host)
                   channel.ban(ban_mask)
                   timer.in_5_minutes do
-                    if (channel.opped?)
-                      wait_a_sec
-                      if (channel.ban_list.include?(ban_mask))
+                    timer.in_a_bit do
+                      if (channel.opped? && channel.ban_list.include?(ban_mask))
                         channel.unban(ban_mask)
                       end
                     end
@@ -252,9 +248,8 @@ module Axial
                     channel.ban(ban_mask)
                     channel.kick(nick, "nick flood: #{nick_change_count} nick changes in #{flood_limit[:time]} seconds")
                     timer.in_5_minutes do
-                      if (channel.opped?)
-                        wait_a_sec
-                        if (channel.ban_list.include?(ban_mask))
+                      timer.in_a_bit do
+                        if (channel.opped? && channel.ban_list.include?(ban_mask))
                           channel.unban(ban_mask)
                         end
                       end

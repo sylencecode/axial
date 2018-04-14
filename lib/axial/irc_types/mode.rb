@@ -181,10 +181,18 @@ module Axial
         @devoices.push(nickname)
       end
 
+      def bans()
+        return @bans.clone
+      end
+
       def ban(mask)
         if (!@bans.include?(mask))
           @bans.push(mask)
         end
+      end
+
+      def unbans()
+        return @unbans.clone
       end
 
       def unban(mask)

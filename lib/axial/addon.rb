@@ -293,11 +293,6 @@ module Axial
       @binds.push(type: :mode, method: method, modes: modes)
     end
 
-    def wait_a_sec()
-      random_sleep = (SecureRandom.random_number(600) / 100.to_f) + 2.0
-      sleep(random_sleep)
-    end
-
     def on_irc_ban_list_end(*args)
       if (args.nil? || args.flatten.empty?)
         raise(AddonError, "#{self.class}.on_irc_ban_list_end called without a callback method")

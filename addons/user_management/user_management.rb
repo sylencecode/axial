@@ -549,6 +549,11 @@ module Axial
 
       def can_ban?(source, user, nick, subject_mask, force)
         can_ban        = false
+        if (myself.match_mask?(subject_mask))
+          reply(source, nick, "please don't ask me to ban myself.")
+          return false
+        end
+
         possible_users = Models::User.get_users_from_overlap(subject_mask)
         if (possible_users.empty?)
           can_ban = true
