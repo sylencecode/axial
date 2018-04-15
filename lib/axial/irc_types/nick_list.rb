@@ -143,7 +143,7 @@ module Axial
       end
 
       def clear()
-        @server_interface.channel_list.clear
+        @nick_list.clear
       end
     end
   end

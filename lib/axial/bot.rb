@@ -219,7 +219,7 @@ module Axial
     def load_server_settings()
       address                     = @config['server']['address']         || 'irc.efnet.org'
       port                        = @config['server']['port']            || 6667
-      timeout                     = @config['server']['timeout']         || 10
+      reconnect_delay             = @config['server']['reconnect_delay'] || 60
       ssl                         = @config['server']['ssl']             || false
       password                    = @config['server']['password']        || ''
 

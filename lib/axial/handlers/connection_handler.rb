@@ -12,6 +12,7 @@ module Axial
 
       def initialize(bot, server)
         @server                 = server
+        @server_connect_timeout = 15
         @bot                    = bot
         @send_monitor           = Monitor.new
         @raw_consumer           = Consumers::RawConsumer.new
@@ -24,13 +25,26 @@ module Axial
         @chat_consumer.register_callback(self, :direct_send)
       end
 
+      def handle_disconnect_cleanup()
+        @bot.trying_nick    = @bot.nick
+        @regaining_nick     = false
+        @server.connected   = false
+
+        @bot.timer.delete(@uhost_timer)
+        @bot.timer.delete(@auto_join_timer)
+        @bot.timer.delete(@nick_regain_timer)
+        @bot.server_interface.cancel_pending_joins
+        @bot.server_interface.channel_list.clear
+        @bot.bind_handler.dispatch_server_disconnect_binds
+      end
+
       def connect()
         @bot.server_interface.myself = IRCTypes::Nick.new(@bot.server_interface)
         @bot.server_interface.myself.name = @bot.real_nick
         @raw_consumer.start
         @chat_consumer.start
         LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
-        Timeout.timeout(@connect_timeout) do
+        Timeout.timeout(@server_connect_timeout) do
           if (@server.ssl?)
             context = OpenSSL::SSL::SSLContext.new
             context.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -43,29 +57,21 @@ module Axial
         end
         LOGGER.info("established tcp connection with #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
-        @server.connected = false
-        @bot.timer.delete(@uhost_timer)
-        @bot.timer.delete(@auto_join_timer)
-        @bot.timer.delete(@nick_regain_timer)
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
-        LOGGER.info('reconnecting in 30 seconds...')
-        @bot.server_interface.cancel_pending_joins
-        @bot.bind_handler.dispatch_server_disconnect_binds
-        sleep 30
+
+        handle_disconnect_cleanup
+        LOGGER.info("reconnecting in #{@server.reconnect_delay} seconds...")
+        sleep @server.reconnect_delay
         retry
       rescue Exception => ex
-        @server.connected = false
-        @bot.timer.delete(@uhost_timer)
-        @bot.timer.delete(@auto_join_timer)
-        @bot.timer.delete(@nick_regain_timer)
-        @bot.server_interface.cancel_pending_joins
-        @bot.bind_handler.dispatch_server_disconnect_binds
         LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
-        LOGGER.info('reconnecting in 30 seconds...')
-        sleep 30
+
+        handle_disconnect_cleanup
+        LOGGER.info("reconnecting in #{@server.reconnect_delay} seconds...")
+        sleep @server.reconnect_delay
         retry
       end
       private :connect
@@ -148,10 +154,10 @@ module Axial
         end
       rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, Errno::ENETDOWN, EOFError => ex
         LOGGER.error("lost server connection: #{ex.class}: #{ex.message}")
-        @server.connected = false
-        @bot.server_interface.cancel_pending_joins
-        @bot.bind_handler.dispatch_server_disconnect_binds
-        sleep @server.timeout
+
+        handle_disconnect_cleanup
+        LOGGER.info("reconnecting in #{@server.reconnect_delay} seconds...")
+        sleep @server.reconnect_delay
         retry
       end
     end

@@ -213,7 +213,7 @@ module Axial
 
       def handle_self_kick(channel, kicker_nick, reason)
         LOGGER.warn("kicked from #{channel.name} by #{kicker_nick.name}: #{reason}")
-        @server_interface.channel_list.clear
+        @server_interface.channel_list.delete(channel)
         @bot.bind_handler.dispatch_self_kick_binds(channel, kicker_nick, reason)
       end
 
