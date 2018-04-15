@@ -53,14 +53,10 @@ module Axial
         possible_user = get_bot_or_user(kicked_nick)
         if (bot_or_op?(possible_user))
           if (!bot_or_director?(user))
-            if (!kicker_nick.is_a?(IRCTypes::Server) && kicker_nick.opped_on?(channel))
-              channel.deop(kicker_nick)
-              channel.kick(kicker_nick, "don't do that.")
-            end
+            channel.kick(kicker_nick, "don't do that.")
           end
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -108,21 +104,37 @@ module Axial
         end
 
         response_mode = IRCTypes::Mode.new(server.max_modes)
+        bans = []
         kicks = []
         channel_nicks = channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }
 
         ban_list.all_bans.each do |ban|
           channel_nicks.each do |subject_nick|
             if (ban.match_mask?(subject_nick.uhost))
-              response_mode.ban(ban.mask)
+              bans.push(ban.mask)
               kicks.push(nick: subject_nick, reason: ban.long_reason)
             end
           end
         end
 
-        channel.set_mode(response_mode)
-        kicks.each do |kick|
-          channel.kick(kick[:nick], kick[:reason])
+        timer.in_a_tiny_bit do
+          response_mode = IRCTypes::Mode.new(server.max_modes)
+          bans.each do |ban_mask|
+            if (!channel.ban_list.include?(ban_mask))
+              response_mode.ban(ban_mask)
+            end
+          end
+          if (channel.opped?)
+            channel.set_mode(response_mode)
+          end
+
+          if (kicks.any?)
+            kicks.each do |kick|
+              if (channel.opped? && channel.nick_list.include?(kick[:nick]))
+                channel.kick(kick[:nick], kick[:reason])
+              end
+            end
+          end
         end
       end
 
@@ -131,29 +143,36 @@ module Axial
           return
         end
 
-        response_mode = IRCTypes::Mode.new(server.max_modes)
+        voice_nicks = []
+        op_nicks = []
         channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
           possible_user = get_bot_or_user(subject_nick)
           if (!possible_user.nil?)
             if (bot_or_op?(possible_user))
-              # op bots and ops
-              timer.in_a_tiny_bit do
-                if (!subject_nick.opped_on?(channel))
-                  response_mode.op(subject_nick.name)
-                end
-              end
+              op_nicks.push(subject_nick)
             elsif (possible_user.role.friend?)
-              # voice friends
-              timer.in_a_tiny_bit do
-                if (!subject_nick.voiced_on?(channel))
-                  response_mode.voice(subject_nick.name)
-                end
-              end
+              voice_nicks.push(subject_nick)
             end
           end
         end
 
-        channel.set_mode(response_mode)
+        timer.in_a_tiny_bit do
+          response_mode = IRCTypes::Mode.new(server.max_modes)
+          op_nicks.each do |op_nick|
+            if (channel.nick_list.include?(op_nick) && !op_nick.opped_on?(channel))
+              response_mode.op(op_nick.name)
+            end
+          end
+
+          voice_nicks.each do |voice_nick|
+            if (channel.nick_list.include?(voice_nick) && !voice_nick.voiced_on?(channel))
+              response_mode.voice(voice_nick.name)
+            end
+          end
+          if (channel.opped?)
+            channel.set_mode(response_mode)
+          end
+        end
       end
 
       def protect_banned_users(channel, nick, mode)
@@ -161,7 +180,6 @@ module Axial
           return
         end
 
-        tried_to_ban_me = false
         user = get_bot_or_user(nick)
 
         kicks = []
@@ -172,13 +190,14 @@ module Axial
           possible_users = get_bots_or_users_overlap(ban_mask)
 
           if (myself.match_mask?(ban_mask))
-            tried_to_ban_me = true
             immediate_response_mode = IRCTypes::Mode.new(server.max_modes)
             immediate_response_mode.unban(ban_mask)
             if (!user.role.root?)
               immediate_response_mode.deop(nick)
             end
-            channel.set_mode(immediate_response_mode)
+            if (channel.opped?)
+              channel.set_mode(immediate_response_mode)
+            end
           elsif (possible_users.any? || myself.match_mask?(ban_mask))
             possible_users.sort_by { |tmp_user| tmp_user.role.numeric }.reverse.each do |possible_user|
               # roles are sorted highest to lowest for this comparison loop
@@ -208,13 +227,16 @@ module Axial
               response_mode.unban(ban_mask)
             end
           end
-          channel.set_mode(response_mode)
-        end
 
-        timer.in_a_tiny_bit do
+          if (channel.opped?)
+            channel.set_mode(response_mode)
+          end
+
           if (kicks.any?)
             kicks.each do |kick|
-              channel.kick(kick[:nick], kick[:reason])
+              if (channel.opped? && channel.nick_list.include?(kick[:nick]))
+                channel.kick(kick[:nick], kick[:reason])
+              end
             end
           end
         end
@@ -235,10 +257,15 @@ module Axial
           return
         end
 
-        check_channel_bans(channel)
-        check_channel_users(channel)
-        set_enforced_modes(channel, channel.mode)
-        unset_prevented_modes(channel, channel.mode)
+        timer.in_a_tiny_bit do
+          check_channel_bans(channel)
+          check_channel_users(channel)
+        end
+
+        timer.in_a_bit do
+          set_enforced_modes(channel)
+          unset_prevented_modes(channel)
+        end
       end
 
       def handle_deop(channel, nick, mode)
@@ -246,55 +273,70 @@ module Axial
           return
         end
 
+        reop_nicks = []
+        deop_nicks = []
         user = get_bot_or_user(nick)
-        response_mode = IRCTypes::Mode.new(server.max_modes)
 
         if (mode.deops.any?)
           mode.deops.each do |deop|
             if (deop == myself.name)
               channel.opped = false
             else
-              # re-op users and penalize offender unless deopped by a director or bot
+              reop_nicks = []
+              deop_nicks = []
               subject_nick = channel.nick_list.get(deop)
               possible_user = get_bot_or_user(subject_nick)
               if (bot_or_op?(possible_user))
                 if (!subject_nick.opped_on?(channel))
-                  response_mode.op(subject_nick.name)
+                  reop_nicks.push(subject_nick)
                 end
 
                 if (!bot_or_director?(user))
-                  if (nick.opped_on?(channel))
-                    response_mode.deop(nick)
-                  end
+                  deop_nicks.push(subject_nick)
                 end
               end
             end
           end
-        end
 
-        channel.set_mode(response_mode)
+          timer.in_a_tiny_bit do
+            reop_nicks.each do |reop_nick|
+              if (channel.nick_list.include?(reop_nick) && !reop_nick.opped_on?(channel))
+                response_mode.op(reop_nick.name)
+              end
+            end
+            deop_nicks.each do |deop_nick|
+              if (channel.nick_list.include?(deop_nick) && deop_nick.opped_on?(channel))
+                response_mode.deop(deop_nick.name)
+              end
+            end
+            if (channel.opped?)
+              channel.set_mode(response_mode)
+            end
+          end
+        end
       end
 
-      def handle_prevent_modes(channel, nick, mode)
-        if (!channel.opped? || nick == myself)
-          return
-        elsif (bot_or_director?(get_bot_or_user(nick)))
+      def handle_prevent_modes(channel, nick, _mode)
+        if (nick == myself || bot_or_director?(get_bot_or_user(nick)))
           return
         end
 
-        unset_prevented_modes(channel, mode)
+        timer.in_a_tiny_bit do
+          unset_prevented_modes(channel)
+        end
       end
 
-      def unset_prevented_modes(channel, mode)
+      def unset_prevented_modes(channel)
         if (!channel.opped?)
           return
         end
 
         response_mode = IRCTypes::Mode.new(server.max_modes)
-        prevent_modes = @prevent_modes.select { |prevent_mode| mode.channel_modes.include?(prevent_mode) }
+        prevent_modes = @prevent_modes.select { |prevent_mode| channel.mode.channel_modes.include?(prevent_mode) }
+
         prevent_modes.each do |channel_mode|
           if (channel_mode == :keyword)
-            response_mode.unset_keyword(mode.keyword)
+            response_mode.unset_keyword(channel.mode.keyword)
           elsif (channel_mode == :limit)
             response_mode.limit = 0
           else
@@ -305,12 +347,23 @@ module Axial
         channel.set_mode(response_mode)
       end
 
-      def set_enforced_modes(channel, mode)
+      def handle_enforce_modes(channel, nick, mode)
+        if (nick == myself || bot_or_director?(get_bot_or_user(nick)))
+          return
+        end
+
+        timer.in_a_tiny_bit do
+          set_enforced_modes(channel)
+        end
+      end
+
+      def set_enforced_modes(channel)
         if (!channel.opped?)
           return
         end
+
         response_mode = IRCTypes::Mode.new(server.max_modes)
-        enforce_modes = @enforce_modes.reject { |enforce_mode| mode.channel_modes.include?(enforce_mode) }
+        enforce_modes = @enforce_modes.reject { |enforce_mode| channel.mode.channel_modes.include?(enforce_mode) }
         enforce_modes.each do |channel_mode|
           response_mode.public_send((channel_mode.to_s + '=').to_sym, true)
         end
@@ -318,18 +371,8 @@ module Axial
         channel.set_mode(response_mode)
       end
 
-      def handle_enforce_modes(channel, nick, mode)
-        if (!channel.opped? || nick == myself)
-          return
-        elsif (bot_or_director?(get_bot_or_user(nick)))
-          return
-        end
-
-        set_enforced_modes(channel, mode)
-      end
-
       def auto_op_voice(channel, nick)
-        if (!channel.opped? || nick == myself)
+        if (nick == myself)
           return
         end
 
@@ -337,14 +380,14 @@ module Axial
         if (!user.nil?)
           if (user.role.op?)
             timer.in_a_bit do
-              if (!nick.opped_on?(channel))
+              if (channel.opped? && channel.nick_list.include?(nick) && !nick.opped_on?(channel))
                 channel.op(nick)
                 LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
               end
             end
           elsif (user.role.friend?)
             timer.in_a_bit do
-              if (!nick.voiced_on?(channel))
+              if (channel.opped? && channel.nick_list.include?(nick) && !nick.voiced_on?(channel))
                 channel.voice(nick)
                 LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
               end
@@ -352,7 +395,6 @@ module Axial
           end
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)
@@ -360,23 +402,23 @@ module Axial
       end
 
       def auto_ban(channel, nick)
-        if (!channel.opped? || nick == myself)
-          return
-        end
+        timer.in_a_tiny_bit do
+          user = get_bot_or_user_mask(nick.uhost)
+          if (!user&.role&.root?)
+            ban_list.all_bans.each do |ban|
+              if (channel.opped? && ban.match_mask?(nick.uhost) && !channel.ban_list.include?(ban.mask))
+                response_mode = IRCTypes::Mode.new(server.max_modes)
+                response_mode.ban(ban.mask)
+                channel.set_mode(response_mode)
 
-        user = get_bot_or_user_mask(nick.uhost)
-        if (user.nil?)
-          ban_list.all_bans.each do |ban|
-            if (ban.match_mask?(nick.uhost))
-              response_mode = IRCTypes::Mode.new(server.max_modes)
-              response_mode.ban(ban.mask)
-              channel.set_mode(response_mode)
-              channel.kick(nick, ban.long_reason)
+                if (channel.nick_list.include?(nick))
+                  channel.kick(nick, ban.long_reason)
+                end
+              end
             end
           end
         end
       rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
           LOGGER.error(i)

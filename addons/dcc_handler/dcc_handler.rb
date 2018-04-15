@@ -29,7 +29,8 @@ module Axial
 
         throttle                  10
 
-        on_dcc          'help',   :silent, :send_help
+        on_dcc          'help',   :silent, :dcc_send_help
+        on_dcc         'about',   :silent, :dcc_send_about
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who
         on_dcc          'quit',   :silent, :dcc_quit
@@ -41,7 +42,22 @@ module Axial
       def check_for_user_updates()
       end
 
-      def send_help(dcc, command)
+      def send_about(dcc, _command)
+        addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
+        addon_version_length = @bot.addons.collect { |tmp_addon| tmp_addon[:version].to_s.length }.max
+        dcc.message("#{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        dcc.message(' ')
+        if (@bot.addons.any?)
+          @bot.addons.each do |addon|
+            dcc.message("#{Colors.gray} +#{Colors.reset} #{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} v#{addon[:version].to_s.rjust(addon_version_length)} #{Colors.gray}|#{Colors.reset} #{addon[:author]}")
+          end
+        else
+          dcc.message('no addons loaded.')
+        end
+      end
+
+
+      def dcc_send_help(dcc, _command)
         dcc.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         dcc.message(' ')
         if (@bot.addons.any?)

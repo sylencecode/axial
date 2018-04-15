@@ -6,14 +6,14 @@ module Axial
       def initialize(bot)
         super
 
-        @name                   = 'base'
+        @name                   = 'basic public commands'
         @author                 = 'sylence <sylence@sylence.org>'
         @version                = '1.1.0'
 
         throttle                10
 
         on_channel    'help',   :send_help
-        on_channel   'about',   :send_help
+        on_channel   'about',   :send_about
         on_channel  'reload',   :reload_addons
         on_channel_emote        :channel_emote
         on_topic                :handle_topic_change
@@ -24,6 +24,20 @@ module Axial
           timer.in_a_tiny_bit do
             channel.emote('ducks')
           end
+        end
+      end
+
+      def send_about(channel, _nick, _command)
+        addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
+        addon_version_length = @bot.addons.collect { |tmp_addon| tmp_addon[:version].to_s.length }.max
+        channel.message("#{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        channel.message(' ')
+        if (@bot.addons.any?)
+          @bot.addons.each do |addon|
+            channel.message("#{Colors.gray} +#{Colors.reset} #{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} v#{addon[:version].to_s.rjust(addon_version_length)} #{Colors.gray}|#{Colors.reset} #{addon[:author]}")
+          end
+        else
+          channel.message('no addons loaded.')
         end
       end
 
@@ -48,7 +62,7 @@ module Axial
 
       def send_help(channel, nick, command)
         exclude_addons = [ 'axnet master', 'axnet slave', 'base' ]
-        channel.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        channel.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR}")
         channel.message(' ')
         if (@bot.addons.any?)
           addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max

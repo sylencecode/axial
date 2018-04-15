@@ -57,22 +57,22 @@ module Axial
             begin
               sleep 0.1
               @timers.each do |timer|
-                # execute <= time.now
-                # remove it or reset the time on it if repeating
-                # remove any other expired
                 if (Time.now - timer.interval >= timer.last)
-                  timer.thread = Thread.new do
-                    begin
-                      timer.execute
-                    rescue Exception => ex
-                      LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-                      ex.backtrace.each do |i|
-                        LOGGER.error(i)
+                  if (!timer.running?)
+                    timer.last = Time.now
+                    timer.thread = Thread.new do
+                      begin
+                        timer.execute
+                      rescue Exception => ex
+                        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+                        ex.backtrace.each do |i|
+                          LOGGER.error(i)
+                        end
                       end
                     end
-                  end
-                  if (!timer.repeat?)
-                    timer.expired = true
+                    if (!timer.repeat?)
+                      timer.expired = true
+                    end
                   end
                 end
               end

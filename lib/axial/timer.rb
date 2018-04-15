@@ -5,8 +5,8 @@ module Axial
   end
 
   class Timer
-    attr_reader     :uuid, :last, :type, :callback_method
-    attr_accessor   :thread, :interval
+    attr_reader     :uuid, :type, :callback_method
+    attr_accessor   :thread, :interval, :last
     attr_writer     :expired, :repeat
 
     def initialize(repeat, interval, *args, &block)
@@ -25,6 +25,7 @@ module Axial
       @args               = nil
       @block              = nil
       @thread             = nil
+      @running            = false
 
       if (block_given?)
         @type             = :block
@@ -38,6 +39,10 @@ module Axial
       end
     end
 
+    def running?()
+      return @running
+    end
+
     def expired?()
       return @expired
     end
@@ -47,7 +52,7 @@ module Axial
     end
 
     def execute()
-      @last = Time.now
+      @running = true
       if (@type == :block)
         if (@args.count > 1)
           @block.call(*@args)
@@ -67,7 +72,9 @@ module Axial
       else
         raise(TimerError, "no idea how to handle response type #{@type}")
       end
+      @running = false
     rescue Exception => ex
+      @running = false
       LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       ex.backtrace.each do |i|
         LOGGER.error(i)

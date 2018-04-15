@@ -129,7 +129,7 @@ module Axial
         if (reason.nil? || reason.empty?)
           reason = 'kicked'
         end
-        @server_interface.kick(@name, nick.name, "#{Constants::AXIAL_LOGO} #{reason}")
+        @server_interface.kick(@name, nick.name, "#{Constants::AXIAL_KICK_LOGO} #{reason}")
       end
 
       # placeholder methods for possible eventual method blocking until the channel has been synced

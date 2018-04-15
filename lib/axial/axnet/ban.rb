@@ -30,7 +30,7 @@ module Axial
       end
 
       def long_reason()
-        return "banned #{@set_at.strftime('%m/%d/%Y')} by #{@user_name}: #{@reason}"
+        return "banned #{@set_at.strftime('%Y-%m-%d')} by #{@user_name}: #{@reason}"
       end
 
       def masks_overlap?(in_mask)
