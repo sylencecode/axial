@@ -128,8 +128,8 @@ module Axial
       # @param _nick [IRCTypes::Nick] unused, in method signature to allow response to channel_mode event
       # @param mode [IRCTypes::Mode] channel modes from an on_mode event, nil when invoked by self_join event
       def create_op_request(channel, _nick = nil, mode = nil)
-        recently_deopped = mode&.deops&.select { |deop| deop.casecmp(myself.name).zero? }&.any?
-        if (channel.opped? || !recently_deopped)
+        deopped = !channel.opped? || mode&.deops&.select { |deop| deop.casecmp(myself.name).zero? }&.any?
+        if (!deopped)
           return
         end
 
