@@ -10,19 +10,20 @@ module Axial
     attr_writer     :expired, :repeat
 
     def initialize(repeat, interval, *args, &block)
-      if (interval <= 0)
-        raise(TimerError, 'invalid duration')
+      if (interval < 0.5)
+        @interval         = 0.5
+      else
+        @interval         = interval
       end
 
       @uuid               = SecureRandom.uuid
-      @interval           = interval
       @repeat             = repeat
+      @last               = Time.now
       @callback_object    = nil
       @callback_method    = nil
       @type               = nil
       @args               = nil
       @block              = nil
-      @last = Time.now
       @thread             = nil
 
       if (block_given?)
@@ -46,6 +47,7 @@ module Axial
     end
 
     def execute()
+      @last = Time.now
       if (@type == :block)
         if (@args.count > 1)
           @block.call(*@args)
@@ -65,7 +67,6 @@ module Axial
       else
         raise(TimerError, "no idea how to handle response type #{@type}")
       end
-      @last = Time.now
     rescue Exception => ex
       LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       ex.backtrace.each do |i|
