@@ -5,7 +5,7 @@ module Axial
   module API
     module Google
       class SearchResult
-        attr_reader :link, :snippet, :title
+        attr_accessor :link, :snippet, :title
         def initialize()
           @link     = ''
           @snippet  = ''
