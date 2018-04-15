@@ -20,6 +20,10 @@ module Axial
         @request_transmit_count           = 0
         @last_request                     = Time.now
 
+        load_binds
+      end
+
+      def load_binds
         on_startup                        :start_request_timer
         on_startup                        :check_initial_requests
         on_reload                         :start_request_timer
@@ -124,9 +128,8 @@ module Axial
       # @param _nick [IRCTypes::Nick] unused, in method signature to allow response to channel_mode event
       # @param mode [IRCTypes::Mode] channel modes from an on_mode event, nil when invoked by self_join event
       def create_op_request(channel, _nick = nil, mode = nil)
-        if (channel.opped?)
-          return
-        elsif (mode&.deops&.select { |deop| deop.casecmp(myself.name).zero? })&.empty?
+        recently_deopped = mode&.deops&.select { |deop| deop.casecmp(myself.name).zero? }&.any?
+        if (channel.opped? || !recently_deopped)
           return
         end
 

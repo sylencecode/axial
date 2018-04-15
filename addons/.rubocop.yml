@@ -1,2 +1,8 @@
 ---
+# Addons are expected to be written in a DSL-like single-file manner. Many of the workflows are intentionally "scripty"
+# by nature. These files will be treated very leniently.
 inherit_from: ../.rubocop.yml
+Metrics/ClassLength:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
