@@ -44,8 +44,16 @@ module Axial
         on_axnet                 'PART',  :part_channel
         on_axnet                'LOREM',  :lorem_ipsum
         on_axnet                 'PING',  :pong_channel
+        on_axnet                  'DIE',  :axnet_die
 
         axnet.register_transmitter(self, :send)
+      end
+
+
+      def axnet_die(handler, _command)
+        LOGGER.warn("received AXNET DIE command from #{handler.remote_cn} - exiting in 5 seconds...")
+        sleep 5
+        exit! 0
       end
 
       def send_axnet_heartbeat()

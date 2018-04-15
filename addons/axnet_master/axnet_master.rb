@@ -140,7 +140,7 @@ module Axial
       end
 
       def lorem_ipsum(source, user, nick, command)
-        if (!user.role.director?)
+        if (!user.role.root?)
           dcc_access_denied(source)
         else
           channel_name, repeats = command.two_arguments
@@ -360,10 +360,14 @@ module Axial
       end
 
       def handle_broadcast(dcc, command)
+        if (!dcc.user.role.root?)
+          dcc_access_denied(source)
+          return
+        end
         axnet.send(command.args)
       end
 
-      def send_help(dcc, command)
+      def send_axnet_help(dcc, command)
         dcc.message("try #{command.command} reload or #{command.command} list")
       end
 
@@ -371,27 +375,39 @@ module Axial
         LOGGER.debug("PONG from #{handler.uuid} (#{handler.remote_cn})")
       end
 
-      def handle_axnet_command(dcc, command)
-        begin
-          if (command.args.strip.empty?)
-            send_help(dcc, command)
-            return
-          end
+      def axnet_die(dcc)
+        dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} issued an axnet death sentence! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
+        axnet.send('DIE')
+        sleep 5
+        exit! 0
+      end
 
-          case (command.args.strip)
-            when /^list$/i, /^list\s+/i
-              list_axnet_connections(dcc)
-            when /^reload$/i, /^stop\s+/i
-              reload_axnet(dcc)
-            else
-              send_help(dcc, command)
-          end
-        rescue Exception => ex
-          dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
+      def handle_axnet_command(dcc, command)
+        if (!dcc.user.role.root?)
+          dcc_access_denied(source)
+          return
+        end
+
+        if (command.args.strip.empty?)
+          send_help(dcc, command)
+          return
+        end
+
+        case (command.args.strip)
+          when /^die$/i
+            axnet_die(dcc)
+          when /^list$/i
+            list_axnet_connections(dcc)
+          when /^reload$/i
+            reload_axnet(dcc)
+          else
+            send_axnet_help(dcc, command)
+        end
+      rescue Exception => ex
+        dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
