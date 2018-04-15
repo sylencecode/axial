@@ -63,6 +63,10 @@ module Axial
         LOGGER.info("reconnecting in #{@server.reconnect_delay} seconds...")
         sleep @server.reconnect_delay
         retry
+      rescue Timeout::Error => ex
+        LOGGER.error("connection attempt to #{@server.address}:#{@server.port} timed out, retrying...")
+        sleep 1
+        retry
       rescue Exception => ex
         LOGGER.error("unhandled connection error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
