@@ -517,7 +517,9 @@ module Axial
             if (!channel.synced?)
               LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
             else
-              channel.nick_list.rename(old_nick_name, new_nick_name)
+              if (channel.nick_list.include?(old_nick_name))
+                channel.nick_list.rename(old_nick_name, new_nick_name)
+              end
             end
           end
 
