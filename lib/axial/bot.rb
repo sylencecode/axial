@@ -223,7 +223,7 @@ module Axial
       ssl                         = @config['server']['ssl']             || false
       password                    = @config['server']['password']        || ''
 
-      @server                     = IRCTypes::Server.new(address, port, ssl, password, timeout)
+      @server                     = IRCTypes::Server.new(address, port, ssl, password, reconnect_delay)
     end
     private :load_server_settings
 
