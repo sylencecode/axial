@@ -53,6 +53,7 @@ module Axial
         on_axnet                 'PART',  :part_channel
         on_axnet                'LOREM',  :lorem_ipsum
         on_axnet                 'PING',  :pong_channel
+        on_axnet                 'DING',  :dong_channel
         on_axnet                  'DIE',  :axnet_die
         on_axnet   'HEARTBEAT_RESPONSE',  :check_heartbeat
 
@@ -132,6 +133,18 @@ module Axial
           channel.message("pong! (axnet slave, pinged by #{handler.remote_cn})")
         end
       end
+
+      def dong_channel(handler, command)
+        channel_name = command.first_argument
+        channel = channel_list.get_silent(channel_name)
+        if (!channel.nil?)
+          random_words = %w[dongs cocks butts fart brrrup whoadang ass];
+          random_word = random_words[SecureRandom.random_number(random_words.count)]
+          other_random_word = random_words[SecureRandom.random_number(random_words.count)]
+          channel.message("#{random_word} (axnet slave, #{other_random_word}'d by #{handler.remote_cn})")
+        end
+      end
+
 
       def check_for_uhost_change()
         if (!myself.uhost.casecmp(@last_uhost).zero?)

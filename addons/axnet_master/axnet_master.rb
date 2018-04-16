@@ -1,3 +1,4 @@
+require 'securerandom'
 require 'yaml'
 require 'axial/addon'
 require 'axial/cert_utils'
@@ -63,6 +64,7 @@ module Axial
         on_dcc                   'bots',  :dcc_bot_status
 
         on_channel               'ping',  :pong_channel
+        on_channel               'ding',  :dong_channel
 
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
@@ -181,6 +183,16 @@ module Axial
           channel.message('pong! (axnet master)')
         end
         axnet.send("PING #{channel.name}")
+      end
+
+      def dong_channel(channel, nick, command)
+        user = user_list.get_from_nick_object(nick)
+        if (!user.nil? && user.role.director?)
+          random_words = %w[dongs cocks butts fart brrrup whoadang ass];
+          random_word = random_words[SecureRandom.random_number(random_words.count)]
+          channel.message("#{random_word} (axnet master)")
+        end
+        axnet.send("DING #{channel.name}")
       end
 
       def print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
