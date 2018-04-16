@@ -47,7 +47,7 @@ module Axial
         LOGGER.warn("received DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
         dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} has issued a DIE comamnd! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
         sleep 5
-        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
+        server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
         exit! 0
       end

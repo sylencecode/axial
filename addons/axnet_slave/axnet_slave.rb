@@ -62,7 +62,7 @@ module Axial
       def axnet_die(handler, _command)
         LOGGER.warn("received AXNET DIE command from #{handler.remote_cn} - exiting in 5 seconds...")
         sleep 5
-        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
+        server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
         exit! 0
       end

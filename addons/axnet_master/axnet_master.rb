@@ -381,7 +381,7 @@ module Axial
         dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} issued an axnet death sentence! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
         axnet.send('DIE')
         sleep 5
-        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
+        server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
         exit! 0
       end
