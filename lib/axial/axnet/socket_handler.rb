@@ -70,6 +70,7 @@ module Axial
 
       def close()
         @socket.sysclose
+        @socket.io.close
       end
 
       def loop()

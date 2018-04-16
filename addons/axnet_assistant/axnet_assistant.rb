@@ -50,7 +50,7 @@ module Axial
         on_invite                         :handle_invite
       end
 
-      def requests_after_reload(_handler)
+      def requests_after_reload()
         server.retry_joins
         channel_list.all_channels.each do |channel|
           if (!channel.opped?)
