@@ -337,13 +337,13 @@ module Axial
         axnet.send('ASSISTANCE_RESPONSE ' + serialized_yaml)
       end
 
-      def stop_request_timer()
+      def stop_request_timer(_handler = nil)
         LOGGER.debug('stopping request timer')
         cancel_all_requests
         timer.delete(@request_timer)
       end
 
-      def start_request_timer()
+      def start_request_timer(_handler = nil)
         LOGGER.debug('starting request timer')
         timer.get_from_callback_method(:check_for_requests).each do |tmp_timer|
           LOGGER.debug("removing previous request timer #{tmp_timer.callback_method}")
