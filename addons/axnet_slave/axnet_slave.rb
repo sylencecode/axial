@@ -36,7 +36,11 @@ module Axial
 
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
+
+        on_axnet_connect                  :start_heartbeat_timer
         on_axnet_connect                  :axnet_login
+
+        on_axnet_disconnect               :stop_heartbeat_timer
         on_axnet_disconnect               :axnet_disconnect
 
         on_axnet    'USERLIST_RESPONSE',  :update_user_list
@@ -288,24 +292,33 @@ module Axial
         retry
       end
 
+      def start_heartbeat_timer(_handler = nil)
+        LOGGER.debug('starting axnet heartbeat timer')
+        timer.get_from_callback_method(:send_axnet_heartbeat).each do |tmp_timer|
+          LOGGER.debug("warning - removing errant axnet heartbeat timer #{tmp_timer.callback_method}")
+          timer.delete(tmp_timer)
+        end
+        @last_heartbeat = Time.now
+        @heartbeat_timer = timer.every_minute(self, :send_axnet_heartbeat)
+      end
+
+      def stop_heartbeat_timer(_handler = nil)
+        LOGGER.debug('stopping axnet heartbeat timer')
+        timer.delete(@heartbeat_timer)
+      end
+
       def start_slave_thread()
         LOGGER.debug('starting axial slave thread')
 
         @running        = true
-        timer.get_from_callback_method(:send_axnet_heartbeat).each do |tmp_timer|
-          LOGGER.debug("removing previous slave send_axnet_heartbeat timer #{tmp_timer.callback_method}")
-          timer.delete(tmp_timer)
-        end
-        @heartbeat_timer = timer.every_minute(self, :send_axnet_heartbeat)
-
         timer.get_from_callback_method(:auth_to_axnet).each do |tmp_timer|
-          LOGGER.debug("removing previous slave auth_to_axnet timer #{tmp_timer.callback_method}")
+          LOGGER.debug("warning - removing errant auth_to_axnet timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @refresh_timer  = timer.every_5_minutes(self, :auth_to_axnet)
 
         timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
-          LOGGER.debug("removing previous slave check_for_uhost_change timer #{tmp_timer.callback_method}")
+          LOGGER.debug("warning - removing errant slave check_for_uhost_change timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @uhost_timer    = timer.every_second(self, :check_for_uhost_change)
@@ -333,7 +346,6 @@ module Axial
           @slave_thread.kill
         end
         @slave_thread = nil
-        timer.delete(@heartbeat_timer)
         timer.delete(@refresh_timer)
         timer.delete(@uhost_timer)
       rescue Exception => ex

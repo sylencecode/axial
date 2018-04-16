@@ -337,15 +337,15 @@ module Axial
       end
 
       def stop_request_timer(_handler = nil)
-        LOGGER.debug('stopping request timer')
+        LOGGER.debug('stopping axnet assistance request timer')
         cancel_all_requests
         timer.delete(@request_timer)
       end
 
       def start_request_timer(_handler = nil)
-        LOGGER.debug('starting request timer')
+        LOGGER.debug('starting axnet assistance request timer')
         timer.get_from_callback_method(:check_for_requests).each do |tmp_timer|
-          LOGGER.debug("removing previous request timer #{tmp_timer.callback_method}")
+          LOGGER.debug("warning - removing errant assistance request timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @request_timer = timer.every_second(self, :check_for_requests)

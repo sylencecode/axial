@@ -607,13 +607,13 @@ module Axial
         end
 
         timer.get_from_callback_method(:send_bot_list).each do |tmp_timer|
-          LOGGER.debug("removing previous axnet send_bot_list timer #{tmp_timer.callback_method}")
+          LOGGER.debug("warning - removing errant send_bot_list timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @refresh_timer  = timer.every_5_minutes(self, :send_bot_list)
 
         timer.get_from_callback_method(:check_for_uhost_change).each do |tmp_timer|
-          LOGGER.debug("removing previous axnet check_for_uhost_change timer #{tmp_timer.callback_method}")
+          LOGGER.debug("warning - removing errant check_for_uhost_change timer #{tmp_timer.callback_method}")
           timer.delete(tmp_timer)
         end
         @uhost_timer   = timer.every_second(self, :check_for_uhost_change)
