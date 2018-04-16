@@ -74,6 +74,10 @@ module Axial
       end
 
       def send_axnet_heartbeat()
+        if (@handler.nil? || @handler.socket.closed?)
+          return
+        end
+
         if (Time.now - @last_heartbeat > 120)
           last_heartbeat_duration = TimeSpan.new(Time.now, @last_heartbeat)
           LOGGER.warn("connection to #{@handler.remote_cn} timed out (last heartbeat received #{last_heartbeat_duration.short_to_s} ago)")
@@ -195,7 +199,7 @@ module Axial
       end
 
       def send(text)
-        if (@handler.nil? || @handler.socket.closed? || @handler.socket.eof?)
+        if (@handler.nil? || @handler.socket.closed?)
           LOGGER.debug("not sending data, connection is dead")
           return
         end

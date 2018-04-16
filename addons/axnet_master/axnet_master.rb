@@ -492,7 +492,7 @@ module Axial
           handlers_string = (@handlers.count == 1) ? '1 connection' : "#{@handlers.count} connections"
           LOGGER.debug("broadcasting to #{handlers_string}")
           @handlers.values.each do |handler|
-            if (handler.socket.closed? || handler.socket.eof?)
+            if (handler.socket.closed?)
               LOGGER.debug("not sending data, connection is dead")
               next
             end
@@ -516,7 +516,7 @@ module Axial
           if (uuid == exclude_handler.uuid)
             next
           else
-            if (handler.socket.closed? || handler.socket.eof?)
+            if (handler.socket.closed?)
               LOGGER.debug("not sending data, connection is dead")
               next
             end
