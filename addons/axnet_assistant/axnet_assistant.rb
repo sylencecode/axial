@@ -24,8 +24,14 @@ module Axial
       end
 
       def load_binds
-        on_axnet_connect                  :start_request_timer
-        on_axnet_disconnect               :stop_request_timer
+        if (axnet.master?)
+          on_server_connect               :start_request_timer
+          on_server_disconnect            :stop_request_timer
+        else
+          on_axnet_connect                :start_request_timer
+          on_axnet_disconnect             :stop_request_timer
+        end
+
         on_startup                        :check_initial_requests
         on_reload                         :check_initial_requests
 

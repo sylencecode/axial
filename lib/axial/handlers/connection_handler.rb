@@ -141,6 +141,7 @@ module Axial
             end
           end
           @auto_join_timer = @bot.timer.every_30_seconds(@bot.server_interface, :retry_joins)
+          @bot.bind_handler.dispatch_server_connect_binds
         elsif (raw =~ /^PING\s+(.*)/)
           pong(Regexp.last_match[1])
         else

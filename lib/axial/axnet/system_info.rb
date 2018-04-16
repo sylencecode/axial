@@ -7,7 +7,7 @@ module Axial
       attr_reader   :os, :cpu_model, :cpu_mhz, :cpu_logical_processors, :mem_free, :mem_total, :kernel_name,
                     :kernel_release, :kernel_machine, :ruby_version, :ruby_patch_level, :ruby_platform
 
-      attr_accessor :startup_time, :addons, :latest_commit, :server_info, :uhost
+      attr_accessor :startup_time, :addons, :latest_commit, :server_info, :uhost, :lag
 
       def initialize(data_hash)
         @os                       = data_hash[:os]
@@ -27,6 +27,7 @@ module Axial
         @latest_commit            = nil
         @server_info              = 'unknown_server:unknown_port'
         @uhost                    = 'unknown'
+        @lag                      = 0.0
       end
 
       def self.from_environment()

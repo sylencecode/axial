@@ -153,6 +153,7 @@ module Axial
         system_info.startup_time    = @bot.startup_time
         system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
         system_info.latest_commit   = @bot.git&.log&.first
+        system_info.lag             = @last_lag
 
         if (!@bot.server.connected?)
           system_info.server_info += " (disconnected)"

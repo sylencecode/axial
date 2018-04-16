@@ -294,6 +294,7 @@ module Axial
           else
             print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
             dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
+            dcc.message("#{Colors.gray}|#{Colors.reset}        axnet lag: #{system_info.lag} seconds")
           end
         end
         dcc.message('')
