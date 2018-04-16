@@ -54,7 +54,7 @@ module Axial
       end
 
       def check_heartbeat(handler, command)
-        #@last_heartbeat = Time.now
+        @last_heartbeat = Time.now
         @last_lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
         LOGGER.debug("lag to #{handler.remote_cn}: #{@last_lag} seconds")
       end
