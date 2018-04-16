@@ -10,7 +10,7 @@ module Axial
       def consume()
         while (msg = @queue.deq)
           @transmitter_object.public_send(@transmitter_method, msg)
-          sleep 1.0
+          sleep 0.75
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
