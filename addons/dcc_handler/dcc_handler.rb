@@ -34,12 +34,22 @@ module Axial
         on_dcc        'reload',   :reload_addons
         on_dcc           'who',   :dcc_who
         on_dcc          'quit',   :silent, :dcc_quit
+        on_dcc           'die',   :dcc_die
 
         on_privmsg      'chat',   :start_dcc_loop
         on_user_list              :check_for_user_updates
       end
 
       def check_for_user_updates()
+      end
+
+      def dcc_die(dcc, _command)
+        LOGGER.warn("received DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
+        dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} has issued a DIE comamnd! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
+        sleep 5
+        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
+        sleep 5
+        exit! 0
       end
 
       def send_about(dcc, _command)

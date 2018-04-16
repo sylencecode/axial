@@ -26,6 +26,7 @@ module Axial
         @master_address                   = 'axial.sylence.org'
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
+        @last_heartbeat                   = Time.now
 
         if (axnet.master?)
           raise(AddonError, 'attempted to load both the axnet master and slave addons')
@@ -45,19 +46,26 @@ module Axial
         on_axnet                'LOREM',  :lorem_ipsum
         on_axnet                 'PING',  :pong_channel
         on_axnet                  'DIE',  :axnet_die
+        on_axnet   'HEARTBEAT_RESPONSE',  :check_heartbeat
 
         axnet.register_transmitter(self, :send)
       end
 
+      def check_heartbeat(handler, command)
+        lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
+        LOGGER.debug("lag to #{handler.remote_cn}: #{lag} seconds")
+      end
 
       def axnet_die(handler, _command)
         LOGGER.warn("received AXNET DIE command from #{handler.remote_cn} - exiting in 5 seconds...")
+        sleep 5
+        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
         exit! 0
       end
 
       def send_axnet_heartbeat()
-        axnet.send('HEARTBEAT')
+        axnet.send("HEARTBEAT #{Time.now.to_f}")
       end
 
       def lorem_ipsum(handler, command)

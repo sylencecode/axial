@@ -62,8 +62,8 @@ module Axial
         axnet.register_relay(self, :relay)
       end
 
-      def log_heartbeat(handler, _command)
-        LOGGER.debug("received heartbeat from #{handler.remote_cn}")
+      def log_heartbeat(handler, command)
+        handler.send("HEARTBEAT_RESPONSE #{command.first_argument}")
       end
 
       def announce_bot(handler)
@@ -376,8 +376,11 @@ module Axial
       end
 
       def axnet_die(dcc)
+        LOGGER.warn("received AXNET DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
         dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} issued an axnet death sentence! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
         axnet.send('DIE')
+        sleep 5
+        @server_interface.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
         exit! 0
       end
