@@ -52,6 +52,7 @@ module Axial
       end
 
       def check_heartbeat(handler, command)
+        @last_heartbeat = Time.now
         lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
         LOGGER.debug("lag to #{handler.remote_cn}: #{lag} seconds")
       end
@@ -65,7 +66,11 @@ module Axial
       end
 
       def send_axnet_heartbeat()
-        axnet.send("HEARTBEAT #{Time.now.to_f}")
+        if (Time.now - @last_heartbeat > 45)
+          @handler.close
+        else
+          axnet.send("HEARTBEAT #{Time.now.to_f}")
+        end
       end
 
       def lorem_ipsum(handler, command)
