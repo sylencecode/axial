@@ -36,7 +36,7 @@ module Axial
         return @channel_list.values
       end
 
-      def has_channel?(channel_or_name)
+      def include?(channel_or_name)
         key = nil
         if (channel_or_name.is_a?(IRCTypes::Channel))
           key = channel_or_name.name.downcase

@@ -127,9 +127,11 @@ module Axial
             LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
             dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
             server.trying_to_join.delete(channel_name.downcase)
-            server.part_channel(channel_name.downcase)
             @bot.delete_channel(channel_name.downcase)
             axnet.send("PART #{channel_name}")
+            if (channel_list.include?(channel_name))
+              server.part_channel(channel_name.downcase)
+            end
           end
         end
       rescue Exception => ex
