@@ -188,7 +188,7 @@ module Axial
       def dong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (!user.nil? && user.role.director?)
-          random_words = %w[dongs cocks bigly brrrup butts fart trump whoadang ass];
+          random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang];
           random_word = random_words[SecureRandom.random_number(random_words.count)]
           channel.message("#{random_word} (axnet master)")
         end
