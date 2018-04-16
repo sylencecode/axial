@@ -12,6 +12,9 @@ while (true)
   begin
     ssl_listener  = OpenSSL::SSL::SSLServer.new(tcp_listener, context)
     client_socket = ssl_listener.accept
+    sleep 1
+    client_socket.sysclose
+    puts client_socket.io.closed?
   rescue OpenSSL::OpenSSLError => ex
     puts "#{ex.class}: #{ex.message}"
   end

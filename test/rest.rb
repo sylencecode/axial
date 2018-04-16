@@ -12,9 +12,20 @@ require 'sinatra/base'
 module Axial
   class WebApp < Sinatra::Base
     set :port, 4444
+    enable :sessions
     configure :production, :development do
       enable :logging
     end
+
+    get '/foo' do
+        session[:message] = 'Hello World!'
+        redirect to('/bar')
+    end
+
+    get '/bar' do
+        session[:message]   # => 'Hello World!'
+    end
+
     get '/users' do
       response['Access-Control-Allow-Origin'] = '*'
       dump_users_json
