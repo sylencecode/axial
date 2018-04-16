@@ -4,6 +4,7 @@ require 'axial/cert_utils'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 require 'axial/axnet/system_info'
+require 'axial/timespan'
 
 module Axial
   module Addons
@@ -52,7 +53,7 @@ module Axial
       end
 
       def check_heartbeat(handler, command)
-        @last_heartbeat = Time.now
+        #@last_heartbeat = Time.now
         lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
         LOGGER.debug("lag to #{handler.remote_cn}: #{lag} seconds")
       end
@@ -66,7 +67,7 @@ module Axial
       end
 
       def send_axnet_heartbeat()
-        if (Time.now - @last_heartbeat > 45)
+        if (Time.now - @last_heartbeat > 130)
           last_heartbeat_duration = TimeSpan.new(Time.now, @last_heartbeat)
           LOGGER.warn("connection to #{@handler.remote_cn} timed out (last heartbeat received #{last_heartbeat.short_to_s} ago)")
           @handler.close

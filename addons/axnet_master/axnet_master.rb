@@ -6,6 +6,7 @@ require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 require 'axial/axnet/system_info'
 require 'axial/colors'
+require 'axial/timespan'
 
 module Axial
   module Addons

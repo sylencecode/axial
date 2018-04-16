@@ -6,6 +6,7 @@ require 'axial/uri_utils.rb'
 require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/rss_feed'
+require 'axial/timespan'
 
 Feedjira.logger.level = Logger::FATAL
 

@@ -1,6 +1,7 @@
 require 'axial/addon'
 require 'axial/models/user'
 require 'axial/models/mask'
+require 'axial/timespan'
 
 module Axial
   module IRCTypes
