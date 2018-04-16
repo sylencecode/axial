@@ -28,6 +28,7 @@ module Axial
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
         @last_heartbeat                   = Time.now
+        @last_lag                         = 0.0
 
         if (axnet.master?)
           raise(AddonError, 'attempted to load both the axnet master and slave addons')
@@ -54,8 +55,8 @@ module Axial
 
       def check_heartbeat(handler, command)
         #@last_heartbeat = Time.now
-        lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
-        LOGGER.debug("lag to #{handler.remote_cn}: #{lag} seconds")
+        @last_lag = (Time.now - Time.at(command.first_argument.to_i)).to_f.round(3)
+        LOGGER.debug("lag to #{handler.remote_cn}: #{@last_lag} seconds")
       end
 
       def axnet_die(handler, _command)
@@ -67,9 +68,9 @@ module Axial
       end
 
       def send_axnet_heartbeat()
-        if (Time.now - @last_heartbeat > 130)
+        if (Time.now - @last_heartbeat > 120)
           last_heartbeat_duration = TimeSpan.new(Time.now, @last_heartbeat)
-          LOGGER.warn("connection to #{@handler.remote_cn} timed out (last heartbeat received #{last_heartbeat.short_to_s} ago)")
+          LOGGER.warn("connection to #{@handler.remote_cn} timed out (last heartbeat received #{last_heartbeat_duration.short_to_s} ago)")
           @handler.close
         else
           axnet.send("HEARTBEAT #{Time.now.to_f}")
