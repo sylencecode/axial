@@ -23,19 +23,12 @@ module Axial
         load_binds
       end
 
-      def load_binds
-        if (axnet.master?)
-          on_server_connect               :start_request_timer
-          on_server_disconnect            :stop_request_timer
-        else
-          on_axnet_connect                :start_request_timer
-          on_axnet_disconnect             :stop_request_timer
-        end
+      def load_binds()
+        on_server_connect                 :start_request_timer
 
-        on_startup                        :check_initial_requests
-        on_reload                         :check_initial_requests
+        on_server_disconnect              :stop_request_timer
 
-        on_server_disconnect              :cancel_all_requests
+        on_reload                         :requests_after_reload
 
         on_axnet    'ASSISTANCE_REQUEST', :handle_assistance_request
         on_axnet   'ASSISTANCE_RESPONSE', :handle_assistance_response
@@ -57,7 +50,7 @@ module Axial
         on_invite                         :handle_invite
       end
 
-      def check_initial_requests()
+      def requests_after_reload(_handler)
         server.retry_joins
         channel_list.all_channels.each do |channel|
           if (!channel.opped?)

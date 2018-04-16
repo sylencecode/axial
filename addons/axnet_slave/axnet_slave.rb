@@ -32,6 +32,8 @@ module Axial
 
         if (axnet.master?)
           raise(AddonError, 'attempted to load both the axnet master and slave addons')
+        else
+          axnet.slave = true
         end
 
         on_startup                        :start_slave_thread
@@ -66,7 +68,7 @@ module Axial
       def axnet_die(handler, _command)
         LOGGER.warn("received AXNET DIE command from #{handler.remote_cn} - exiting in 5 seconds...")
         sleep 5
-        server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
+        server.send_raw("QUIT :Kill order received from #{handler.remote_cn}.")
         sleep 5
         exit! 0
       end
@@ -193,18 +195,21 @@ module Axial
       end
 
       def send(text)
-        if (!@handler.nil?)
-          @handler.send(text)
+        if (@handler.nil? || @handler.socket.closed? || @handler.socket.eof?)
+          LOGGER.debug("not sending data, connection is dead")
+          return
         end
+
+        @handler.send(text)
       end
 
-      def axnet_login(handler)
+      def axnet_login(_handler)
         auth_to_axnet
         @handler.send('USERLIST')
         @handler.send('BANLIST')
       end
 
-      def reload_axnet(handler, command)
+      def reload_axnet(handler, _command)
         LOGGER.info("axnet reload request from #{handler.remote_cn}.")
         @bot.git_pull
         @bot.reload_axnet

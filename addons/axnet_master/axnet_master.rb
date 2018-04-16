@@ -32,7 +32,12 @@ module Axial
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
 
-        axnet.master = true
+
+        if (axnet.slave?)
+          raise(AddonError, 'attempted to load both the axnet master and slave addons')
+        else
+          axnet.master = true
+        end
 
         on_startup                        :start_master_threads
         on_reload                         :start_master_threads
@@ -483,9 +488,16 @@ module Axial
       end
 
       def broadcast(payload)
-        LOGGER.debug("broadcasting to #{@handlers.count} connections")
-        @handlers.values.each do |handler|
-          handler.send(payload)
+        if (@handlers.any?)
+          handlers_string = (@handlers.count == 1) ? '1 connection' : "#{@handlers.count} connections"
+          LOGGER.debug("broadcasting to #{handlers_string}")
+          @handlers.values.each do |handler|
+            if (handler.socket.closed? || handler.socket.eof?)
+              LOGGER.debug("not sending data, connection is dead")
+              next
+            end
+            handler.send(payload)
+          end
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -504,6 +516,10 @@ module Axial
           if (uuid == exclude_handler.uuid)
             next
           else
+            if (handler.socket.closed? || handler.socket.eof?)
+              LOGGER.debug("not sending data, connection is dead")
+              next
+            end
             handler.send(text)
           end
         end

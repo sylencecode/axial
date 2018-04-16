@@ -13,7 +13,7 @@ module Axial
   module Interfaces
     class AxnetInterface
       attr_accessor :bot, :command_queue, :transmitter_method, :transmitter_object
-      attr_writer   :master
+      attr_writer   :master, :slave
 
       def initialize(bot)
         @bot                  = bot
@@ -23,10 +23,15 @@ module Axial
         @relay_method         = nil
         @command_queue        = Consumers::RawConsumer.new
         @master               = false
+        @slave                = false
       end
 
       def master?()
         return @master
+      end
+
+      def slave?()
+        return @slave
       end
 
       def self.copy(bot, old_interface)
