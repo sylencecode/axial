@@ -317,12 +317,12 @@ module Axial
         end
 
         if (@handlers.any?)
-          max_bot_name_length       = @handlers.values.collect { |handler| handler.remote_cn.length }.max
+          max_bot_name_length       = @handlers.values.collect { |handler| handler&.remote_cn&.length || 0 }.max
           if (@bot.local_cn.length > max_bot_name_length)
             max_bot_name_length     = @bot.local_cn.length
           end
 
-          max_server_info_length    = @handlers.values.collect { |handler| handler.system_info&.server_info&.length }.max
+          max_server_info_length    = @handlers.values.collect { |handler| handler.system_info&.server_info&.length || 0 }.max
           if (system_info.server_info.length > max_server_info_length)
             max_server_info_length  = system_info.server_info.length
           end

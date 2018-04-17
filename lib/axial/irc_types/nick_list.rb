@@ -16,14 +16,10 @@ module Axial
         old_key = old_nick_name.downcase
         new_key = new_nick_name.downcase
 
-        if (old_key.nil?)
-          raise(NickListError, "cannot rename nick without an old nickname having been provided")
-        elsif (!@nick_list.key?(old_key))
+        if (!@nick_list.key?(old_key))
           raise(NickListError, "attempted to rename non-existent nick '#{old_key}' on #{@channel.name}, but did have: #{@nick_list.keys.inspect}")
-        elsif (new_key.nil?)
-          raise(NickListError, "failed to rename '#{old_key}' to '#{new_key}'")
         elsif (@nick_list.key?(new_key))
-          raise(NickListError, "attempted to rename '#{old_key}' to already-existing nick '#{new_key}'")
+          return
         end
 
         @nick_list[new_key] = @nick_list.delete(old_key)
