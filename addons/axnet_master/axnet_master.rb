@@ -38,9 +38,10 @@ module Axial
         end
 
         axnet.master = true
-
         axnet.register_transmitter(self, :broadcast)
         axnet.register_relay(self, :relay)
+
+        load_binds
       end
 
       def load_binds()
@@ -51,7 +52,7 @@ module Axial
         on_axnet             'BOT_AUTH',  :add_bot
         on_axnet             'USERLIST',  :send_user_list
         on_axnet          'SYSTEM_INFO',  :update_bot_system_info
-        on_axnet            'HEARTBEAT',  :log_heartbeat
+        on_axnet            'HEARTBEAT',  :heartbeat
 
         on_axnet_disconnect               :remove_bot
         on_axnet_connect                  :announce_bot
@@ -71,7 +72,8 @@ module Axial
         on_channel               'ding',  :dong_channel
       end
 
-      def log_heartbeat(handler, command)
+      def heartbeat(handler, command)
+        rescue_orphan(handler)
         handler.send("HEARTBEAT_RESPONSE #{command.first_argument}")
       end
 
@@ -80,6 +82,7 @@ module Axial
       end
 
       def update_bot_system_info(handler, command)
+        rescue_orphan(handler)
         system_info_yaml    = command.args.tr("\0", "\n")
         safe_classes        = [
           Axnet::SystemInfo,
@@ -199,7 +202,7 @@ module Axial
       def dong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (!user.nil? && user.role.director?)
-          random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang];
+          random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang]
           random_word = random_words[SecureRandom.random_number(random_words.count)]
           channel.message("#{random_word} (axnet master)")
         end
@@ -280,8 +283,6 @@ module Axial
 
         print_bot_header(dcc, bot_name, max_bot_name_length)
         print_bot_system_info(dcc, system_info)
-        print_addon_list(dcc, system_info.addons)
-        print_latest_commit(dcc, system_info.latest_commit)
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -334,6 +335,7 @@ module Axial
           print_brief_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info, max_server_info_length)
         else
           print_full_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
+          print_addon_list(dcc, system_info.addons)
         end
 
         @handlers.values.each do |handler|
@@ -347,11 +349,12 @@ module Axial
             print_full_bot_status(dcc, bot_name, max_bot_name_length, system_info)
             dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
             dcc.message("#{Colors.gray}|#{Colors.reset}        axnet lag: #{system_info.lag} seconds")
+            print_addon_list(dcc, system_info.addons)
           end
         end
         dcc.message('')
 
-        bots_string = (@handlers.count == 1) ? '1 bot' : "#{@@handlers.count} bots"
+        bots_string = (@handlers.count == 1) ? '1 bot' : "#{@handlers.count} bots"
         dcc.message("#{bots_string} connected.")
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -368,6 +371,17 @@ module Axial
         end
 
         dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{handler.remote_cn}#{Colors.reset} disconnected from axnet.", :director)
+      end
+
+      def rescue_orphan(handler)
+        if (@handlers.key?(handler.uuid))
+          return
+        end
+
+        LOGGER.warn("recreated an entry in the handlers collection for orphaned bot '#{handler.remote_cn}'")
+        @handler_monitor.synchronize do
+          @handlers[handler.uuid] = handler
+        end
       end
 
       def add_bot(handler, command)
@@ -419,10 +433,6 @@ module Axial
 
       def send_axnet_help(dcc, command)
         dcc.message("try #{command.command} reload or #{command.command} list")
-      end
-
-      def receive_pong(handler, text)
-        LOGGER.debug("PONG from #{handler.uuid} (#{handler.remote_cn})")
       end
 
       def axnet_die(dcc)
@@ -496,6 +506,7 @@ module Axial
       end
 
       def send_user_list(handler, command)
+        rescue_orphan(handler)
         LOGGER.debug("user list requested from #{handler.remote_cn}")
         user_list_yaml = YAML.dump(user_list).tr("\n", "\0")
         handler.send('USERLIST_RESPONSE ' + user_list_yaml)
@@ -508,6 +519,7 @@ module Axial
       end
 
       def send_ban_list(handler, command)
+        rescue_orphan(handler)
         LOGGER.debug("ban list requested from #{handler.remote_cn}")
         ban_list_yaml = YAML.dump(ban_list).tr("\n", "\0")
         handler.send('BANLIST_RESPONSE ' + ban_list_yaml)
@@ -521,8 +533,7 @@ module Axial
 
       def close_connections()
         @handlers.values.each(&:close)
-
-        @handlers = {}
+        @handlers.clear
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
