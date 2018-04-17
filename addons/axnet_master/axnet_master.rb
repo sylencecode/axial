@@ -268,7 +268,7 @@ module Axial
           commit_string = 'unknown'
         else
           gc = system_info.latest_commit
-          commit_string = "#{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
+          commit_string = "#{gc.message} #{Colors.gray}|#{Colors.reset} #{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')} #{Colors.gray}|#{Colors.reset} #{gc.author.name} #{Colors.gray}<#{Colors.reset}#{gc.author.email}#{Colors.gray}> |#{Colors.reset} #{gc.sha[0..11]}"
         end
         dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
 
