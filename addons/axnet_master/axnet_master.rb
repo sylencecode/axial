@@ -299,22 +299,28 @@ module Axial
         dcc.message(msg)
       end
 
-      def dcc_bot_status(dcc, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/PerceivedComplexity
+      def get_system_info()
+        system_info                 = Axnet::SystemInfo.from_environment
+        system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
+        system_info.uhost           = server.myself.uhost
+        system_info.startup_time    = @bot.startup_time
+        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
+        system_info.latest_commit   = @bot.git&.log&.first
+
+        if (!@bot.server.connected?)
+          system_info.server_info += ' (disconnected)'
+        end
+
+        return system_info
+      end
+
+      def dcc_bot_status(dcc, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
         brief = false
         if (command.first_argument.casecmp('brief').zero?)
           brief = true
         end
 
-        system_info                     = Axnet::SystemInfo.from_environment
-        system_info.server_info         = "#{@bot.server.real_address}:#{@bot.server.port}"
-        system_info.uhost               = server.myself.uhost
-        system_info.startup_time        = @bot.startup_time
-        system_info.addons              = @bot.addons.collect { |addon| addon[:name] }
-        system_info.latest_commit       = @bot.git&.log&.first
-
-        if (!@bot.server.connected?)
-          system_info.server_info += ' (disconnected)'
-        end
+        system_info                 = get_system_info
 
         if (@handlers.any?)
           max_bot_name_length       = @handlers.values.collect { |handler| handler&.remote_cn&.length || 0 }.max

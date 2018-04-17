@@ -22,7 +22,7 @@ module Axial
         @refresh_timer                    = nil
         @slave_thread                     = nil
         @running                          = false
-        @port                             = 34567
+        @port                             = 34567 # rubocop:disable Style/NumericLiterals
         @handler                          = nil
         @master_address                   = 'axial.sylence.org'
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
@@ -32,10 +32,15 @@ module Axial
 
         if (axnet.master?)
           raise(AddonError, 'attempted to load both the axnet master and slave addons')
-        else
-          axnet.slave = true
         end
 
+        axnet.slave = true
+        axnet.register_transmitter(self, :send)
+
+        load_binds
+      end
+
+      def load_binds()
         on_startup                        :start_slave_thread
         on_reload                         :start_slave_thread
 
@@ -56,8 +61,6 @@ module Axial
         on_axnet                 'DING',  :dong_channel
         on_axnet                  'DIE',  :axnet_die
         on_axnet   'HEARTBEAT_RESPONSE',  :check_heartbeat
-
-        axnet.register_transmitter(self, :send)
       end
 
       def check_heartbeat(handler, command)
@@ -120,42 +123,66 @@ module Axial
         channel_name = command.first_argument
         LOGGER.info("received orders to part #{channel_name} from #{handler.remote_cn}")
         server.trying_to_join.delete(channel_name.downcase)
-        @bot.delete_channel(channel_name.downcase)
-        if (channel_list.include?(channel_name))
-          server.part_channel(channel_name.downcase)
+
+        if (!channel_list.include?(channel_name))
+          return
         end
+
+        @bot.delete_channel(channel_name.downcase)
+        server.part_channel(channel_name.downcase)
       end
 
       def pong_channel(handler, command)
         channel_name = command.first_argument
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil?)
-          channel.message("pong! (axnet slave, pinged by #{handler.remote_cn})")
+        if (channel.nil?)
+          return
         end
+
+        channel.message("pong! (axnet slave, pinged by #{handler.remote_cn})")
       end
 
       def dong_channel(handler, command)
         channel_name = command.first_argument
         channel = channel_list.get_silent(channel_name)
-        if (!channel.nil?)
-          random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang]
-          random_word = random_words[SecureRandom.random_number(random_words.count)]
-          other_random_word = random_words[SecureRandom.random_number(random_words.count)]
-          channel.message("#{random_word} (axnet slave, #{other_random_word}'d by #{handler.remote_cn})")
+        if (channel.nil?)
+          return
         end
+
+        random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang]
+        random_word = random_words[SecureRandom.random_number(random_words.count)]
+        other_random_word = random_words[SecureRandom.random_number(random_words.count)]
+        channel.message("#{random_word} (axnet slave, #{other_random_word}'d by #{handler.remote_cn})")
       end
 
-
       def check_for_uhost_change()
-        if (!myself.uhost.casecmp(@last_uhost).zero?)
-          LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
-          @last_uhost = myself.uhost
-          auth_to_axnet
+        if (myself.uhost.casecmp(@last_uhost).zero?)
+          return
         end
+
+        LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
+        @last_uhost = myself.uhost
+        auth_to_axnet
+      end
+
+      def get_system_info()
+        system_info                 = Axnet::SystemInfo.from_environment
+        system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
+        system_info.uhost           = server.myself.uhost
+        system_info.startup_time    = @bot.startup_time
+        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
+        system_info.latest_commit   = @bot.git&.log&.first
+        system_info.lag             = @last_lag
+
+        if (!@bot.server.connected?)
+          system_info.server_info += ' (disconnected)'
+        end
+
+        return system_info
       end
 
       def auth_to_axnet()
-        LOGGER.debug("authenticating to axnet")
+        LOGGER.debug('authenticating to axnet')
         @bot_user.name              = @bot.local_cn
         @bot_user.pretty_name       = @bot.local_cn
         @bot_user.role_name         = 'bot'
@@ -166,17 +193,7 @@ module Axial
           @bot_user.masks           = [ MaskUtils.ensure_wildcard(myself.uhost) ]
         end
 
-        system_info                 = Axnet::SystemInfo.from_environment
-        system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
-        system_info.uhost           = server.myself.uhost
-        system_info.startup_time    = @bot.startup_time
-        system_info.addons          = @bot.addons.collect { |addon| addon[:name] }
-        system_info.latest_commit   = @bot.git&.log&.first
-        system_info.lag             = @last_lag
-
-        if (!@bot.server.connected?)
-          system_info.server_info += " (disconnected)"
-        end
+        system_info                 = get_system_info
 
         auth_yaml                   = YAML.dump(@bot_user).tr("\n", "\0")
         system_info_yaml            = YAML.dump(system_info).tr("\n", "\0")
@@ -213,7 +230,7 @@ module Axial
 
       def send(text)
         if (@handler.nil? || @handler.socket.closed?)
-          LOGGER.debug("not sending data, connection is dead")
+          LOGGER.debug('not sending data, connection is dead')
           return
         end
 
@@ -279,7 +296,7 @@ module Axial
         end
       end
 
-      def client()
+      def client() # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         LOGGER.info("connecting to #{@master_address}:#{@port}")
         while (@running)
           begin
