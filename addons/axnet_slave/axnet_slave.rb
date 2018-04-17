@@ -138,7 +138,7 @@ module Axial
         channel_name = command.first_argument
         channel = channel_list.get_silent(channel_name)
         if (!channel.nil?)
-          random_words = %w[dongs cocks butts fart brrrup whoadang ass];
+          random_words = %w[ass brrrup butts dongs cocks crack cuck fart jerb jorb p.gay p.lame pines souche whoadang]
           random_word = random_words[SecureRandom.random_number(random_words.count)]
           other_random_word = random_words[SecureRandom.random_number(random_words.count)]
           channel.message("#{random_word} (axnet slave, #{other_random_word}'d by #{handler.remote_cn})")

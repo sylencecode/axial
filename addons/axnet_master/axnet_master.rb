@@ -29,17 +29,21 @@ module Axial
         @running                          = false
         @refresh_timer                    = nil
         @handler_monitor                  = Monitor.new
-        @port                             = 34567
+        @port                             = 34567 # rubocop:disable Style/NumericLiterals
         @bot.local_cn                     = Axial::CertUtils.get_cert_cn
         @bot_user                         = Axnet::User.new
 
-
         if (axnet.slave?)
           raise(AddonError, 'attempted to load both the axnet master and slave addons')
-        else
-          axnet.master = true
         end
 
+        axnet.master = true
+
+        axnet.register_transmitter(self, :broadcast)
+        axnet.register_relay(self, :relay)
+      end
+
+      def load_binds()
         on_startup                        :start_master_threads
         on_reload                         :start_master_threads
 
@@ -65,9 +69,6 @@ module Axial
 
         on_channel               'ping',  :pong_channel
         on_channel               'ding',  :dong_channel
-
-        axnet.register_transmitter(self, :broadcast)
-        axnet.register_relay(self, :relay)
       end
 
       def log_heartbeat(handler, command)
@@ -97,23 +98,54 @@ module Axial
         handler.system_info = system_info
       end
 
-      def join_channel(source, user, nick, command)
+      def join_channel(source, user, nick, command) # rubocop:disable Metrics/AbcSize
         if (!user.role.director?)
           dcc_access_denied(source)
-        else
-          channel_name, password = command.two_arguments
-          if (channel_name.empty?)
-            reply(source, nick, "usage: #{command.command} <nick>")
-          else
-            LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
-            dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
-            if (!server.trying_to_join.key?(channel_name.downcase))
-              server.trying_to_join[channel_name.downcase] = password
-            end
-            server.join_channel(channel_name.downcase, password)
-            @bot.add_channel(channel_name.downcase, password)
-            axnet.send("JOIN #{channel_name} #{password}")
-          end
+          return
+        end
+
+        channel_name, password = command.two_arguments
+        if (channel_name.empty?)
+          reply(source, nick, "usage: #{command.command} <channel>")
+          return
+        end
+
+        LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
+        server.trying_to_join[channel_name.downcase] = password
+        server.join_channel(channel_name.downcase, password)
+        @bot.add_channel(channel_name.downcase, password)
+        axnet.send("JOIN #{channel_name} #{password}")
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def part_channel(source, user, nick, command) # rubocop:disable Metrics/AbcSize
+        if (!user.role.director?)
+          dcc_access_denied(source)
+          return
+        end
+
+        channel_name = command.first_argument
+        if (channel_name.empty?)
+          reply(source, nick, "usage: #{command.command} <nick>")
+          return
+        end
+
+        LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
+
+        server.trying_to_join.delete(channel_name.downcase)
+        @bot.delete_channel(channel_name.downcase)
+
+        axnet.send("PART #{channel_name}")
+
+        if (channel_list.include?(channel_name))
+          server.part_channel(channel_name.downcase)
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -123,51 +155,30 @@ module Axial
         end
       end
 
-      def part_channel(source, user, nick, command)
-        if (!user.role.director?)
-          dcc_access_denied(source)
-        else
-          channel_name = command.first_argument
-          if (channel_name.empty?)
-            reply(source, nick, "usage: #{command.command} <nick>")
-          else
-            LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
-            dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
-            server.trying_to_join.delete(channel_name.downcase)
-            @bot.delete_channel(channel_name.downcase)
-            axnet.send("PART #{channel_name}")
-            if (channel_list.include?(channel_name))
-              server.part_channel(channel_name.downcase)
-            end
-          end
-        end
-      rescue Exception => ex
-        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def lorem_ipsum(source, user, nick, command)
+      def lorem_ipsum(source, user, nick, command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         if (!user.role.root?)
           dcc_access_denied(source)
+          return
+        end
+
+        channel_name, repeats = command.two_arguments
+        if (repeats.empty?)
+          reply(source, nick, "usage: #{command.command} <channel> <times>")
+          return
         else
-          channel_name, repeats = command.two_arguments
-          if (repeats.empty?)
-            reply(source, nick, "usage: #{command.command} <channel> <times>")
-          else
-            repeats = repeats.to_i
-            channel = channel_list.get_silent(channel_name)
-            if (!channel.nil?)
-              LOGGER.info("received orders to flood #{channel_name} from #{user.pretty_name}")
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
-              axnet.send("LOREM #{channel_name} #{repeats}")
-              repeats.times do
-                channel.message('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
-              end
-            end
-          end
+          repeats = repeats.to_i
+        end
+
+        channel = channel_list.get_silent(channel_name)
+        if (channel.nil?)
+          return
+        end
+
+        LOGGER.info("received orders to flood #{channel_name} from #{user.pretty_name}")
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
+        axnet.send("LOREM #{channel_name} #{repeats}")
+        repeats.times do
+          channel.message('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -188,66 +199,89 @@ module Axial
       def dong_channel(channel, nick, command)
         user = user_list.get_from_nick_object(nick)
         if (!user.nil? && user.role.director?)
-          random_words = %w[dongs cocks butts fart brrrup whoadang ass];
+          random_words = %w[ass brrrup butts dongs cocks crack cuck fart jerb jorb p.gay p.lame pines souche whoadang]
           random_word = random_words[SecureRandom.random_number(random_words.count)]
           channel.message("#{random_word} (axnet master)")
         end
         axnet.send("DING #{channel.name}")
       end
 
-      def print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
+      def get_addon_chunks(addons)
+        addon_chunks = []
+        while (addons.count >= 4)
+          tmp_chunk = []
+          4.times do
+            tmp_chunk.push(addons.shift)
+          end
+          addon_chunks.push(tmp_chunk)
+        end
+
+        if (addons.any?)
+          addon_chunks.push(addons)
+        end
+
+        return addon_chunks
+      end
+
+      def print_bot_header(dcc, bot_name, max_bot_name_length)
+        header        = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
+        header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
+        header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
+        dcc.message(header)
+      end
+
+      def print_addon_list(dcc, addons)
+        if (addons.empty?)
+          dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: none")
+          return
+        end
+
+        remaining_chunks = get_addon_chunks(addons)
+
+        first_chunk = remaining_chunks.shift
+        dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: #{first_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+
+        remaining_chunks.each do |chunk|
+          dcc.message("#{Colors.gray}|#{Colors.reset}                   #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+        end
+      end
+
+      def print_bot_system_info(dcc, system_info) # rubocop:disable Metrics/AbcSize
+        if (system_info.nil?)
+          dcc.message('system information not yet available.')
+          return
+        end
+
+        running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
+        dcc.message("#{Colors.gray}|#{Colors.reset}            uhost: #{system_info.uhost}")
+        dcc.message("#{Colors.gray}|#{Colors.reset}     connected to: #{system_info.server_info}")
+        dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
+        dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
+        dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
+        dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_total}mb (#{system_info.mem_free}mb free)")
+        dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
+
+        if (system_info.latest_commit.nil?)
+          commit_string = 'unknown'
+        else
+          gc = system_info.latest_commit
+          commit_string = "#{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
+        end
+        dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
+
+        dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since} [#{TimeSpan.new(Time.now, system_info.startup_time).short_to_s}]")
+      end
+
+      def print_full_bot_status(dcc, bot_name, max_bot_name_length, system_info)
         if (!dcc.user.role.director?)
           dcc_access_denied(source)
-        else
-          header        = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
-          header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
-          header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
-          dcc.message(header)
-
-          if (system_info.nil?)
-            dcc.message('system information not yet available.')
-          else
-            addons = system_info.addons.clone
-            addon_chunks = []
-            while (addons.count >= 4)
-              chunk = []
-              4.times do
-                chunk.push(addons.shift)
-              end
-              addon_chunks.push(chunk)
-            end
-
-            if (addons.any?)
-              addon_chunks.push(addons)
-            end
-
-            running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
-            dcc.message("#{Colors.gray}|#{Colors.reset}            uhost: #{system_info.uhost}")
-            dcc.message("#{Colors.gray}|#{Colors.reset}     connected to: #{system_info.server_info}")
-            dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
-            dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
-            dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
-            dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_total}mb (#{system_info.mem_free}mb free)")
-            dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
-            if (system_info.addons.empty?)
-              dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: none")
-            else
-              addon_chunks.each_with_index do |chunk, i|
-                if (i.zero?)
-                  dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
-                else
-                  dcc.message("#{Colors.gray}|#{Colors.reset}                   #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
-                end
-              end
-            end
-            if (!system_info.latest_commit.nil?)
-              gc = system_info.latest_commit
-              commit_string = "#{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')} [#{gc.sha[0..7]}] - #{gc.author.name} <#{gc.author.email}>: #{gc.message}"
-              dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
-            end
-            dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since} [#{TimeSpan.new(Time.now, system_info.startup_time).short_to_s}]")
-          end
+          return
         end
+
+        print_bot_header(dcc, bot_name, max_bot_name_length)
+        print_bot_system_info(dcc, system_info)
+        print_addon_list(dcc, system_info.addons)
+        print_latest_commit(dcc, system_info.latest_commit)
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -256,15 +290,15 @@ module Axial
         end
       end
 
-      def print_brief_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
+      def print_brief_bot_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
         msg  = "#{bot_name.ljust(max_bot_name_length)} #{Colors.gray}|#{Colors.reset} "
         msg += "#{system_info.server_info.ljust(max_server_info_length)} #{Colors.gray}|#{Colors.reset} "
-        msg += "#{system_info.uhost}"
+        msg += (system_info.uhost).to_s
 
         dcc.message(msg)
       end
 
-      def dcc_bot_status(dcc, command)
+      def dcc_bot_status(dcc, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/PerceivedComplexity
         brief = false
         if (command.first_argument.casecmp('brief').zero?)
           brief = true
@@ -278,7 +312,7 @@ module Axial
         system_info.latest_commit       = @bot.git&.log&.first
 
         if (!@bot.server.connected?)
-          system_info.server_info += " (disconnected)"
+          system_info.server_info += ' (disconnected)'
         end
 
         if (@handlers.any?)
@@ -286,6 +320,7 @@ module Axial
           if (@bot.local_cn.length > max_bot_name_length)
             max_bot_name_length     = @bot.local_cn.length
           end
+
           max_server_info_length    = @handlers.values.collect { |handler| handler.system_info&.server_info&.length }.max
           if (system_info.server_info.length > max_server_info_length)
             max_server_info_length  = system_info.server_info.length
@@ -296,9 +331,9 @@ module Axial
         end
 
         if (brief)
-          print_brief_status(dcc, @bot.local_cn, max_bot_name_length, system_info, max_server_info_length)
+          print_brief_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info, max_server_info_length)
         else
-          print_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
+          print_full_bot_status(dcc, @bot.local_cn, max_bot_name_length, system_info)
         end
 
         @handlers.values.each do |handler|
@@ -307,23 +342,16 @@ module Axial
 
           connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
           if (brief)
-            print_brief_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
+            print_brief_bot_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
           else
-            print_bot_status(dcc, bot_name, max_bot_name_length, system_info)
+            print_full_bot_status(dcc, bot_name, max_bot_name_length, system_info)
             dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
             dcc.message("#{Colors.gray}|#{Colors.reset}        axnet lag: #{system_info.lag} seconds")
           end
         end
         dcc.message('')
-        case @handlers.count
-          when 0
-            bots_string = 'no bots'
-          when 1
-            bots_string = '1 bot'
-          else
-            bots_string = "#{@handlers.count} bots"
-        end
 
+        bots_string = (@handlers.count == 1) ? '1 bot' : "#{@@handlers.count} bots"
         dcc.message("#{bots_string} connected.")
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -334,11 +362,12 @@ module Axial
       end
 
       def remove_bot(handler)
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{handler.remote_cn}#{Colors.reset} disconnected from axnet.", :director)
         if (bot_list.include?(handler.remote_cn))
           LOGGER.debug("removing #{handler.remote_cn} from bot list")
           bot_list.delete(handler.remote_cn)
         end
+
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{handler.remote_cn}#{Colors.reset} disconnected from axnet.", :director)
       end
 
       def add_bot(handler, command)
@@ -436,11 +465,13 @@ module Axial
       end
 
       def check_for_uhost_change()
-        if (!myself.uhost.casecmp(@last_uhost).zero?)
-          LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
-          @last_uhost = myself.uhost
-          send_bot_list
+        if (myself.uhost.casecmp(@last_uhost).zero?)
+          return
         end
+
+        LOGGER.debug("uhost changed from #{@last_uhost} to #{myself.uhost}")
+        @last_uhost = myself.uhost
+        send_bot_list
       end
 
       def list_axnet_connections(dcc)
@@ -505,7 +536,7 @@ module Axial
           LOGGER.debug("broadcasting to #{handlers_string}")
           @handlers.values.each do |handler|
             if (handler.socket.closed?)
-              LOGGER.debug("not sending data, connection is dead")
+              LOGGER.debug('not sending data, connection is dead')
               next
             end
             handler.send(payload)
@@ -527,13 +558,13 @@ module Axial
         @handlers.each do |uuid, handler|
           if (uuid == exclude_handler.uuid)
             next
-          else
-            if (handler.socket.closed?)
-              LOGGER.debug("not sending data, connection is dead")
-              next
-            end
-            handler.send(text)
           end
+
+          if (handler.socket.closed?)
+            LOGGER.debug('not sending data, connection is dead')
+            next
+          end
+          handler.send(text)
         end
       end
 
@@ -553,7 +584,7 @@ module Axial
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
       end
 
-      def listen()
+      def listen() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         begin
           @tcp_listener = TCPServer.new(@port)
         rescue Errno::EADDRINUSE => ex

@@ -12,6 +12,8 @@ module Axial
         @author                         = 'sylence <sylence@sylence.org>'
         @version                        = '1.1.0'
 
+        @quote_limit                    = 5
+
         on_channel           'crypto',  :crypto_quote
         on_channel      'quote|stock',  :stock_quote
         on_channel   'market|markets',  :market_quote
@@ -42,7 +44,7 @@ module Axial
         end
       end
 
-      def render_market_quote(channel, nick, type_string, results, batch = false)
+      def render_market_quote(channel, nick, type_string, results, batch = false) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         if (batch)
           symbol_length           = results.collect { |result| get_symbol_name(result.symbol).length }.max
         else
@@ -57,13 +59,14 @@ module Axial
 
         if (results.any?)
           results.each do |result|
-            type_string       = "#{Colors.blue}#{              type_string.center(type_string_length)}#{Colors.reset}"
+            channel.message(get_result_string(result))
+            type_string       = "#{Colors.blue}#{type_string.center(type_string_length)}#{Colors.reset}"
             quote_color, change = colorify_result(result)
             if (batch)
-              symbol          = "#{Colors.cyan}#{ get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
+              symbol          = "#{Colors.cyan}#{get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
             else
               company_symbol  = "#{result.company_name} (#{result.symbol})"
-              symbol          = "#{Colors.cyan}#{        company_symbol.ljust(company_symbol_length)}#{Colors.reset}"
+              symbol          = "#{Colors.cyan}#{company_symbol.ljust(company_symbol_length)}#{Colors.reset}"
             end
 
             latest_price    = "$ #{format('%.2f', result.latest_price.to_f.round(2).to_s).rjust(latest_price_length)}"
@@ -113,35 +116,45 @@ module Axial
         end
       end
 
+      def get_percent_string(change_value, total_value)
+        float_string = format('%.2f', (change_value.to_f.abs / total_value.to_f.abs).to_f * 100.0) + '%'
+        return float_string
+      end
+
       def colorify_result(result)
-        change_pct = format('%.2f', (result.change.to_f.abs / result.latest_price.to_f.abs).to_f * 100.0) + '%'
+        change_pct = get_percent_string(result.change, result.latest_price)
         if (result.change.negative?)
           quote_color   = Colors.red
-          change_string = "\u2193 " + format('%.2f', result.change.to_f.round(2).to_s).gsub(/^-/, '') + " (#{change_pct})"
+          change_character = "\u2193 "
         elsif (result.change.zero?)
+          change_character = ''
           quote_color   = Colors.reset
-          change_string = format('%.2f', result.change.to_f.round(2).to_s) + " (#{change_pct})"
         else
           quote_color   = Colors.green
-          change_string = "\u2191 " + format('%.2f', result.change.to_f.round(2).to_s) + " (#{change_pct})"
+          change_character = "\u2191 "
         end
+        change_string = "#{change_character}#{format('%.2f', result.change.to_f.round(2).to_s).gsub(/^-/, '')} (#{change_pct})"
+        # do what with quote_color?
         return [quote_color, change_string]
       end
 
-      def stock_quote(channel, nick, command)
-        symbols = command.args.split(',').collect { |symbol| symbol.strip }.select { |symbol| !symbol.nil? && !symbol.empty? }
+      def stock_quote(channel, nick, command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+        symbols = command.args.gsub(/\s+/, ',').split(',').collect(&:strip).select { |symbol| !symbol.nil? && !symbol.empty? }
         if (symbols.empty?)
-          channel.message("#{nick.name}: usage: #{command.name} <symbol 1, symbol 2, symbol 3>")
-        elsif (symbols.count > 3)
-          channel.message("#{nick.name}: only 3 symbols at a time, please.")
+          channel.message("#{nick.name}: usage: #{command.command} <symbols>")
+          throttle(2)
+          return
+        end
+
+        symbols = (symbols.count > @quote_limit) ? symbols[0..4] : symbols
+
+        throttle(symbols.count * 2)
+        LOGGER.debug("stock quote request from #{nick.uhost}: #{symbols.join(', ')}")
+        results = API::IEXTrading::V10::Stock::Market.batch(symbols)
+        if (results.any?)
+          render_market_quote(channel, nick, 'ticker', results)
         else
-          LOGGER.debug("stock quote request from #{nick.uhost}: #{symbols.join(', ')}")
-          results = API::IEXTrading::V10::Stock::Market.batch(symbols)
-          if (results.any?)
-            render_market_quote(channel, nick, 'ticker', results)
-          else
-            channel.message("#{nick.name}: couldn't find any matches for symbols: #{symbols.join(', ')}")
-          end
+          channel.message("#{nick.name}: couldn't find any matches for symbols: #{symbols.join(', ')}")
         end
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")

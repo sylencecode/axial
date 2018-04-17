@@ -62,7 +62,9 @@ module Axial
 
     def throttle(seconds)
       @throttle_secs = seconds
-      @last = Time.now - @throttle_secs
+      if (@last.nil?)
+        @last = Time.now - @throttle_secs
+      end
     end
 
     def on_nick_change(*args)

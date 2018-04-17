@@ -54,7 +54,6 @@ module Axial
       end
 
       def part_channel(channel_or_name)
-        channel_name = nil
         if (channel_or_name.is_a?(IRCTypes::Channel))
           channel_name = channel_or_name.name.downcase
         elsif (channel_or_name.is_a?(String))
