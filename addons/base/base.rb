@@ -66,13 +66,14 @@ module Axial
         return command_chunks
       end
 
-      def get_names_with_binds() # rubocop:disable Naming/AccessorMethodName
+      def get_names_with_binds() # rubocop:disable Naming/AccessorMethodName,Metrics/AbcSizek
         exclude_addons = [ 'axnet assistant', 'axnet master', 'axnet slave', 'base' ]
         selected_addons = @bot.addons.reject { |tmp_addon| exclude_addons.include?(tmp_addon[:name].downcase) }
-        names_with_binds = selected_addons.collect { |tmp_addon| { name: tmp_addon[:name], binds: tmp_addon[:object].binds } }
+        names_with_binds = selected_addons.collect { |tmp_addon| { name: tmp_addon[:name], binds: tmp_addon[:object].binds } }.clone
+
         names_with_binds.each do |name_with_binds|
           name_with_binds[:binds].delete_if { |tmp_bind| tmp_bind[:type] != :channel || !tmp_bind[:command].is_a?(String) }
-          name_with_binds[:binds].collect! { |tmp_bind| @bot.channel_command_character + tmp_bind[:command] }
+          name_with_binds[:binds].collect { |tmp_bind| @bot.channel_command_character + tmp_bind[:command] }
           name_with_binds[:binds].sort_by! { |tmp_bind| tmp_bind.gsub(/^\+/, '').gsub(/^-/, '') }
         end
 
