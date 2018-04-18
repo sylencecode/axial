@@ -194,7 +194,7 @@ module Axial
         end
       end
 
-      def handle_assistance_request(handler, command) # rubocop:disable Metrics/MethodLength
+      def handle_assistance_request(handler, command)
         request_yaml_raw  = command.args
         request_yaml      = request_yaml_raw.tr("\0", "\n")
 

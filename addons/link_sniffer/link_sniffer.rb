@@ -15,10 +15,10 @@ module Axial
 
         throttle                                      5
 
-        on_channel_leftover   /https{0,1}:\/\/\S+/,   :sniff_link
+        on_channel_leftover   %r[https{0,1}://\S+],   :sniff_link
       end
 
-      def sniff_link(channel, nick, text)
+      def sniff_link(channel, nick, text) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         urls = URIUtils.extract(text)
         if (urls.any?)
           begin
@@ -57,7 +57,7 @@ module Axial
         super
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

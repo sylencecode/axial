@@ -32,26 +32,14 @@ module Axial
           channel.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
         end
-        if (command.args.strip =~ /(.*)=(.*)/)
-          thing_array = command.args.split('=')
-          thing = thing_array.shift.strip
-          explanation = thing_array.join('=').strip
-          if (thing.empty? || explanation.empty?)
-            channel.message("#{nick.name}: try ?learn <thing> = <explanation> instead of whatever you just did.")
-            return
-          end
-        else
-          channel.message("#{nick.name}: try ?learn <thing> = <explanation> instead of whatever you just did.")
+
+        thing_hash = parse_thing(channel, nick, command)
+        if (thing_hash.empty?)
           return
         end
 
-        if (thing.length > 64)
-          channel.message("#{nick.name}: your thing name is too long (<= 64 characters).")
-          return
-        elsif (explanation.length > 255)
-          channel.message("#{nick.name}: your thing explanation is too long (<= 255 characters).")
-          return
-        end
+        thing = thing_hash[:thing]
+        explanation = thing_hash[:explanation]
 
         Models::Thing.upsert(thing, explanation, user_model)
         LOGGER.info("learned: #{thing} = #{explanation} from #{nick.uhost}")
@@ -62,6 +50,34 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+      end
+
+      def parse_learn_thing(channel, nick, command)
+        thing_hash = {}
+        thing = nil
+        explanation = nil
+
+        if (command.args.strip =~ /(.*)=(.*)/)
+          thing_array = command.args.split('=')
+          thing = thing_array.shift.strip
+          explanation = thing_array.join('=').strip
+        end
+
+        if (thing.nil? || explanation.nil?)
+          channel.message("#{nick.name}: usage: #{command.command} <thing> = <explanation>")
+          return
+        end
+
+        if (thing.length > 64)
+          channel.message("#{nick.name}: your thing name is too long (<= 64 characters).")
+          return
+        elsif (explanation.length > 255)
+          channel.message("#{nick.name}: your thing explanation is too long (<= 255 characters).")
+          return
+        else
+          thing_hash = { thing: thing, explanation: explanation }
+        end
+        return thing_hash
       end
 
       def forget(channel, nick, command)
@@ -160,7 +176,7 @@ module Axial
         super
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

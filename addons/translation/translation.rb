@@ -320,7 +320,7 @@ module Axial
         super
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

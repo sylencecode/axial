@@ -59,7 +59,6 @@ module Axial
 
         if (results.any?)
           results.each do |result|
-            channel.message(get_result_string(result))
             type_string       = "#{Colors.blue}#{type_string.center(type_string_length)}#{Colors.reset}"
             quote_color, change = colorify_result(result)
             if (batch)
@@ -138,7 +137,7 @@ module Axial
         return [quote_color, change_string]
       end
 
-      def stock_quote(channel, nick, command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+      def stock_quote(channel, nick, command) # rubocop:disable Metrics/AbcSize
         symbols = command.args.gsub(/\s+/, ',').split(',').collect(&:strip).select { |symbol| !symbol.nil? && !symbol.empty? }
         if (symbols.empty?)
           channel.message("#{nick.name}: usage: #{command.command} <symbols>")
@@ -168,7 +167,7 @@ module Axial
         super
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

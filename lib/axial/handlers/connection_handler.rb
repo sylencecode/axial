@@ -63,7 +63,7 @@ module Axial
         LOGGER.info("reconnecting in #{@server.reconnect_delay} seconds...")
         sleep @server.reconnect_delay
         retry
-      rescue Timeout::Error => ex
+      rescue Timeout::Error
         LOGGER.error("connection attempt to #{@server.address}:#{@server.port} timed out, retrying...")
         sleep 1
         retry

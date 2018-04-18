@@ -45,8 +45,8 @@ module Axial
         on_user_list              :check_for_user_updates
       end
 
-      def check_for_user_updates()
-      end
+      # TODO: See https://www.sylence.org/code/sylence/axial/issues/69
+      def check_for_user_updates(); end
 
       def dcc_die(dcc, _command)
         LOGGER.warn("received DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
@@ -411,7 +411,7 @@ module Axial
         super
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

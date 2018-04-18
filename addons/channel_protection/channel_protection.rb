@@ -98,7 +98,7 @@ module Axial
         end
       end
 
-      def check_channel_bans(channel) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize
+      def check_channel_bans(channel) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         if (!channel.opped?)
           return
         end
@@ -507,7 +507,7 @@ module Axial
         stop_ban_cleanup_timer
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end

@@ -299,7 +299,7 @@ module Axial
         dcc.message(msg)
       end
 
-      def get_system_info()
+      def get_system_info() # rubocop:disable Naming/AccessorMethodName
         system_info                 = Axnet::SystemInfo.from_environment
         system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
         system_info.uhost           = server.myself.uhost
@@ -702,7 +702,7 @@ module Axial
         stop_master_threads
         self.class.instance_methods(false).each do |method_symbol|
           LOGGER.debug("#{self.class}: removing instance method #{method_symbol}")
-          instance_eval("undef #{method_symbol}")
+          instance_eval("undef #{method_symbol}", __FILE__, __LINE__)
         end
       end
     end
