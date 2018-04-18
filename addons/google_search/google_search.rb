@@ -19,7 +19,7 @@ module Axial
         on_channel               'g|google',  :google_search
       end
 
-      def google_search(channel, nick, command)
+      def google_search(channel, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         query = command.args.strip
         if (query.empty?)
           channel.message("#{nick.name}: please provide a search term.")
@@ -61,7 +61,7 @@ module Axial
         end
       end
 
-      def google_image_search(channel, nick, command)
+      def google_image_search(channel, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         query = command.args.strip
         if (query.empty?)
           channel.message("#{nick.name}: please provide a search term.")

@@ -1,2 +1,4 @@
 ---
 inherit_from: ../.rubocop.yml
+Metrics/BlockNesting:
+  Enabled: false

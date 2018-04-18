@@ -18,7 +18,7 @@ module Axial
         @version                  = '1.1.0'
 
         @dcc_timeout              = 30
-        @dcc_ports                = Array(54321..54329)
+        @dcc_ports                = Array(54321..54329) # rubocop:disable Style/NumericLiterals
 
         @ports_in_use             = []
 
@@ -29,6 +29,10 @@ module Axial
 
         throttle                  10
 
+        load_binds
+      end
+
+      def load_binds()
         on_dcc          'help',   :silent, :dcc_send_help
         on_dcc         'about',   :silent, :dcc_send_about
         on_dcc        'reload',   :reload_addons
@@ -36,7 +40,8 @@ module Axial
         on_dcc          'quit',   :silent, :dcc_quit
         on_dcc           'die',   :dcc_die
 
-        on_privmsg      'chat',   :start_dcc_loop
+        on_privmsg      'chat',   :dcc_chat
+
         on_user_list              :check_for_user_updates
       end
 
@@ -52,7 +57,7 @@ module Axial
         exit! 0
       end
 
-      def send_about(dcc, _command)
+      def dcc_send_about(dcc, _command) # rubocop:disable Metrics/AbcSize
         addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
         addon_version_length = @bot.addons.collect { |tmp_addon| tmp_addon[:version].to_s.length }.max
         dcc.message("#{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
@@ -66,43 +71,72 @@ module Axial
         end
       end
 
+      def get_command_chunks(commands, max_command_length)
+        command_chunks = []
+
+        while (commands.count >= 6)
+          chunk = []
+          6.times do
+            tmp_command = commands.shift.ljust(max_command_length)
+            chunk.push(tmp_command)
+          end
+          command_chunks.push(chunk)
+        end
+
+        if (commands.any?)
+          command_chunks.push(commands.collect { |tmp_command| tmp_command.ljust(max_command_length) })
+        end
+
+        return command_chunks
+      end
+
+      def get_names_with_binds() # rubocop:disable Naming/AccessorMethodName, Metrics/AbcSize
+        exclude_addons = [ 'axnet assistant', 'axnet master', 'axnet slave', 'base' ]
+        selected_addons = @bot.addons.reject { |tmp_addon| exclude_addons.include?(tmp_addon[:name].downcase) }
+        names_with_binds = selected_addons.collect { |tmp_addon| { name: tmp_addon[:name], binds: tmp_addon[:object].binds.clone } }
+
+        names_with_binds.each do |name_with_binds|
+          name_with_binds[:binds].delete_if { |tmp_bind| tmp_bind[:type] != :dcc || !tmp_bind[:command].is_a?(String) }
+          name_with_binds[:binds].collect! { |tmp_bind| tmp_bind[:command] }
+          name_with_binds[:binds].sort_by! { |tmp_command| tmp_command.gsub(/^\+/, '').gsub(/^-/, '') }
+          name_with_binds[:binds].collect! { |tmp_command| @bot.dcc_command_character + tmp_command }
+        end
+
+        names_with_binds.delete_if { |tmp_bind| tmp_bind[:binds].empty? }
+        return names_with_binds
+      end
+
+      def print_dcc_commands(dcc, names_with_binds) # rubocop:disable Metrics/AbcSize
+        if (names_with_binds.empty?)
+          return
+        end
+
+        addon_name_length = names_with_binds.collect { |tmp_bind| tmp_bind[:name].length }.max + 2
+        max_command_length = names_with_binds.collect { |tmp_bind| tmp_bind[:binds].collect(&:length).max }.max + 2
+
+        names_with_binds.each do |name_with_binds|
+          remaining_chunks = get_command_chunks(name_with_binds[:binds], max_command_length)
+
+          first_chunk = remaining_chunks.shift
+          dcc.message("#{Colors.blue}#{name_with_binds[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{first_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+          remaining_chunks.each do |tmp_chunk|
+            dcc.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{tmp_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+          end
+        end
+      end
 
       def dcc_send_help(dcc, _command)
         dcc.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         dcc.message(' ')
-        if (@bot.addons.any?)
-          addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
-          all_string_commands = @bot.addons.collect { |tmp_addon| tmp_addon[:object].binds.collect { |tmp_bind| (tmp_bind[:type] == :dcc && tmp_bind[:command].is_a?(String)) ? tmp_bind[:command] : nil } }.flatten
-          all_string_commands.delete_if { |command| command.nil? }
-          max_command_length = all_string_commands.collect{ |tmp_command| tmp_command.length }.max + 2
-          @bot.addons.each do |addon|
-            binds = addon[:object].binds.select { |bind| bind[:type] == :dcc && bind[:command].is_a?(String) }
-            commands = binds.collect { |bind| bind[:command] }.sort_by { |command| command.gsub(/^\+/, '').gsub(/^-/, '') }.collect { |command| @bot.dcc_command_character + command }
-            command_chunks = []
-            while (commands.count >= 6)
-              chunk = []
-              6.times do
-                tmp_command = commands.shift.ljust(max_command_length)
-                chunk.push(tmp_command)
-              end
-              command_chunks.push(chunk)
-            end
 
-            if (commands.any?)
-              command_chunks.push(commands.collect { |tmp_command| tmp_command.ljust(max_command_length) })
-            end
-
-            command_chunks.each_with_index do |chunk, i|
-              if (i.zero?)
-                dcc.message("#{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
-              else
-                dcc.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
-              end
-            end
-          end
-        else
+        if (@bot.addons.empty?)
           dcc.message('no addons loaded.')
+          return
         end
+
+        names_with_binds = get_names_with_binds
+
+        print_dcc_commands(dcc, names_with_binds)
       rescue Exception => ex
         dcc.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -124,7 +158,7 @@ module Axial
 
       def dcc_who(dcc, command)
         dcc.message('online users:')
-        @connections.each do |uuid, state_data|
+        @connections.values.each do |state_data|
           remote_dcc = state_data[:dcc]
           dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name_with_color} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
         end
@@ -135,7 +169,7 @@ module Axial
         end
       end
 
-      def reload_addons(dcc, command)
+      def reload_addons(dcc, _command) # rubocop:disable Metrics/AbcSize
         if (!dcc.user.role.director?)
           dcc.message(Constants::ACCESS_DENIED)
           return
@@ -163,159 +197,95 @@ module Axial
         end
       end
 
-      def start_dcc_loop(nick, command)
-        local_ip    = Resolv.getaddress(Socket.gethostname)
-
-        user = user_list.get_from_nick_object(nick)
-        if (user.nil? || user.role < :friend)
-          return
-        elsif (!user.password_set?)
-          nick.message("you do not have a password set. please set one with /msg #{myself.name} PASSWORD <password>. please employ secure password practices.")
-          return
-        end
-        fragments = local_ip.split('.')
+      def get_long_ip(local_ip)
         long_ip = 0
         block = 4
+
+        fragments = local_ip.split('.')
         fragments.each do |fragment|
           block -= 1
           long_ip += fragment.to_i * (256 ** block)
         end
 
+        return long_ip
+      end
+
+      def get_available_dcc_port() # rubocop:disable Naming/AccessorMethodName
         next_port = nil
 
         @port_monitor.synchronize do
           @ports_in_use.delete(next_port)
           available_ports = @dcc_ports - @ports_in_use
-
-          if (available_ports.empty?)
-            nick.message('all dcc ports are currently in use. please wait a few seconds and try again.')
-          else
+          if (available_ports.any?)
             next_port = available_ports.first
             @ports_in_use.push(next_port)
           end
         end
 
-        if (next_port.nil?)
+        return next_port
+      end
+
+      def release_dcc_port(port)
+        @port_monitor.synchronize do
+          @ports_in_use.delete(port)
+        end
+      end
+
+      def send_dcc_offer(nick, user, local_ip, long_ip, port)
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}sent dcc chat offer to #{nick.uhost}", :director)
+        LOGGER.debug("dcc chat offer to #{nick.name} (user: #{user.pretty_name}) (source: #{local_ip}:#{port})")
+        nick.message("\x01DCC CHAT chat #{long_ip} #{port}\x01")
+      end
+
+      def open_dcc_socket(nick, user, local_ip, long_ip, port)
+        send_dcc_offer(nick, user, local_ip, long_ip, port)
+        tcp_server = TCPServer.new(port)
+        socket = nil
+
+        Timeout.timeout(@dcc_timeout) do
+          socket = tcp_server.accept
+        end
+
+        tcp_server.close
+        release_dcc_port(port)
+        return socket
+      rescue Timeout::Error
+        release_dcc_port(port)
+        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc chat offer to #{nick.uhost} timed out.", :director)
+        LOGGER.error("connection attempt timed out attempting to dcc chat #{nick.name} (#{user.pretty_name})")
+      end
+
+      def dcc_chat(nick, _command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+        user = user_list.get_from_nick_object(nick)
+        if (user.nil? || user.role < :friend)
           return
         end
 
+        if (!user.password_set?)
+          nick.message("you do not have a password set. please set one with /msg #{myself.name} PASSWORD <password>. please employ secure password practices.")
+          return
+        end
+
+        local_ip = Resolv.getaddress(Socket.gethostname)
+        long_ip = get_long_ip(local_ip)
+        port = get_available_dcc_port
+
+        if (port.nil?)
+          nick.message('all dcc ports are currently in use. please wait a few seconds and try again.')
+        end
+
         Thread.new do
-          tcp_server = TCPServer.new(next_port)
-          socket = nil
           begin
-            dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}sent dcc chat offer to #{nick.uhost}", :director)
-            LOGGER.debug("dcc chat offer to #{nick.name} (user: #{user.pretty_name}) (source: #{local_ip}:#{next_port})")
-            nick.message("\x01DCC CHAT chat #{long_ip} #{next_port}\x01")
-            Timeout.timeout(@dcc_timeout) do
-              socket = tcp_server.accept
+            socket = open_dcc_socket(nick, user, local_ip, long_ip, port)
+            state_data = register_dcc_connection(socket, user)
+            remote_ip = state_data[:remote_ip]
+
+            start_dcc_handler(socket, state_data, user)
+          rescue Exception => ex
+            LOGGER.error("error establishing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
+            ex.backtrace.each do |i|
+              LOGGER.error(i)
             end
-          rescue Timeout::Error
-            @port_monitor.synchronize do
-              @ports_in_use.delete(next_port)
-            end
-            dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc chat offer to #{nick.uhost} timed out.", :director)
-            LOGGER.error("connection attempt timed out attempting to dcc chat #{nick.name} (#{user.pretty_name})")
-          end
-
-          tcp_server.close
-          @port_monitor.synchronize do
-            @ports_in_use.delete(next_port)
-          end
-          if (!socket.nil?)
-            begin
-              uuid = SecureRandom.uuid
-              remote_ip = socket.to_io.peeraddr[2]
-              state_data = { remote_ip: remote_ip, status: :authenticating }
-              dcc = IRCTypes::DCC.from_socket(state_data, @bot.server_interface, socket, user)
-              state_data[:dcc] = dcc
-
-              @monitor.synchronize do
-                @connections[uuid] = state_data
-              end
-
-              attempts = 0
-              dcc.message("hello #{dcc.user.pretty_name_with_color}, please enter your password.")
-              auth_timeout_timer = timer.in_15_seconds do
-                dcc.message('timeout.')
-                dcc.close
-              end
-
-              while (text = socket.gets)
-                text.strip!
-                if (dcc.status == :authenticating)
-                  attempts += 1
-                  if (user.password?(text))
-                    dcc.message("welcome. type '#{@bot.dcc_command_character}help' for a list of available commands.")
-                    dcc.status = :open
-                    timer.delete(auth_timeout_timer)
-                    dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{dcc.user.pretty_name_with_color} has logged in.")
-                    LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
-                  else
-                    if (attempts == 3)
-                      dcc.message('incorrect password after 3 attempts.')
-                      dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
-                      dcc.status = :failed
-                      dcc.close
-                    else
-                      dcc.message("incorrect password, attempt #{attempts} of 3.")
-                    end
-                  end
-                else
-                  dispatched_commands = bind_handler.dispatch_dcc_binds(dcc, text)
-                  if (dispatched_commands.any?)
-                    dispatched_commands.each do |dispatched_command|
-                      if (!dispatched_command[:silent])
-                        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
-                        LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
-                      end
-                    end
-                  else
-                    if (text.start_with?(@bot.dcc_command_character))
-                      dcc.message("command not found. try #{@bot.dcc_command_character}help")
-                    else
-                      dcc_broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
-                    end
-                  end
-                end
-              end
-              LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip}).")
-              @monitor.synchronize do
-                @connections.delete(uuid)
-              end
-            rescue Exception => ex
-              if (!dcc.nil?)
-                case dcc.status
-                  when :closed
-                    dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
-                    LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
-                  when :authenticating
-                    LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
-                  when :failed
-                    LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
-                  else
-                    dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
-                    LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
-                    ex.backtrace.each do |i|
-                      LOGGER.warn(i)
-                    end
-                end
-              else
-                LOGGER.error("unexpected error establishing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
-                ex.backtrace.each do |i|
-                  LOGGER.error(i)
-                end
-              end
-              @monitor.synchronize do
-                @connections.delete(uuid)
-              end
-            end
-          else
-            LOGGER.info("establishing dcc connection with #{user.pretty_name}: no response after #{@dcc_timeout} seconds")
-          end
-        rescue Exception => ex
-          LOGGER.error("error establishing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
           end
         end
       rescue Exception => ex
@@ -323,6 +293,118 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+      end
+
+      def delete_dcc_connection(uuid)
+        @monitor.synchronize do
+          @connections.delete(uuid)
+        end
+      end
+
+      def register_dcc_connection(socket, user)
+        uuid = SecureRandom.uuid
+        remote_ip = socket.to_io.peeraddr[2]
+        state_data = { remote_ip: remote_ip, status: :authenticating }
+        dcc = IRCTypes::DCC.from_socket(state_data, @bot.server_interface, socket, user)
+        state_data[:dcc] = dcc
+        state_data[:uuid] = uuid
+
+        @monitor.synchronize do
+          @connections[uuid] = state_data
+        end
+
+        return state_data
+      end
+
+      def try_authentication(dcc, text, state_data, auth_timeout_timer, password_attempts) # rubocop:disable Metrics/AbcSize
+        remote_ip = state_data[:remote_ip]
+        if (dcc.user.password?(text))
+          dcc.message("welcome. type '#{@bot.dcc_command_character}help' for a list of available commands.")
+          dcc.status = :open
+          timer.delete(auth_timeout_timer)
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{dcc.user.pretty_name_with_color} has logged in.")
+          LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
+        elsif (password_attempts >= 3)
+          dcc.message('incorrect password after 3 attempts.')
+          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
+          dcc.status = :failed
+          dcc.close
+          timer.delete(auth_timeout_timer)
+        else
+          dcc.message("incorrect password, attempt #{password_attempts} of 3.")
+        end
+      end
+
+      def dcc_loop(socket, state_data) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+        dcc = state_data[:dcc]
+
+        password_attempts = 0
+        dcc.message("hello #{dcc.user.pretty_name_with_color}, please enter your password.")
+        auth_timeout_timer = timer.in_15_seconds do
+          dcc.message('timeout.')
+          dcc.close
+        end
+
+        while (text = socket.gets)
+          text.strip!
+          if (dcc.status == :authenticating)
+            password_attempts += 1
+            try_authentication(dcc, text, state_data, auth_timeout_timer, password_attempts)
+          else
+            dispatched_commands = bind_handler.dispatch_dcc_binds(dcc, text)
+            if (dispatched_commands.any?)
+              dispatched_commands.each do |dispatched_command|
+                if (!dispatched_command[:silent]) # rubocop:disable Metrics/BlockNesting
+                  dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
+                  LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
+                end
+              end
+            elsif (text.start_with?(@bot.dcc_command_character))
+              dcc.message("command not found. try #{@bot.dcc_command_character}help")
+            else
+              dcc_broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
+            end
+          end
+        end
+      end
+
+      def start_dcc_handler(socket, state_data, user) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+        if (socket.nil?)
+          LOGGER.info("error establishing dcc connection with #{user.pretty_name}: no response after #{@dcc_timeout} seconds")
+          return
+        end
+
+        dcc = state_data[:dcc]
+
+        remote_ip = state_data[:remote_ip]
+        dcc_loop(socket, state_data)
+
+        LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip}).")
+        delete_dcc_connection(state_data[:uuid])
+      rescue Exception => ex
+        if (!dcc.nil?)
+          case dcc.status
+            when :closed
+              dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+              LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
+            when :authenticating
+              LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
+            when :failed
+              LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
+            else
+              dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+              LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
+              ex.backtrace.each do |i|
+                LOGGER.warn(i)
+              end
+          end
+        else
+          LOGGER.error("unexpected error establishing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
+          ex.backtrace.each do |i|
+            LOGGER.error(i)
+          end
+        end
+        delete_dcc_connection(state_data[:uuid])
       end
 
       def before_reload()

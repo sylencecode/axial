@@ -86,7 +86,7 @@ module Axial
       end
 
       def cleanup_old_bans()
-        channel_list.all_channels.select { |tmp_channel| tmp_channel.opped? }.each do |channel|
+        channel_list.all_channels.select(&:opped?).each do |channel|
           timer.in_a_bit do
             response_mode = IRCTypes::Mode.new(server.max_modes)
             channel.ban_list.all_bans.select { |tmp_ban| tmp_ban.set_at + @maximum_ban_time <= Time.now }.each do |ban|
@@ -98,7 +98,7 @@ module Axial
         end
       end
 
-      def check_channel_bans(channel)
+      def check_channel_bans(channel) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize
         if (!channel.opped?)
           return
         end
@@ -138,7 +138,7 @@ module Axial
         end
       end
 
-      def check_channel_users(channel)
+      def check_channel_users(channel) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize
         if (!channel.opped?)
           return
         end
@@ -175,17 +175,18 @@ module Axial
         end
       end
 
-      def protect_banned_users(channel, nick, mode)
+      def protect_banned_users(channel, nick, mode) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
         if (!channel.opped? || nick == myself)
           return
         end
 
-        user = get_bot_or_user(nick)
+        user                  = get_bot_or_user(nick)
 
-        kicks = []
-        protected_user_names = []
-        unbans = []
-        mode.bans.each do |ban_mask|
+        kicks                 = []
+        protected_user_names  = []
+        unbans                = []
+
+        mode.bans.each do |ban_mask| # rubocop:disable Metrics/BlockLength
           ban_mask = ban_mask.strip
           possible_users = get_bots_or_users_overlap(ban_mask)
 
@@ -201,14 +202,18 @@ module Axial
           elsif (possible_users.any? || myself.match_mask?(ban_mask))
             possible_users.sort_by { |tmp_user| tmp_user.role.numeric }.reverse.each do |possible_user|
               # roles are sorted highest to lowest for this comparison loop
-              if (!user.role.root?)
-                if (user.role <= possible_user.role)
-                  # example: ops cannot ban other ops, but managers+ can
-                  protected_user_names.push(possible_user.pretty_name_with_color)
-                  if (!unbans.include?(ban_mask))
-                    unbans.push(ban_mask)
-                  end
-                end
+              if (user.role.root?)
+                next
+              end
+
+              if (user.role > possible_user.role)
+                next
+              end
+
+              # example: ops cannot ban other ops, but managers+ can
+              protected_user_names.push(possible_user.pretty_name_with_color)
+              if (!unbans.include?(ban_mask))
+                unbans.push(ban_mask)
               end
             end
           else
@@ -243,9 +248,7 @@ module Axial
       end
 
       def handle_op(channel, _nick, mode)
-        if (mode.ops.select { |tmp_op| tmp_op.casecmp(myself.name).zero? }.empty?)
-          return
-        elsif (!channel.opped?)
+        if (mode.ops.select { |tmp_op| tmp_op.casecmp(myself.name).zero? }.empty? || !channel.opped?)
           return
         end
 
@@ -268,8 +271,8 @@ module Axial
         end
       end
 
-      def handle_deop(channel, nick, mode)
-        if (!channel.opped? || nick == myself)
+      def handle_deop(channel, nick, mode) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
+        if (!channel.opped? || nick == myself || mode.deops.empty?)
           return
         end
 
@@ -277,41 +280,39 @@ module Axial
         deop_nicks = []
         user = get_bot_or_user(nick)
 
-        if (mode.deops.any?)
-          mode.deops.each do |deop|
-            if (deop == myself.name)
-              channel.opped = false
-            else
-              reop_nicks = []
-              deop_nicks = []
-              subject_nick = channel.nick_list.get(deop)
-              possible_user = get_bot_or_user(subject_nick)
-              if (bot_or_op?(possible_user))
-                if (!subject_nick.opped_on?(channel))
-                  reop_nicks.push(subject_nick)
-                end
+        mode.deops.each do |deop|
+          if (deop == myself.name)
+            channel.opped = false
+          else
+            reop_nicks    = []
+            deop_nicks    = []
+            subject_nick  = channel.nick_list.get(deop)
+            possible_user = get_bot_or_user(subject_nick)
+            if (bot_or_op?(possible_user))
+              if (!subject_nick.opped_on?(channel))
+                reop_nicks.push(subject_nick)
+              end
 
-                if (!bot_or_director?(user))
-                  deop_nicks.push(subject_nick)
-                end
+              if (!bot_or_director?(user))
+                deop_nicks.push(subject_nick)
               end
             end
           end
+        end
 
-          timer.in_a_tiny_bit do
-            reop_nicks.each do |reop_nick|
-              if (channel.nick_list.include?(reop_nick) && !reop_nick.opped_on?(channel))
-                response_mode.op(reop_nick.name)
-              end
+        timer.in_a_tiny_bit do
+          reop_nicks.each do |reop_nick|
+            if (channel.nick_list.include?(reop_nick) && !reop_nick.opped_on?(channel))
+              response_mode.op(reop_nick.name)
             end
-            deop_nicks.each do |deop_nick|
-              if (channel.nick_list.include?(deop_nick) && deop_nick.opped_on?(channel))
-                response_mode.deop(deop_nick.name)
-              end
+          end
+          deop_nicks.each do |deop_nick|
+            if (channel.nick_list.include?(deop_nick) && deop_nick.opped_on?(channel))
+              response_mode.deop(deop_nick.name)
             end
-            if (channel.opped?)
-              channel.set_mode(response_mode)
-            end
+          end
+          if (channel.opped?)
+            channel.set_mode(response_mode)
           end
         end
       end
@@ -357,7 +358,7 @@ module Axial
         end
       end
 
-      def set_enforced_modes(channel)
+      def set_enforced_modes(channel) # rubocop:disable Naming/AccessorMethodName
         if (!channel.opped?)
           return
         end
@@ -371,26 +372,28 @@ module Axial
         channel.set_mode(response_mode)
       end
 
-      def auto_op_voice(channel, nick)
+      def auto_op_voice(channel, nick) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity
         if (nick == myself)
           return
         end
 
         user = get_bot_or_user_mask(nick.uhost)
-        if (!user.nil?)
-          if (user.role.op?)
-            timer.in_a_bit do
-              if (channel.opped? && channel.nick_list.include?(nick) && !nick.opped_on?(channel))
-                channel.op(nick)
-                LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
-              end
+        if (user.nil?)
+          return
+        end
+
+        if (user.role.op?)
+          timer.in_a_bit do
+            if (channel.opped? && channel.nick_list.include?(nick) && !nick.opped_on?(channel))
+              channel.op(nick)
+              LOGGER.info("auto-opped #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
-          elsif (user.role.friend?)
-            timer.in_a_bit do
-              if (channel.opped? && channel.nick_list.include?(nick) && !nick.voiced_on?(channel))
-                channel.voice(nick)
-                LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
-              end
+          end
+        elsif (user.role.friend?)
+          timer.in_a_bit do
+            if (channel.opped? && channel.nick_list.include?(nick) && !nick.voiced_on?(channel))
+              channel.voice(nick)
+              LOGGER.info("auto-voiced #{nick.uhost} in #{channel.name} (user: #{user.pretty_name})")
             end
           end
         end
@@ -401,19 +404,21 @@ module Axial
         end
       end
 
-      def auto_ban(channel, nick)
+      def auto_ban(channel, nick) # rubocop:disable Metrics/AbcSize
         timer.in_a_tiny_bit do
           user = get_bot_or_user_mask(nick.uhost)
           if (!user&.role&.root?)
             ban_list.all_bans.each do |ban|
-              if (channel.opped? && ban.match_mask?(nick.uhost) && !channel.ban_list.include?(ban.mask))
-                response_mode = IRCTypes::Mode.new(server.max_modes)
-                response_mode.ban(ban.mask)
-                channel.set_mode(response_mode)
+              if (!channel.opped? || !ban.match_mask?(nick.uhost) || channel.ban_list.include?(ban.mask))
+                next
+              end
 
-                if (channel.nick_list.include?(nick))
-                  channel.kick(nick, ban.long_reason)
-                end
+              response_mode = IRCTypes::Mode.new(server.max_modes)
+              response_mode.ban(ban.mask)
+              channel.set_mode(response_mode)
+
+              if (channel.nick_list.include?(nick))
+                channel.kick(nick, ban.long_reason)
               end
             end
           end

@@ -165,7 +165,7 @@ module Axial
         auth_to_axnet
       end
 
-      def get_system_info()
+      def get_system_info() # rubocop:disable Naming/AccessorMethodName
         system_info                 = Axnet::SystemInfo.from_environment
         system_info.server_info     = "#{@bot.server.real_address}:#{@bot.server.port}"
         system_info.uhost           = server.myself.uhost
