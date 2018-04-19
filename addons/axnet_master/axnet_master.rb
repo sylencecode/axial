@@ -294,7 +294,7 @@ module Axial
       def print_brief_bot_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
         msg  = "#{bot_name.ljust(max_bot_name_length)} #{Colors.gray}|#{Colors.reset} "
         msg += "#{system_info.server_info.ljust(max_server_info_length)} #{Colors.gray}|#{Colors.reset} "
-        msg += (system_info.uhost).to_s
+        msg += "#{system_info.uhost} #{Colors.gray}|#{Colors.reset} addons: #{system_info.addons.count}"
 
         dcc.message(msg)
       end

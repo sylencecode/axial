@@ -63,7 +63,7 @@ module Axial
           msg = get_entry_message(feed, entry)
 
           channel_list.all_channels.each do |channel|
-            if (restrict_to_channels.any? && !restrict_to_channels.include?(channel.name.downcase))
+            if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
               next
             end
 
@@ -126,7 +126,7 @@ module Axial
         text += summary
         text += " #{Colors.gray}|#{Colors.reset} "
 
-        article_url = URIutils.shorten(entry.url)
+        article_url = URIUtils.shorten(entry.url)
         text += article_url.to_s
         return text
       end
@@ -135,14 +135,14 @@ module Axial
         channel.message("#{nick.name}: try ?rss add <name> = <feed url>, ?rss delete <name>, ?rss list, ?rss enable, or ?rss disable.")
       end
 
-      def get_feed_hash(channel, nick, command, args)
+      def get_feed_hash(channel, nick, command, feed_args)
         feed_hash = {}
-        if (args.strip !~ /(.*)=(.*)/)
+        if (feed_args.strip !~ /(.*)=(.*)/)
           channel.message("#{nick.name}: usage: #{command.command} add <name> = <url>")
           return
         end
 
-        feed_array = command.args.split('=')
+        feed_array = feed_args.split('=')
         feed_name = feed_array.shift.strip
         feed_url = feed_array.join('=').strip
 
@@ -167,9 +167,9 @@ module Axial
 
         feed_url = feed_hash[:url]
         feed_name = feed_hash[:name]
-        parsed_urls = URIUtilsUtils.extract(feed_url)
+        parsed_urls = URIUtils.extract(feed_url)
         if (parsed_urls.empty?)
-          channel.message("#{nick.name}: '#{feed_url}' is not a valid URI. (http|https)")
+          channel.message("#{nick.name}: '#{feed_url}' is not a valid URI. (requires http/https url)")
           return
         end
         parsed_url = parsed_urls.first
@@ -180,7 +180,7 @@ module Axial
           end
           Models::RssFeed.upsert(feed_name, parsed_url, user_model)
           LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
-          channel.message("#{nick.name}: ok, following articles from '#{feed_name}'.")
+          channel.message("#{nick.name}: ok, now following articles from feed '#{feed_name}'.")
         rescue Feedjira::NoParserAvailable
           channel.message("#{nick.name}: '#{feed_url}' can't be parsed. is it a valid RSS feed?")
         rescue Timeout::Error
@@ -195,8 +195,8 @@ module Axial
 
         msg  = "#{Colors.gray}[#{Colors.reset} #{feed.pretty_name} #{Colors.gray}|#{Colors.reset} "
         msg += "#{feed.pretty_url} #{Colors.gray}|#{Colors.reset} "
-        msg += "added on #{feed.added.strftime('%m/%d/%Y')} by #{feed.user.pretty_name_with_color} #{Colors.gray}|#{Colors.reset}"
-        msg += "#{feed.ingest_count} ingested #{Colors.gray}|#{Colors.reset} "
+        msg += "added: #{feed.added.strftime('%m/%d/%Y')} by #{feed.user.pretty_name_with_color} #{Colors.gray}|#{Colors.reset} "
+        msg += "ingested: #{feed.ingest_count} articles #{Colors.gray}|#{Colors.reset} "
         msg += "last: #{last.short_to_s} ago #{Colors.gray}|#{Colors.reset} "
         msg += "#{enabled} #{Colors.gray}]#{Colors.reset}"
         return msg
@@ -272,8 +272,8 @@ module Axial
       end
 
       def handle_rss_command(channel, nick, command) # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/AbcSize
-        user = user_list.get_from_nick_object(nick)
-        if (user.nil? || !user.role.director?)
+        user_model = Models::User.get_from_nick_object(nick)
+        if (user_model.nil? || !user_model.role.director?)
           return
         end
 

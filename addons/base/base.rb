@@ -75,7 +75,7 @@ module Axial
           name_with_binds[:binds].delete_if { |tmp_bind| tmp_bind[:type] != :channel || !tmp_bind[:command].is_a?(String) }
           name_with_binds[:binds].collect! { |tmp_bind| tmp_bind[:command] }
           name_with_binds[:binds].sort_by! { |tmp_command| tmp_command.gsub(/^\+/, '').gsub(/^-/, '') }
-          name_with_binds[:binds].collect! { |tmp_command| @bot.cbannel_command_character + tmp_command }
+          name_with_binds[:binds].collect! { |tmp_command| @bot.channel_command_character + tmp_command }
         end
 
         names_with_binds.delete_if { |tmp_bind| tmp_bind[:binds].empty? }
