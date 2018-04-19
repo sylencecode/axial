@@ -1,5 +1,6 @@
 require 'axial/addon'
 require 'axial/uri_utils'
+require 'axial/api/google/complete'
 require 'axial/api/google/custom_search/v1'
 require 'axial/api/web_of_trust/v0_4/public_link_json2'
 
@@ -17,6 +18,28 @@ module Axial
 
         on_channel  'gis|image|imagesearch',  :google_image_search
         on_channel               'g|google',  :google_search
+        on_channel       'searches|popular',  :popular_searches
+      end
+
+      def popular_searches(channel, nick, command)
+        query = command.args.strip
+        if (query.empty?)
+          channel.message("#{nick.name}: please provide a search phrase to see poplular searches.")
+          return
+        end
+
+        query = (query.length >= 80) ? query[0..79] : query
+
+        LOGGER.debug("popular searches request from #{nick.uhost}: #{query}")
+        phrase_result = API::Google::Complete.search(query)
+        if (phrase_result.results.empty?)
+          channel.message("#{nick.name}: No popular search phrases found.")
+          return
+        end
+
+        msg  = "#{Colors.gray}[#{Colors.green}popular searches#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+        msg += phrase_result.results.join(" #{Colors.gray}|#{Colors.reset} ")
+        channel.message(msg)
       end
 
       def google_search(channel, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength

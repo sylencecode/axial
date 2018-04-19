@@ -82,8 +82,8 @@ module Axial
           end
         rescue Feedjira::NoParserAvailable
           LOGGER.warn("#{self.class}: feed '#{feed.pretty_name}' did not present valid XML to feedjira. skipping.")
-        rescue Timeout::Error
-          LOGGER.warn("#{self.class}: connection attempt to #{feed.pretty_url} timed out")
+        rescue Timeout::Error, OpenSSL::SSL::SSLError => ex
+          LOGGER.warn("#{self.class}: error connecting to #{feed.pretty_url}: #{ex.class}: #{ex.message}")
         end
         return rss_content
       end
@@ -174,19 +174,15 @@ module Axial
         end
         parsed_url = parsed_urls.first
 
-        begin
-          Timeout.timeout(@rss_timeout) do
-            Feedjira::Feed.fetch_and_parse(parsed_url)
-          end
-          Models::RssFeed.upsert(feed_name, parsed_url, user_model)
-          LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
-          channel.message("#{nick.name}: ok, now following articles from feed '#{feed_name}'.")
-        rescue Feedjira::NoParserAvailable
-          channel.message("#{nick.name}: '#{feed_url}' can't be parsed. is it a valid RSS feed?")
-        rescue Timeout::Error
-          channel.message("#{nick.name}: '#{feed_url}' is unreachable. is it a valid RSS feed?")
-          LOGGER.warn("#{self.class}: connection attempt to #{feed.pretty_url} timed out")
+        rss_content = rss_safe_fetch(parsed_url)
+        if (rss_content.nil?)
+          channel.message("#{nick.name}: cannot parse data from '#{feed_url}' - is it a valid RSS feed?")
+          return
         end
+
+        Models::RssFeed.upsert(feed_name, parsed_url, user_model)
+        LOGGER.info("RSS: #{nick.uhost} added #{feed_name} -> #{parsed_url}")
+        channel.message("#{nick.name}: ok, now following articles from feed '#{feed_name}'.")
       end
 
       def get_feed_string(feed)
