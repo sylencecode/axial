@@ -19,6 +19,7 @@ module Axial
 
         on_channel            %r[https{0,1}://youtu.be/\S+],  :sniff_youtube_link
         on_channel     %r[https{0,1}://www.youtube.com/\S+],  :sniff_youtube_link
+        on_channel         %r[https{0,1}://youtube.com/\S+],  :sniff_youtube_link
         on_channel       %r[https{0,1}://m.youtube.com/\S+],  :sniff_youtube_link
       end
 

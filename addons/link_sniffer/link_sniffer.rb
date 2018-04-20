@@ -36,7 +36,7 @@ module Axial
 
           preview = API::LinkPreview.preview(urls.first)
           if (preview&.data?)
-            send_link_preview_to_channel(channel, nick, preview, warnings)
+            send_link_preview_to_channel(channel, nick, warnings, preview)
           else
             LOGGER.warn("failed to preview #{urls.first}")
           end
