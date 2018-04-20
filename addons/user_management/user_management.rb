@@ -27,12 +27,10 @@ module Axial
         on_channel                       'ban', :dcc_wrapper, :ban
         on_channel                     'unban', :dcc_wrapper, :unban
         on_channel               'who|whofrom', :dcc_wrapper, :who_from
-        on_channel                      'note', :dcc_wrapper, :set_note
 
         on_privmsg             'pass|password', :silent, :dcc_wrapper, :set_password
         on_privmsg       'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
         on_privmsg   'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
-        on_privmsg                      'note', :dcc_wrapper, :set_note
 
         on_dcc                 'addmask|+mask', :dcc_wrapper, :add_mask
         on_dcc                 'adduser|+user', :dcc_wrapper, :add_user

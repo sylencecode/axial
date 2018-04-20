@@ -12,6 +12,8 @@ channels:
   password: ''
 - name: "#rimjob"
   password: ''
+- name: "#0"
+  password: ''
 addons:
 - AxnetAssistant
 - AxnetMaster
