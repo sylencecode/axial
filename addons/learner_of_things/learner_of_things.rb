@@ -14,6 +14,9 @@ module Axial
         @author  = 'sylence <sylence@sylence.org>'
         @version = '1.1.0'
 
+        # change to [] to send to all channels
+        @restrict_to_channels = %w[ #lulz ]
+
         on_channel      'explain',  :explain
         on_channel        'learn',  :learn
         on_channel       'forget',  :forget
@@ -148,6 +151,10 @@ module Axial
       end
 
       def explain_on_join(channel, nick) # rubocop:disable Metrics/AbcSize
+        if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
+          return
+        end
+
         user_model = Models::User.get_user_from_mask(nick.uhost)
         if (!user_model.nil?)
           thing_model = Models::Thing[thing: user_model.name]

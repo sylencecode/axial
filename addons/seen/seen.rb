@@ -63,11 +63,7 @@ module Axial
           return
         end
 
-        if (source.is_a?(IRCTypes::Channel))
-          scan_channels = [ source ]
-        else
-          scan_channels = channel_list.all_channels
-        end
+        scan_channels = source.is_a?(IRCTypes::Channel) ? [ source ] : channel_list.all_channels
 
         subject_model = Models::User[name: subject_nick_name.downcase]
 
@@ -78,30 +74,26 @@ module Axial
             channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
               # check for nicks associated with a known user
               possible_user = user_list.get_from_nick_object(subject_nick)
-              if (!possible_user.nil? && possible_user.id == subject_model.id)
-                if (!on_channels.key?(channel))
-                  on_channels[channel] = []
-                end
-                on_channels[channel].push(subject_nick)
+              if (possible_user.nil? || possible_user.id != subject_model.id)
+                next
               end
-            end
-          else
-            if (channel.nick_list.include?(subject_nick_name))
-              seen_nick = channel.nick_list.get(subject_nick_name)
+
               if (!on_channels.key?(channel))
                 on_channels[channel] = []
               end
-              on_channels[channel].push(seen_nick)
+              on_channels[channel].push(subject_nick)
             end
+          elsif (channel.nick_list.include?(subject_nick_name))
+            seen_nick = channel.nick_list.get(subject_nick_name)
+            if (!on_channels.key?(channel))
+              on_channels[channel] = []
+            end
+            on_channels[channel].push(seen_nick)
           end
         end
 
         if (on_channels.any?)
-          if (!subject_model.nil?)
-            seen_name = subject_model.pretty_name_with_color
-          else
-            seen_name = subject_nick_name
-          end
+          seen_name = (subject_model.nil?) ? subject_nick_name : subject_model.pretty_name_with_color
 
           on_channels.each do |channel, tmp_nicks|
             latest_message = nil
@@ -111,13 +103,17 @@ module Axial
               if (tmp_nick.last_spoke.nil?)
                 tmp_nick.last_spoke = {}
               end
-              if (tmp_nick.last_spoke.key?(channel.name))
-                last_spoke = tmp_nick.last_spoke[channel.name][:time]
-                if (!last_spoke.nil?)
-                  if (latest_message.nil? || latest_message > last_spoke)
-                    latest_message = last_spoke
-                  end
-                end
+              if (!tmp_nick.last_spoke.key?(channel.name))
+                next
+              end
+
+              last_spoke = tmp_nick.last_spoke[channel.name][:time]
+              if (last_spoke.nil?)
+                next
+              end
+
+              if (latest_message.nil? || latest_message > last_spoke)
+                latest_message = last_spoke
               end
             end
 
@@ -157,13 +153,14 @@ module Axial
         else
           if (subject_model.nil?)
             reply(source, nick, "i don't know anything about #{subject_nick_name}")
+            return
+          end
+
+          seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
+          if (subject_model.seen.status =~ /^for the first time/i)
+            reply(source, nick, "i haven't seen #{subject_model.pretty_name_with_color} since his/her account was created #{seen_at.approximate_to_s} ago.")
           else
-            seen_at = TimeSpan.new(subject_model.seen.last, Time.now)
-            if (subject_model.seen.status =~ /^for the first time/i)
-              reply(source, nick, "i haven't seen #{subject_model.pretty_name_with_color} since his/her account was created #{seen_at.approximate_to_s} ago.")
-            else
-              reply(source, nick, "#{subject_model.pretty_name_with_color} was last seen #{subject_model.seen.status} #{TimeSpan.new(Time.now, subject_model.seen.last).approximate_to_s} ago")
-            end
+            reply(source, nick, "#{subject_model.pretty_name_with_color} was last seen #{subject_model.seen.status} #{TimeSpan.new(Time.now, subject_model.seen.last).approximate_to_s} ago")
           end
         end
       rescue Exception => ex
@@ -214,16 +211,15 @@ module Axial
         if (!nick.last_spoke.nil?)
           nick.last_spoke.delete(channel.name)
         end
+
         user = Models::User.get_from_nick_object(nick)
-        if (!user.nil?)
-          if (reason.empty?)
-            status = "leaving #{channel.name}"
-          else
-            status = "leaving #{channel.name} (#{reason})"
-          end
-          Models::Seen.upsert(user, Time.now, status)
-          LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
+        if (user.nil?)
+          return
         end
+
+        status = (reason.empty?) ? "leaving #{channel.name}" : "leaving #{channel.name} (#{reason})"
+        Models::Seen.upsert(user, Time.now, status)
+        LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -235,11 +231,7 @@ module Axial
       def update_seen_quit(nick, reason)
         user = Models::User.get_from_nick_object(nick)
         if (!user.nil?)
-          if (reason.empty?)
-            status = 'quitting IRC'
-          else
-            status = "quitting IRC (#{reason})"
-          end
+          status = (reason.empty?) ? 'quitting IRC' : "quitting IRC (#{reason})"
 
           Models::Seen.upsert(user, Time.now, status)
           LOGGER.debug("updated seen for #{user.pretty_name} - #{status}")

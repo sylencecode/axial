@@ -149,7 +149,7 @@ module Axial
           return
         end
 
-        random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r kneegrow trump whoadang]
+        random_words = %w[anus ass bigly brrrup butts cocks crackuh dongs fart fux0r goatse.cx kneegrow trump tubgirl whoadang wibble]
         random_word = random_words[SecureRandom.random_number(random_words.count)]
         other_random_word = random_words[SecureRandom.random_number(random_words.count)]
         channel.message("#{random_word} (axnet slave, #{other_random_word}'d by #{handler.remote_cn})")

@@ -14,12 +14,19 @@ module Axial
 
         throttle                                              5
 
+        # change to [] to send to all channels
+        @restrict_to_channels = %w[ #lulz ]
+
         on_channel            %r[https{0,1}://youtu.be/\S+],  :sniff_youtube_link
         on_channel     %r[https{0,1}://www.youtube.com/\S+],  :sniff_youtube_link
         on_channel       %r[https{0,1}://m.youtube.com/\S+],  :sniff_youtube_link
       end
 
       def sniff_youtube_link(channel, nick, text)
+        if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
+          return
+        end
+
         parsed_urls = URIUtils.extract(text)
         if (parsed_urls.empty?)
           return
@@ -37,7 +44,7 @@ module Axial
           return
         end
 
-        send_youtube_to_channel(channel, video, video_url)
+        send_youtube_to_channel(channel, nick, video, video_url)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -62,7 +69,7 @@ module Axial
         return youtube_id
       end
 
-      def send_youtube_to_channel(channel, video, video_url) # rubocop:disable Metrics/AbcSize
+      def send_youtube_to_channel(channel, nick, video, video_url) # rubocop:disable Metrics/AbcSize
         link = URIUtils.shorten(video_url)
         msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
         msg += video.title

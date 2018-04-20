@@ -295,7 +295,8 @@ module Axial
           else
             subject_model = Models::User.create_from_nickname_mask(user.pretty_name, subject_nickname, subject_mask)
             update_user_list
-            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{subject_mask}' and the role of #{Role.basic.name_with_color}.")
+            wildcard_mask = MaskUtils.ensure_wildcard(subject_mask)
+            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{wildcard_mask}' and the role of #{Role.basic.name_with_color}.")
           end
         end
       rescue Exception => ex

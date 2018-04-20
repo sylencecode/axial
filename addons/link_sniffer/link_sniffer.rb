@@ -15,10 +15,17 @@ module Axial
 
         throttle                                      5
 
+        # change to [] to send to all channels
+        @restrict_to_channels = %w[ #lulz ]
+
         on_channel_leftover   %r[https{0,1}://\S+],   :sniff_link
       end
 
-      def sniff_link(channel, nick, text) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+      def sniff_link(channel, nick, text)
+        if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
+          return
+        end
+
         urls = URIUtils.extract(text)
         if (urls.any?)
           begin
@@ -28,19 +35,8 @@ module Axial
           end
 
           preview = API::LinkPreview.preview(urls.first)
-          if (!preview.nil? && preview.data?)
-            msg  = "#{Colors.gray}[#{Colors.green}link#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-            msg += preview.title
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += preview.short_description
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            if (warnings.any?)
-              msg += preview.url
-              msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
-            else
-              msg += URIUtils.shorten(preview.url).to_s
-            end
-            channel.message(msg)
+          if (preview&.data?)
+            send_link_preview_to_channel(channel, nick, preview, warnings)
           else
             LOGGER.warn("failed to preview #{urls.first}")
           end
@@ -51,6 +47,21 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+      end
+
+      def send_link_preview_to_channel(channel, nick, warnings, preview) # rubocop:disable Metrics/AbcSize
+        msg  = "#{Colors.gray}[#{Colors.green}link#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+        msg += preview.title
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg += preview.short_description
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        if (warnings.any?)
+          msg += preview.url
+          msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
+        else
+          msg += URIUtils.shorten(preview.url).to_s
+        end
+        channel.message(msg)
       end
 
       def before_reload()
