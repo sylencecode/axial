@@ -22,7 +22,7 @@ module Axial
     attr_reader   :addons, :binds, :nick, :user, :real_name, :server, :server_consumer, :channel_handler,
                   :server_handler, :connection_handler, :server_interface, :message_handler, :bind_handler,
                   :axnet, :ban_list, :user_list, :timer, :bot_list, :channel_command_character,
-                  :dcc_command_character, :dcc_state, :startup_time, :git, :last_reload
+                  :dcc_command_character, :dcc_state, :startup_time, :git, :last_reload, :custom_ctcp_version_reply
 
     attr_accessor :real_nick, :local_cn, :trying_nick
 
@@ -255,6 +255,11 @@ module Axial
       @trying_nick                = @config['bot']['nick']               || 'unnamed'
       if (!@config.key?('channels') || @config['channels'].empty?)
         @config['channels'] = []
+      end
+      if (@config.key?('version_reply') && !@config['version_reply'].empty?)
+        @custom_ctcp_version_reply = config['version_reply']
+      else
+        @custom_ctcp_version_reply = ''
       end
 
       begin
