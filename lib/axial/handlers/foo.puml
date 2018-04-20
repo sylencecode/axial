@@ -1,0 +1,8 @@
+@startuml
+RawConsumer <|--GenericConsumer
+class Addon {
+data : Object
+void foo
+}
+Addon <|-- AxnetAssistant
+@enduml

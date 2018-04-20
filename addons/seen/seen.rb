@@ -17,7 +17,7 @@ module Axial
       def initialize(bot)
         super
 
-        @name                                 = 'last seen'
+        @name                                 = 'seen/last spoke'
         @author                               = 'sylence <sylence@sylence.org>'
         @version                              = '1.1.0'
 
@@ -31,6 +31,7 @@ module Axial
         on_part                               :update_seen_part
         on_quit                               :update_seen_quit
         on_kick                               :update_seen_kick
+
         throttle                              2
       end
 

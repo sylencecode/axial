@@ -14,23 +14,44 @@ module Axial
 
         throttle                                              5
 
-        on_channel          /https{0,1}:\/\/youtu\.be\/\S+/,  :handle_youtube
-        on_channel  /https{0,1}:\/\/www\.youtube\.com\/\S+/,  :handle_youtube
-        on_channel    /https{0,1}:\/\/m\.youtube\.com\/\S+/,  :handle_youtube
+        on_channel            %r[https{0,1}://youtu.be/\S+],  :sniff_youtube_link
+        on_channel     %r[https{0,1}://www.youtube.com/\S+],  :sniff_youtube_link
+        on_channel       %r[https{0,1}://m.youtube.com/\S+],  :sniff_youtube_link
       end
 
-      def handle_youtube(channel, nick, text)
-        youtube_id = ''
+      def sniff_youtube_link(channel, nick, text)
         parsed_urls = URIUtils.extract(text)
         if (parsed_urls.empty?)
           return
         end
         video_url = parsed_urls.first
-        uri = URI.parse(video_url)
-        if (uri.host =~ /youtu\.be/)
-          youtube_id = uri.path.gsub(/^\//, '')
-        elsif (uri.host =~ /youtube\.com/)
-          query = CGI.parse(uri.query)
+        video_uri = URI.parse(video_url)
+
+        youtube_id = extract_youtube_id(video_uri)
+        if (youtube_id.empty?)
+          return
+        end
+
+        video = API::YouTube::V3.get_video(youtube_id)
+        if (!video.found)
+          return
+        end
+
+        send_youtube_to_channel(channel, video, video_url)
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def extract_youtube_id(video_uri)
+        youtube_id = ''
+        if (video_uri.host =~ /youtu\.be/)
+          youtube_id = video_uri.path.gsub(%r[/], '')
+        elsif (video_uri.host =~ /youtube\.com/)
+          query = CGI.parse(video_uri.query)
           if (query.key?('v'))
             if (query['v'].is_a?(Array) && query['v'].any?)
               youtube_id = query['v'][0]
@@ -38,34 +59,22 @@ module Axial
           end
         end
 
-        if (youtube_id.empty?)
-          LOGGER.warn("Youtube video not found: #{video_url}")
-          return
-        else
-          video = API::YouTube::V3.get_video(youtube_id)
-          if (video.found)
-            link = URIUtils.shorten(video_url)
-            msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-            msg += video.title
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += video.duration.short_to_s
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views"
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += video.irc_description
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += link.to_s
-            channel.message(msg)
-          else
-            LOGGER.warn("Youtube video not found: #{video_url}")
-          end
-        end
-      rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
+        return youtube_id
+      end
+
+      def send_youtube_to_channel(channel, video, video_url) # rubocop:disable Metrics/AbcSize
+        link = URIUtils.shorten(video_url)
+        msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+        msg += video.title
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg += video.duration.short_to_s
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views"
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg += video.irc_description
+        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg += link.to_s
+        channel.message(msg)
       end
 
       def before_reload()

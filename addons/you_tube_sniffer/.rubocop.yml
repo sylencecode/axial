@@ -1,2 +1,5 @@
 ---
 inherit_from: ../.rubocop.yml
+
+Style/PercentLiteralDelimiters:
+  Enabled: false

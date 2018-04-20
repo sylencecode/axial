@@ -3,8 +3,6 @@ $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 $stdout.sync = true
 $stderr.sync = true
 
-gem 'git'
-require 'git'
 require 'yaml'
 require 'axial/log'
 require 'axial/handlers/timer_handler'
@@ -29,6 +27,7 @@ module Axial
     attr_accessor :real_nick, :local_cn, :trying_nick
 
     def initialize(config_yaml)
+      check_version
       @config_yaml  = config_yaml
       @startup_time = Time.now
       @last_reload  = Time.now
@@ -43,6 +42,14 @@ module Axial
       load_dispatchers
       load_addons
       notify_startup
+    end
+
+    def check_version()
+      major, minor, release = RUBY_VERSION.split('.').collect(&:to_i)
+      if (major != 2 || minor < 5)
+        puts "#{Constants::AXIAL_NAME} has only been tested on Ruby 2.5."
+        exit 1
+      end
     end
 
     def notify_startup()
@@ -192,6 +199,8 @@ module Axial
     end
 
     def git_pull()
+      gem 'git'
+      require 'git'
       if (!@git.nil?)
         @git.pull
       end
