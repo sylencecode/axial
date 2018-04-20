@@ -3,6 +3,8 @@ $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 $stdout.sync = true
 $stderr.sync = true
 
+gem 'git'
+require 'git'
 require 'yaml'
 require 'axial/log'
 require 'axial/handlers/timer_handler'
@@ -199,8 +201,6 @@ module Axial
     end
 
     def git_pull()
-      gem 'git'
-      require 'git'
       if (!@git.nil?)
         @git.pull
       end

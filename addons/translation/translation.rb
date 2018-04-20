@@ -21,6 +21,7 @@ module Axial
         on_channel 'german',      :translate_german
         on_channel 'hebrew',      :translate_hebrew
         on_channel 'japanese',    :translate_japanese
+        on_channel 'latin',       :translate_latin
         on_channel 'portuguese',  :translate_portuguese
         on_channel 'russian',     :translate_russian
         on_channel 'spanish',     :translate_spanish
@@ -60,6 +61,11 @@ module Axial
       def translate_hebrew(channel, nick, command)
         text = get_text(channel, nick, command)
         translate(channel, nick, 'en', 'he', text)
+      end
+
+      def translate_latin(channel, nick, command)
+        text = get_text(channel, nick, command)
+        translate(channel, nick, 'en', 'la', text)
       end
 
       def translate_japanese(channel, nick, command)
