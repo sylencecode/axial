@@ -3,6 +3,7 @@ server:
   address: sylence.org
   port: 6667
   ssl: false
+#  user_mode: +ig
 bot:
   nick: taxial
   real_name: taxial

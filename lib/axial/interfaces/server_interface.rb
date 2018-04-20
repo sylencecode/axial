@@ -24,7 +24,7 @@ module Axial
       end
 
       def set_invisible()
-        @bot.connection_handler.send_raw("MODE #{@bot.real_nick} +i")
+        @bot.connection_handler.send_raw("MODE #{@bot.real_nick} #{@bot.server.user_mode}")
       end
 
       def whois_myself()

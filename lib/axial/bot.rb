@@ -231,8 +231,10 @@ module Axial
       reconnect_delay             = @config['server']['reconnect_delay'] || 60
       ssl                         = @config['server']['ssl']             || false
       password                    = @config['server']['password']        || ''
+      user_mode                   = @config['server']['user_mode']       || '+i'
 
       @server                     = IRCTypes::Server.new(address, port, ssl, password, reconnect_delay)
+      @server.user_mode           = user_mode
     end
     private :load_server_settings
 

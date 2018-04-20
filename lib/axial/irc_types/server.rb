@@ -1,7 +1,7 @@
 module Axial
   module IRCTypes
     class Server
-      attr_accessor :address, :real_address
+      attr_accessor :address, :real_address, :user_mode
       attr_reader   :port, :password, :reconnect_delay
       attr_writer   :connected, :ssl
 
