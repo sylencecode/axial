@@ -128,7 +128,7 @@ module Axial
           @server.connected = true
           if (!@bot.trying_nick.casecmp(@bot.nick).zero?)
             @regaining_nick = true
-            @nick_regain_timer = @bot.timer.every_60_seconds(@bot.server_interface, :send_ison)
+            @nick_regain_timer = @bot.timer.every_30_seconds(@bot.server_interface, :send_ison)
           end
           @bot.real_nick = @bot.trying_nick
           @bot.server_interface.myself.name = @bot.real_nick

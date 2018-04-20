@@ -257,7 +257,7 @@ module Axial
         @config['channels'] = []
       end
       if (@config.key?('version_reply') && !@config['version_reply'].empty?)
-        @custom_ctcp_version_reply = config['version_reply']
+        @custom_ctcp_version_reply = @config['version_reply']
       else
         @custom_ctcp_version_reply = ''
       end

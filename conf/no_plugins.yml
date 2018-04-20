@@ -13,3 +13,4 @@ channels:
 - name: "#rimjob"
   password: ''
 addons:
+#version_reply: 'eat it v1.0'
