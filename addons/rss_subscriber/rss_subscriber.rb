@@ -60,7 +60,7 @@ module Axial
             next
           end
 
-          msg = get_entry_message(feed, entry)
+          msg = send_entry_to_channel(feed, entry)
 
           channel_list.all_channels.each do |channel|
             if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
@@ -113,18 +113,15 @@ module Axial
         end
       end
 
-      def get_entry_message(feed, entry) # rubocop:disable Metrics/AbcSize
+      def send_entry_to_channel(feed, entry)
         title = Nokogiri::HTML(entry.title).text.gsub(/\s+/, ' ').strip
         summary = Nokogiri::HTML(entry.summary).text.gsub(/\s+/, ' ').strip
 
-        text =  "#{Colors.gray}[#{Colors.cyan}news#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{feed.pretty_name}#{Colors.gray}]#{Colors.reset} "
-
-        text += title
-        text += " #{Colors.gray}|#{Colors.reset} "
+        text =  Color.cyan_prefix('news', feed.pretty_name)
+        text += title + Color.gray(' | ')
 
         summary = (summary.length < 300) ? summary : text += summary[0..296] + '...'
-        text += summary
-        text += " #{Colors.gray}|#{Colors.reset} "
+        text += summary + Color.gray(' | ')
 
         article_url = URIUtils.shorten(entry.url)
         text += article_url.to_s

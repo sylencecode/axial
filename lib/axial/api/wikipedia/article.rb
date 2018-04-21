@@ -7,14 +7,13 @@ module Axial
       WIKIPEDIA_PUBLIC_URL = 'https://en.wikipedia.org/'.freeze
 
       class Article
-        attr_accessor :id, :extract, :json, :found
+        attr_accessor :id, :extract, :found
 
         def initialize()
           @id = ''
           @found = false
           @extract = ''
           @irc_extract = ''
-          @json = ''
           @url = ''
         end
 

@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/color'
 require 'axial/uri_utils'
 require 'axial/api/google/complete'
 require 'axial/api/google/custom_search/v1'
@@ -37,9 +38,7 @@ module Axial
           return
         end
 
-        msg  = "#{Colors.gray}[#{Colors.green}popular searches#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += phrase_result.results.join(" #{Colors.gray}|#{Colors.reset} ")
-        channel.message(msg)
+        channel.message(Color.green_prefix('popular searches', nick.name) + phrase_result.results.join(Color.gray(' | ')))
       end
 
       def google_search(channel, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -63,16 +62,7 @@ module Axial
             warnings  = []
           end
 
-          msg  = "#{Colors.gray}[#{Colors.green}google#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-          msg += result.snippet
-          msg += " #{Colors.gray}|#{Colors.reset} "
-          if (warnings.any?)
-            msg += result.link
-            msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
-          else
-            msg += URIUtils.shorten(result.link).to_s
-          end
-          channel.message(msg)
+          send_result_to_channel(channel, nick, 'google search', result, warnings)
         else
           channel.message("#{nick.name}: No search results.")
         end
@@ -82,6 +72,19 @@ module Axial
         ex.backtrace.each do |i|
           LOGGER.error(i)
         end
+      end
+
+      def send_result_to_channel(channel, nick, request_type, result, warnings)
+        msg = Color.green_prefix(request_type, nick.name)
+        msg += result.title + Color.gray(' | ')
+        if (warnings.any?)
+          msg += result.link
+          msg += Color.gray(' [') + Color.red("potentially #{warnings.join(', ')}") + Color.gray(']')
+        else
+          msg += URIUtils.shorten(result.link).to_s
+        end
+
+        channel.message(msg)
       end
 
       def google_image_search(channel, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -104,17 +107,7 @@ module Axial
             warnings  = []
           end
 
-          msg  = "#{Colors.gray}[#{Colors.green}image search#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-          msg += result.title
-          msg += " #{Colors.gray}|#{Colors.reset} "
-          if (warnings.any?)
-            msg += result.link
-            msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
-          else
-            msg += URIUtils.shorten(result.link).to_s
-          end
-
-          channel.message(msg)
+          send_result_to_channel(channel, nick, 'image search', result, warnings)
         else
           channel.message("#{nick.name}: No image search results.")
         end

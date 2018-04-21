@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/color'
 
 module Axial
   module Addons
@@ -32,19 +33,15 @@ module Axial
       def send_about(channel, _nick, _command) # rubocop:disable Metrics/AbcSize
         addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
         addon_version_length = @bot.addons.collect { |tmp_addon| tmp_addon[:version].to_s.length }.max
-        channel.message("#{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        channel.message("#{Constants::AXIAL_LOGO} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         channel.message(' ')
         if (@bot.addons.any?)
           @bot.addons.each do |addon|
-            channel.message("#{Colors.gray} +#{Colors.reset} #{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} v#{addon[:version].to_s.rjust(addon_version_length)} #{Colors.gray}|#{Colors.reset} #{addon[:author]}")
+            channel.message(Color.gray(' + ') + Color.blue(addon[:name].rjust(addon_name_length)) + Color.gray(' | ') + "v#{addon[:version].to_s.rjust(addon_version_length)}" + Color.gray(' | ') + addon[:author])
           end
         else
           channel.message('no addons loaded.')
         end
-      end
-
-      def ctcp_ping_user(channel, nick, command)
-        server.send_ctcp(nick, 'PING', Time.now.to_i.to_s)
       end
 
       def get_command_chunks(commands, max_command_length)
@@ -94,15 +91,15 @@ module Axial
           remaining_chunks = get_command_chunks(name_with_binds[:binds], max_command_length)
 
           first_chunk = remaining_chunks.shift
-          channel.message("#{Colors.blue}#{name_with_binds[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{first_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+          channel.message(Color.blue(name_with_binds[:name].rjust(addon_name_length)) + Color.gray(' | ') + first_chunk.join(Color.gray(' | ')))
           remaining_chunks.each do |tmp_chunk|
-            channel.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{tmp_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+            channel.message(' '.ljust(addon_name_length) + Color.gray(' | ') + tmp_chunk.join(Color.gray(' | ')))
           end
         end
       end
 
       def channel_send_help(channel, _nick, _command)
-        channel.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        channel.message("                    #{Constants::AXIAL_LOGO} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         channel.message(' ')
 
         if (@bot.addons.empty?)

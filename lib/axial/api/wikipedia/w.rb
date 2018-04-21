@@ -33,7 +33,6 @@ module Axial
           json = JSON.parse(response)
 
           article = API::Wikipedia::Article.new
-          article.json = json
 
           if (json.key?('query'))
             query = json['query']

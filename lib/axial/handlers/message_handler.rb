@@ -1,5 +1,5 @@
+require 'axial/color'
 require 'axial/irc_types/nick'
-require 'axial/colors'
 
 module Axial
   module Handlers
@@ -60,7 +60,9 @@ module Axial
           if (dispatched_commands.any?)
             dispatched_commands.each do |dispatched_command|
               if (!dispatched_command[:silent])
-                @bot.dcc_state.broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{nick.uhost}#{Colors.reset} executed privmsg command: #{text}", :director)
+                msg  = Color.blue_arrow + Color.cyan(nick.uhost)
+                msg += " executed privmsg command: #{text}"
+                dcc_broadcast(msg, :director)
                 LOGGER.info("privmsg command: #{nick.uhost}: #{text}")
               end
             end

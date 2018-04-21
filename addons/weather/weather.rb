@@ -30,6 +30,20 @@ module Axial
         return temp_color
       end
 
+      def zip_or_geonames(query)
+        location = nil
+        if (query =~ /^[0-9][0-9][0-9][0-9][0-9]$/)
+          location = query
+        else
+          geonames_location = API::GeoNames::SearchJSON.search(query)
+          if (geonames_location.found?)
+            location = geonames_location.to_wunderground
+          end
+        end
+
+        return location
+      end
+
       def handle_weather(channel, nick, command)
         query = command.args.strip
         if (query.empty?)
@@ -37,58 +51,42 @@ module Axial
           return
         end
 
-        if (query.length > 63)
-          query = query[0..63]
+        query = (query.length >= 64) ? query[0..63] : query
+
+        location = zip_or_geonames(query)
+        conditions = API::WUnderground::Q.get_current_conditions(location)
+
+        send_conditions_to_channel(channel, nick, conditions)
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def send_conditions_to_channel(channel, nick, conditions) # rubocop:disable Metrics/AbcSize
+        if (!conditions.found?)
+          channel.message("#{nick.name}: no weather data found for '#{query}'.")
+          return
         end
 
-        begin
-          LOGGER.debug("weather request from #{nick.uhost} on #{channel.name}: #{query}")
-          location = nil
-          if (query =~ /^[0-9][0-9][0-9][0-9][0-9]$/)
-            location = query
-          else
-            geonames_location = API::GeoNames::SearchJSON.search(query)
-            if (geonames_location.found)
-              location = geonames_location.to_wunderground
-            end
+        msg = Color.cyan_prefix('weather', conditions.location)
+        msg += conditions.weather.downcase + Color.gray(' |')
+        msg += "#{weather_color(conditions.temp_f)} #{conditions.temp_f}f" + Color.gray(' | ')
+        msg += "feels like:#{weather_color(conditions.feels_like_f)} #{conditions.feels_like_f}f" + Color.gray(' | ')
+        msg += "humidity: #{conditions.relative_humidity}%" + Color.gray(' | ')
+        msg += "visibility: #{conditions.visibility_mi}mi" + Color.gray(' | ')
+        if (conditions.wind_mph.positive?)
+          msg += "winds: #{conditions.wind_mph}mph from #{conditions.wind_dir.downcase}"
+          if (conditions.wind_gust_mph.positive?)
+            msg += " (gusts up to #{conditions.wind_gust_mph}mph)"
           end
-          if (!location.nil?)
-            conditions = API::WUnderground::Q.get_current_conditions(location)
-            if (conditions.found)
-              msg  = "#{Colors.gray}[#{Colors.cyan}weather#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkcyan}#{conditions.location}#{Colors.gray}]#{Colors.reset} "
-              msg += (conditions.weather.downcase).to_s
-              msg += " #{Colors.gray}|#{Colors.reset}"
-              msg += "#{weather_color(conditions.temp_f)} #{conditions.temp_f}f#{Colors.reset}"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "feels like:#{weather_color(conditions.feels_like_f)} #{conditions.feels_like_f}f#{Colors.reset}"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "humidity: #{conditions.relative_humidity}%"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              msg += "visibility: #{conditions.visibility_mi}mi"
-              msg += " #{Colors.gray}|#{Colors.reset} "
-              if (conditions.wind_mph.positive?)
-                msg += "winds: #{conditions.wind_mph}mph from #{conditions.wind_dir.downcase}"
-                if (conditions.wind_gust_mph.positive?)
-                  msg += " (gusts up to #{conditions.wind_gust_mph}mph)"
-                end
-              else
-                msg += 'winds: calm'
-              end
-              channel.message(msg)
-            else
-              channel.message("#{nick.name}: no weather data found for \"#{query}\".")
-            end
-          else
-            channel.message("#{nick.name}: couldn't find a location matching \"#{query}\".")
-          end
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
-          channel.message("#{nick.name}: the weather guys can't report the weather for \"#{query}\" right now.")
+        else
+          msg += 'winds: calm'
         end
+
+        channel.message(msg)
       end
 
       def before_reload()

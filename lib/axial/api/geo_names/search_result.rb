@@ -2,7 +2,8 @@ module Axial
   module API
     module GeoNames
       class SearchResult
-        attr_accessor :admin_code1, :city, :country_code, :country_id, :country_name, :found, :json, :lat, :long, :toponym_name
+        attr_writer :found
+        attr_accessor :admin_code1, :city, :country_code, :country_id, :country_name, :lat, :long, :toponym_name
         def initialize()
           @admin_code1 = ''
           @city = ''
@@ -10,10 +11,13 @@ module Axial
           @country_id = ''
           @country_name = ''
           @found = false
-          @json = ''
           @lat = 0.0
           @long = 0.0
           @toponym_name = ''
+        end
+
+        def found?()
+          return @found
         end
 
         # take location data and convert it to Country/State/City format, for wunderground api

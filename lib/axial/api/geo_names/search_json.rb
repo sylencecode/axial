@@ -29,7 +29,6 @@ module Axial
           json = JSON.parse(response)
 
           result = API::GeoNames::SearchResult.new
-          result.json = json
 
           if (json.key?('totalResultsCount'))
             result_count = json['totalResultsCount'].to_i

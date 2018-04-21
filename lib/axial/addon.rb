@@ -501,9 +501,9 @@ module Axial
           end
         end
         if (silent)
-          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}' (silently)")
+          LOGGER.debug("dcc command '#{command}' will invoke method '#{self.class}.#{method}' (silently)")
         else
-          LOGGER.debug("DCC '#{command}' will invoke method '#{self.class}.#{method}'")
+          LOGGER.debug("dcc command '#{command}' will invoke method '#{self.class}.#{method}'")
         end
       end
     end

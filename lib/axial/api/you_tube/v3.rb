@@ -22,7 +22,7 @@ module Axial
           video = API::YouTube::Video.new
           response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
           json = JSON.parse(response)
-          video.json = json
+
           if (json.key?('items') && json['items'].is_a?(Array))
             items = json['items']
             if (items.any?)

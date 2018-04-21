@@ -120,8 +120,7 @@ module Axial
         target_text = translation.target_text
         target_text = (target_text.length >= 329) ? target_text[0..319] : target_text
 
-        msg  = "#{Colors.gray}[#{Colors.magenta}#{translation.source_language.downcase} -> #{translation.target_language.downcase}"
-        msg += "#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkmagenta}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+        msg = Color.magenta_prefix("#{translation.source_language.downcase} -> #{translation.target_language.downcase}", nick.name)
         msg += target_text
         channel.message(msg)
       end

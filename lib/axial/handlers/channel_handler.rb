@@ -1,6 +1,5 @@
 require 'axial/constants'
 require 'axial/handlers/patterns'
-require 'axial/colors'
 require 'axial/irc_types/channel'
 require 'axial/irc_types/mode'
 require 'axial/irc_types/channel_ban'

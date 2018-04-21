@@ -32,7 +32,7 @@ module Axial
       end
 
       def pretty_name_with_color()
-        return "#{@role.color}#{@pretty_name}#{Colors.reset}"
+        return "#{@role.color}#{@pretty_name}#{Color.reset}"
       end
 
       def self.from_model(user_model)

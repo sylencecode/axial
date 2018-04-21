@@ -50,7 +50,6 @@ module Axial
           end
 
           conditions = WUnderground::Conditions.new
-          conditions.json = json
 
           if (json.key?('current_observation'))
             observation = json['current_observation']

@@ -82,7 +82,7 @@ module Axial
             send_ctcp_reply(nick, ctcp_command, ctcp_args)
           when 'VERSION'
             if (@bot.custom_ctcp_version_reply.empty?)
-              send_ctcp_reply(nick, ctcp_command, "#{Constants::AXIAL_NAME} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+              send_ctcp_reply(nick, ctcp_command, "#{Constants::AXIAL_LOGO} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
             else
               send_ctcp_reply(nick, ctcp_command, @bot.custom_ctcp_version_reply)
             end

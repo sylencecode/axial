@@ -4,7 +4,7 @@ require 'resolv'
 require 'timeout'
 require 'securerandom'
 require 'axial/addon'
-require 'axial/colors'
+require 'axial/color'
 require 'axial/irc_types/dcc'
 
 module Axial
@@ -50,7 +50,7 @@ module Axial
 
       def dcc_die(dcc, _command)
         LOGGER.warn("received DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
-        dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} has issued a DIE comamnd! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
+        dcc_broadcast("#{Color.gray}*#{Color.darkred}*#{Color.red}* #{dcc.user.pretty_name_with_color} has issued a DIE comamnd! #{Color.red}*#{Color.darkred}*#{Color.gray}*", :director)
         sleep 5
         server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
         sleep 5
@@ -60,11 +60,11 @@ module Axial
       def dcc_send_about(dcc, _command) # rubocop:disable Metrics/AbcSize
         addon_name_length = @bot.addons.collect { |tmp_addon| tmp_addon[:name].length }.max
         addon_version_length = @bot.addons.collect { |tmp_addon| tmp_addon[:version].to_s.length }.max
-        dcc.message("#{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        dcc.message("#{Constants::AXIAL_LOGO} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (interpreter: ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         dcc.message(' ')
         if (@bot.addons.any?)
           @bot.addons.each do |addon|
-            dcc.message("#{Colors.gray} +#{Colors.reset} #{Colors.blue}#{addon[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} v#{addon[:version].to_s.rjust(addon_version_length)} #{Colors.gray}|#{Colors.reset} #{addon[:author]}")
+            dcc.message(Color.gray(' + ') + Color.blue(addon[:name].rjust(addon_name_length)) + Color.gray(' | ') + "v#{addon[:version].to_s.rjust(addon_version_length)}" + Color.gray(' | ') + addon[:author])
           end
         else
           dcc.message('no addons loaded.')
@@ -118,15 +118,15 @@ module Axial
           remaining_chunks = get_command_chunks(name_with_binds[:binds], max_command_length)
 
           first_chunk = remaining_chunks.shift
-          dcc.message("#{Colors.blue}#{name_with_binds[:name].rjust(addon_name_length)}#{Colors.reset} #{Colors.gray}|#{Colors.reset} #{first_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+          dcc.message(Color.blue(name_with_binds[:name].rjust(addon_name_length)) + Color.gray(' | ') + first_chunk.join(Color.gray(' | ')))
           remaining_chunks.each do |tmp_chunk|
-            dcc.message("#{' '.ljust(addon_name_length)} #{Colors.gray}|#{Colors.reset} #{tmp_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+            dcc.message(' '.ljust(addon_name_length) + Color.gray(' | ') + tmp_chunk.join(Color.gray(' | ')))
           end
         end
       end
 
       def dcc_send_help(dcc, _command)
-        dcc.message("                    #{Colors.cyan}#{Constants::AXIAL_NAME}#{Colors.reset} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
+        dcc.message("                    #{Constants::AXIAL_LOGO} version #{Constants::AXIAL_VERSION} by #{Constants::AXIAL_AUTHOR} (ruby version #{RUBY_VERSION}p#{RUBY_PATCHLEVEL})")
         dcc.message(' ')
 
         if (@bot.addons.empty?)
@@ -145,7 +145,7 @@ module Axial
         end
       end
 
-      def dcc_quit(dcc, command)
+      def dcc_quit(dcc, _command)
         dcc.message('goodbye.')
         dcc.status = :closed
         dcc.close
@@ -156,11 +156,13 @@ module Axial
         end
       end
 
-      def dcc_who(dcc, command)
+      def dcc_who(dcc, _command)
         dcc.message('online users:')
         @connections.values.each do |state_data|
           remote_dcc = state_data[:dcc]
-          dcc.message("  #{remote_dcc.user.pretty_name} #{Colors.gray}|#{Colors.reset} #{remote_dcc.user.role.name_with_color} #{Colors.gray}|#{Colors.reset} #{remote_dcc.remote_ip}")
+          msg  = "  #{remote_dcc.user.pretty_name}" + Color.gray(' | ') + remote_dcc.user.role.name_with_color
+          msg += Color.gray(' | ') + remote_dcc.remote_ip
+          dcc.message(msg)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -179,7 +181,7 @@ module Axial
           dcc.message('no addons loaded.')
         else
           LOGGER.info("#{dcc.user.pretty_name} reloaded addons.")
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} reloaded addons.")
+          dcc_broadcast(Color.blue_arrow + dcc.user.pretty_name_with_color + 'reloaded addons.')
           addon_list = @bot.addons.reject { |addon| addon[:name] == 'base' }
           addon_names = addon_list.collect { |addon| addon[:name] }
           dcc.message("unloading addons: #{addon_names.join(', ')}")
@@ -232,7 +234,7 @@ module Axial
       end
 
       def send_dcc_offer(nick, user, local_ip, long_ip, port)
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}sent dcc chat offer to #{nick.uhost}", :director)
+        dcc_broadcast(Color.blue_arrow + "sent dcc chat offer to #{nick.uhost}", :director)
         LOGGER.debug("dcc chat offer to #{nick.name} (user: #{user.pretty_name}) (source: #{local_ip}:#{port})")
         nick.message("\x01DCC CHAT chat #{long_ip} #{port}\x01")
       end
@@ -251,7 +253,7 @@ module Axial
         return socket
       rescue Timeout::Error
         release_dcc_port(port)
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc chat offer to #{nick.uhost} timed out.", :director)
+        dcc_broadcast(Color.blue_arrow + "dcc chat offer to #{nick.uhost} timed out.", :director)
         LOGGER.error("connection attempt timed out attempting to dcc chat #{nick.name} (#{user.pretty_name})")
       end
 
@@ -316,17 +318,17 @@ module Axial
         return state_data
       end
 
-      def try_authentication(dcc, text, state_data, auth_timeout_timer, password_attempts) # rubocop:disable Metrics/AbcSize
+      def try_authentication(dcc, text, state_data, auth_timeout_timer, password_attempts)
         remote_ip = state_data[:remote_ip]
         if (dcc.user.password?(text))
           dcc.message("welcome. type '#{@bot.dcc_command_character}help' for a list of available commands.")
           dcc.status = :open
           timer.delete(auth_timeout_timer)
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{dcc.user.pretty_name_with_color} has logged in.")
+          dcc_broadcast(Color.green_arrow + dcc.user.pretty_name_with_color + ' has logged in.')
           LOGGER.info("dcc connection established with #{dcc.user.pretty_name} (#{remote_ip}).")
         elsif (password_attempts >= 3)
           dcc.message('incorrect password after 3 attempts.')
-          dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{Colors.reset}dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
+          dcc_broadcast(Color.blue_arrow + "dcc: 3 failed password attempts from #{dcc.user.pretty_name_with_color}.", :director)
           dcc.status = :failed
           dcc.close
           timer.delete(auth_timeout_timer)
@@ -355,14 +357,14 @@ module Axial
             if (dispatched_commands.any?)
               dispatched_commands.each do |dispatched_command|
                 if (!dispatched_command[:silent]) # rubocop:disable Metrics/BlockNesting
-                  dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} executed command: #{text}", :director)
+                  dcc_broadcast(Color.blue_arrow + dcc.user.pretty_name_with_color + " executed command: #{text}", :director)
                   LOGGER.info("dcc command: #{dcc.user.pretty_name}: #{text}")
                 end
               end
             elsif (text.start_with?(@bot.dcc_command_character))
               dcc.message("command not found. try #{@bot.dcc_command_character}help")
             else
-              dcc_broadcast("#{Colors.gray}<#{dcc.user.pretty_name_with_color}#{Colors.gray}>#{Colors.reset} #{text}")
+              dcc_broadcast("#{Color.gray}<#{dcc.user.pretty_name_with_color}#{Color.gray}>#{Color.reset} #{text}")
             end
           end
         end
@@ -385,14 +387,14 @@ module Axial
         if (!dcc.nil?)
           case dcc.status
             when :closed
-              dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+              dcc_broadcast(Color.red_arrow_reverse + dcc.user.pretty_name_with_color + ' has logged out.')
               LOGGER.info("closed dcc connection with #{user.pretty_name} (#{remote_ip})")
             when :authenticating
               LOGGER.warn("login attempt timed out for #{user.pretty_name} (#{remote_ip})")
             when :failed
               LOGGER.warn("failed dcc login for #{user.pretty_name} (#{remote_ip})")
             else
-              dcc_broadcast("#{Colors.red}<#{Colors.darkred}-#{Colors.gray}-#{Colors.cyan} #{dcc.user.pretty_name}#{Colors.reset} has logged out.")
+              dcc_broadcast(Color.red_arrow_reverse + dcc.user.pretty_name_with_color + ' has logged out.')
               LOGGER.warn("error closing dcc connection with #{user.pretty_name} (#{remote_ip}): #{ex.class}: #{ex.message}")
               ex.backtrace.each do |i|
                 LOGGER.warn(i)

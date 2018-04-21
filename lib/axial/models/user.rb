@@ -1,5 +1,6 @@
 gem 'sequel'
 require 'sequel'
+require 'axial/color'
 require 'axial/role'
 require 'axial/irc_types/nick'
 require 'axial/mask_utils'
@@ -29,7 +30,7 @@ module Axial
       one_to_one  :seen
 
       def pretty_name_with_color()
-        return "#{self.role.color}#{self.pretty_name}#{Colors.reset}"
+        return self.role.color + self.pretty_name + Color.reset
       end
 
       def self.get_users_from_overlap(in_mask)

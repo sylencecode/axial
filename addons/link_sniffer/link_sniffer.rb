@@ -49,15 +49,12 @@ module Axial
         end
       end
 
-      def send_link_preview_to_channel(channel, nick, warnings, preview) # rubocop:disable Metrics/AbcSize
-        msg  = "#{Colors.gray}[#{Colors.green}link#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkgreen}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += preview.title
-        msg += " #{Colors.gray}|#{Colors.reset} "
-        msg += preview.short_description
-        msg += " #{Colors.gray}|#{Colors.reset} "
-        if (warnings.any?)
-          msg += preview.url
-          msg += " #{Colors.gray}[#{Colors.red}potentially #{warnings.join(', ')}#{Colors.gray}]#{Colors.reset}"
+      def send_link_preview_to_channel(channel, nick, warnings, preview)
+        msg = Color.green_prefix('link', nick.name)
+        msg += preview.title + Color.gray(' | ')
+        msg += preview.short_description + Color.gray(' | ')
+        if (warnings.any?) # rubocop:disable Style/ConditionalAssignment
+          msg += preview.url + " #{Color.gray}[#{Color.red}potentially #{warnings.join(', ')}#{Color.gray(']')}"
         else
           msg += URIUtils.shorten(preview.url).to_s
         end

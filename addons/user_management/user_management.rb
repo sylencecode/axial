@@ -188,10 +188,10 @@ module Axial
                 subject_model.set_password(new_password)
                 update_user_list
                 reply(source, nick, "password for #{subject_model.pretty_name_with_color} changed.")
-                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
+                dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + " has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
               end
             else
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.cyan} #{user.pretty_name_with_color}#{Colors.reset} attempted to change password for user #{subject_model.pretty_name_with_color}.", :director)
+              dcc_broadcast(Color.red_arrow + user.pretty_name_with_color + " tried to change password for user #{subject_model.pretty_name_with_color}.", :director)
             end
           end
         end
@@ -214,7 +214,7 @@ module Axial
               user_model.set_password(new_password)
               update_user_list
               reply(source, nick, 'password set.')
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has set an initial password.", :director)
+              dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + ' has set an initial password.', :director)
             end
           end
         else
@@ -227,11 +227,11 @@ module Axial
                 user_model.set_password(new_password)
                 update_user_list
                 reply(source, nick, 'password changed.')
-                dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{user.pretty_name_with_color} has changed his/her password.", :director)
+                dcc_broadcast(Color.blue_arrow + " #{user.pretty_name_with_color} has changed his/her password.", :director)
               end
             else
               reply(source, nick, 'old password is incorrect.')
-              dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}>#{Colors.reset} failed password change attempt for #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
+              dcc_broadcast(Color.red_arrow + " failed password change attempt from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
             end
           end
         end
@@ -637,7 +637,7 @@ module Axial
           else
             dcc.message("user: #{user_model.pretty_name}")
             dcc.message("role: #{user_model.role.name_with_color}")
-            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime('%A, %B %-d, %Y at %l:%M%p (%Z)')}")
+            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime('%A, %B %-d, %Y at %l:%M%p (%Z)').gsub(/\s+/, ' ')}")
 
             on_channels = {}
 
@@ -659,7 +659,7 @@ module Axial
               dcc.message('')
               mask_length   = user_model.masks.collect { |mask_model| mask_model.mask.length }.max + 2
               user_model.masks.each do |mask_model|
-                dcc.message("  #{mask_model.mask.ljust(mask_length)} - added #{mask_model.created.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')}")
+                dcc.message("  #{mask_model.mask.ljust(mask_length)} - added #{mask_model.created.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')}")
               end
             end
 

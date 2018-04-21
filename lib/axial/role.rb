@@ -1,3 +1,5 @@
+require 'axial/color'
+
 module Axial
   class Role
     @numerics = { root: 5, director: 4, manager: 3, op: 2, friend: 1, basic: 0 }
@@ -95,46 +97,46 @@ module Axial
     def color()
       case @name
         when 'root'
-          role_color = Colors.red
+          role_color = Color.red
         when 'director'
-          role_color = Colors.yellow
+          role_color = Color.yellow
         when 'manager'
-          role_color = Colors.cyan
+          role_color = Color.cyan
         when 'op'
-          role_color = Colors.blue
+          role_color = Color.blue
         when 'friend'
-          role_color = Colors.green
+          role_color = Color.green
         when 'basic'
-          role_color = Colors.gray
+          role_color = Color.gray
       end
     end
 
     def name_with_color()
-      return "#{self.color}#{@name}#{Colors.reset}"
+      return "#{self.color}#{@name}#{Color.reset}"
     end
 
     def plural_name_with_color()
       case @name
         when 'root'
-          role_color = Colors.red
+          role_color = Color.red
           plural_name = 'root users'
         when 'director'
-          role_color = Colors.yellow
+          role_color = Color.yellow
           plural_name = 'directors'
         when 'manager'
-          role_color = Colors.cyan
+          role_color = Color.cyan
           plural_name = 'managers'
         when 'op'
-          role_color = Colors.blue
+          role_color = Color.blue
           plural_name = 'ops'
         when 'friend'
-          role_color = Colors.reset
+          role_color = Color.reset
           plural_name = 'friends'
         when 'basic'
-          role_color = Colors.gray
+          role_color = Color.gray
           plural_name = 'basic users'
       end
-      return "#{role_color}#{plural_name}#{Colors.reset}"
+      return "#{role_color}#{plural_name}#{Color.reset}"
     end
 
     def plural_name()

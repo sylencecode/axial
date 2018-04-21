@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/color'
 require 'axial/models/user'
 require 'axial/models/thing'
 require 'axial/timespan'
@@ -84,49 +85,10 @@ module Axial
       end
 
       def forget(channel, nick, command) # rubocop:disable Metrics/AbcSize
-        begin
-          user_model = Models::User.get_from_nick_object(nick)
-          if (user_model.nil?)
-            return
-          end
-          thing = command.args.strip
-          if (thing.empty?)
-            channel.message("#{nick.name}: usage: #{command.command} <thing>")
-            return
-          end
-          thing_model = Models::Thing[thing: thing.downcase]
-          if (thing_model.nil?)
-            channel.message("#{nick.name}: I don't know anything about #{thing}.")
-            return
-          end
-          LOGGER.info("forgot: #{thing_model.pretty_thing} = #{thing_model.explanation} from #{nick.uhost}")
-          thing_model.delete
-          channel.message("#{nick.name}: ok, I've forgotten about #{thing}.")
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
+        user_model = Models::User.get_from_nick_object(nick)
+        if (user_model.nil?)
+          return
         end
-      end
-
-      def random(channel, nick, _command) # rubocop:disable Metrics/AbcSize
-        thing_model = Models::Thing.order(Sequel.lit('RANDOM()')).first
-        LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
-        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
-        msg  = "#{Colors.gray}[#{Colors.blue}random thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} #{Colors.gray}=#{Colors.reset} #{thing_model.explanation} (learned from #{thing_model.user.pretty_name_with_color} #{learned_at.approximate_to_s} ago)"
-        channel.message(msg)
-      rescue Exception => ex
-        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
-        end
-      end
-
-      def explain(channel, nick, command) # rubocop:disable Metrics/AbcSize
         thing = command.args.strip
         if (thing.empty?)
           channel.message("#{nick.name}: usage: #{command.command} <thing>")
@@ -137,11 +99,9 @@ module Axial
           channel.message("#{nick.name}: I don't know anything about #{thing}.")
           return
         end
-        LOGGER.info("explained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost}")
-        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
-        msg  = "#{Colors.gray}[#{Colors.blue}thing#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkblue}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += "#{thing_model.pretty_thing} #{Colors.gray}=#{Colors.reset} #{thing_model.explanation} (learned from #{thing_model.user.pretty_name_with_color} #{learned_at.approximate_to_s} ago)"
-        channel.message(msg)
+        LOGGER.info("forgot: #{thing_model.pretty_thing} = #{thing_model.explanation} from #{nick.uhost}")
+        thing_model.delete
+        channel.message("#{nick.name}: ok, I've forgotten about #{thing}.")
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -150,27 +110,69 @@ module Axial
         end
       end
 
-      def explain_on_join(channel, nick) # rubocop:disable Metrics/AbcSize
+      def print_thing_to_channel(channel, nick, thing_model, request_type)
+        LOGGER.info("expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{nick.uhost} in #{channel.name}")
+        learned_at = TimeSpan.new(thing_model.learned_at, Time.now)
+        msg  = Color.blue_prefix(request_type, nick.name)
+        msg += thing_model.pretty_thing + Color.gray(' = ') + thing_model.explanation
+        msg += " (learned from #{thing_model.user.pretty_name_with_color} #{learned_at.approximate_to_s} ago)"
+        channel.message(msg)
+      end
+
+      def random(channel, nick, _command)
+        thing_model = Models::Thing.order(Sequel.lit('RANDOM()')).first
+        print_thing_to_channel(channel, nick, thing_model, 'random thing')
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def explain(channel, nick, command)
+        thing = command.args.strip
+        if (thing.empty?)
+          channel.message("#{nick.name}: usage: #{command.command} <thing>")
+          return
+        end
+        thing_model = Models::Thing[thing: thing.downcase]
+        if (thing_model.nil?)
+          channel.message("#{nick.name}: I don't know anything about #{thing}.")
+          return
+        end
+        print_thing_to_channel(channel, nick, thing_model, 'explain')
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def print_autojoin_to_channel(channel, thing_model)
+        channel.message(Color.gray('[ ') + thing_model.pretty_thing + Color.gray(' ] ') + thing_model.explanation)
+        LOGGER.debug("thing (autojoin) expained #{thing_model.pretty_thing} = #{thing_model.explanation} to #{channel.name}")
+      end
+
+      def explain_on_join(channel, nick)
         if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
           return
         end
 
-        user_model = Models::User.get_user_from_mask(nick.uhost)
-        if (!user_model.nil?)
-          thing_model = Models::Thing[thing: user_model.name]
-          if (!thing_model.nil?)
-            thing_subject_string = nick.name # don't reveal the user's actual nick, just use the nick they joined with
-          end
-        else
+        user_model = Models::User.get_from_nick_object(nick)
+
+        if (user_model.nil?) # rubocop:disable Style/ConditionalAssignment
           thing_model = Models::Thing[thing: nick.name.downcase]
-          if (!thing_model.nil?)
-            thing_subject_string = thing_model.pretty_thing # otherwise, explain if there is an entry for the user's current nick
-          end
+        else
+          thing_model = Models::Thing[thing: user_model.name]
         end
-        if (!thing_model.nil?) # if we found something, tell the channel
-          channel.message("#{Colors.gray}[#{Colors.reset}#{thing_subject_string}#{Colors.gray}]#{Colors.reset} #{thing_model.explanation}")
-          LOGGER.debug("thing (autojoin) expained #{thing_subject_string} = #{thing_model.explanation} to #{channel.name}.")
+
+        if (thing_model.nil?)
+          return
         end
+
+        print_autojoin_to_channel(channel, thing_model)
       rescue Exception => ex
         LOGGER.error("#{self.class} error on join of #{nick.uhost} to #{channel.name}: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|

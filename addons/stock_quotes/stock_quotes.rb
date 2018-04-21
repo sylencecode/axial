@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/color'
 require 'axial/api/iextrading/v1_0/stock/batch'
 require 'axial/api/crypto_compare/data'
 
@@ -59,29 +60,25 @@ module Axial
 
         if (results.any?)
           results.each do |result|
-            type_string       = "#{Colors.blue}#{type_string.center(type_string_length)}#{Colors.reset}"
+            type_string       = Color.blue(type_string.center(type_string_length))
             quote_color, change = colorify_result(result)
             if (batch)
-              symbol          = "#{Colors.cyan}#{get_symbol_name(result.symbol).ljust(symbol_length)}#{Colors.reset}"
+              symbol          = get_symbol_name(result.symbol).ljust(symbol_length)
             else
-              company_symbol  = "#{result.company_name} (#{result.symbol})"
-              symbol          = "#{Colors.cyan}#{company_symbol.ljust(company_symbol_length)}#{Colors.reset}"
+              company_symbol  = result.company_name + "(#{result.symbol})"
+              symbol          = company_symbol.ljust(company_symbol_length)
             end
 
             latest_price    = "$ #{format('%.2f', result.latest_price.to_f.round(2).to_s).rjust(latest_price_length)}"
             low             = "$ #{format('%.2f',          result.low.to_f.round(2).to_s).rjust(low_length)}"
             high            = "$ #{format('%.2f',         result.high.to_f.round(2).to_s).rjust(high_length)}"
 
-            msg  = "#{Colors.gray}[ #{type_string} #{Colors.gray}]#{Colors.reset} "
-            msg += symbol.center(symbol_length)
-            msg += " #{Colors.gray}|#{quote_color} "
-            msg += latest_price
-            msg += " #{Colors.gray}|#{quote_color} "
-            msg += change.rjust(change_length)
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "low: #{low}"
-            msg += " #{Colors.gray}|#{Colors.reset} "
-            msg += "high: #{high}"
+            msg  = Color.gray('[ ') + type_string + Color.gray(' ] ')
+            msg += Color.cyan(symbol.center(symbol_length))
+            msg += Color.gray(' | ') + quote_color + latest_price
+            msg += Color.gray(' | ') + quote_color + " #{change.rjust(change_length)}"
+            msg += Color.gray(' | ') + 'low: ' + low
+            msg += Color.gray(' | ') + 'high: ' + high
             channel.message(msg)
           end
         else
@@ -123,13 +120,13 @@ module Axial
       def colorify_result(result)
         change_pct = get_percent_string(result.change, result.latest_price)
         if (result.change.negative?)
-          quote_color   = Colors.red
+          quote_color   = Color.red
           change_character = "\u2193 "
         elsif (result.change.zero?)
           change_character = ''
-          quote_color   = Colors.reset
+          quote_color   = Color.reset
         else
-          quote_color   = Colors.green
+          quote_color   = Color.green
           change_character = "\u2191 "
         end
         change_string = "#{change_character}#{format('%.2f', result.change.to_f.round(2).to_s).gsub(/^-/, '')} (#{change_pct})"

@@ -2,12 +2,12 @@ require 'securerandom'
 require 'yaml'
 require 'axial/addon'
 require 'axial/cert_utils'
+require 'axial/color'
 require 'axial/role'
+require 'axial/timespan'
 require 'axial/axnet/socket_handler'
 require 'axial/axnet/user'
 require 'axial/axnet/system_info'
-require 'axial/colors'
-require 'axial/timespan'
 
 module Axial
   module Addons
@@ -78,7 +78,7 @@ module Axial
       end
 
       def announce_bot(handler)
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkgreen}-#{Colors.green}> #{handler.remote_cn}#{Colors.reset} connected to axnet.", :director)
+        dcc_broadcast(Color.green_arrow + handler.remote_cn + ' connected to axnet.', :director)
       end
 
       def update_bot_system_info(handler, command)
@@ -114,7 +114,7 @@ module Axial
         end
 
         LOGGER.info("received orders to join #{channel_name} from #{user.pretty_name}")
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
+        dcc_broadcast(Color.red_arrow + "#{user.pretty_name_with_color} issued orders to join #{channel_name}.", :director)
         server.trying_to_join[channel_name.downcase] = password
         server.join_channel(channel_name.downcase, password)
         @bot.add_channel(channel_name.downcase, password)
@@ -140,7 +140,7 @@ module Axial
         end
 
         LOGGER.info("received orders to part #{channel_name} from #{user.pretty_name}")
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
+        dcc_broadcast(Color.red_arrow + "#{user.pretty_name_with_color} issued orders to part #{channel_name}.", :director)
 
         server.trying_to_join.delete(channel_name.downcase)
         @bot.delete_channel(channel_name.downcase)
@@ -178,7 +178,7 @@ module Axial
         end
 
         LOGGER.info("received orders to flood #{channel_name} from #{user.pretty_name}")
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
+        dcc_broadcast(Color.red_arrow + "#{user.pretty_name_with_color} issued orders to flood #{channel_name}.", :director)
         axnet.send("LOREM #{channel_name} #{repeats}")
         repeats.times do
           channel.message('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
@@ -227,25 +227,25 @@ module Axial
       end
 
       def print_bot_header(dcc, bot_name, max_bot_name_length)
-        header        = ".---- --- --- -#{Colors.gray}--#{Colors.darkblue}--#{Colors.blue}["
-        header       += " #{Colors.cyan} #{bot_name.center(max_bot_name_length)} "
-        header       += "#{Colors.blue}]#{Colors.darkblue}--#{Colors.gray}--#{Colors.reset}"
+        header        = ".---- --- --- -#{Color.gray}--#{Color.darkblue}--#{Color.blue}["
+        header       += "#{Color.cyan}  #{bot_name.center(max_bot_name_length)} "
+        header       += "#{Color.blue}]#{Color.darkblue}--#{Color.gray}--#{Color.reset}"
         dcc.message(header)
       end
 
       def print_addon_list(dcc, addons)
         if (addons.empty?)
-          dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: none")
+          dcc.message(Color.gray('|') + '    loaded addons: none')
           return
         end
 
         remaining_chunks = get_addon_chunks(addons)
 
         first_chunk = remaining_chunks.shift
-        dcc.message("#{Colors.gray}|#{Colors.reset}    loaded addons: #{first_chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+        dcc.message(Color.gray('|') + "    loaded addons: #{first_chunk.join(Color.gray(' | '))}")
 
         remaining_chunks.each do |chunk|
-          dcc.message("#{Colors.gray}|#{Colors.reset}                   #{chunk.join("#{Colors.gray} | #{Colors.reset}")}")
+          dcc.message(Color.gray('|') + "                   #{chunk.join(Color.gray(' | '))}")
         end
       end
 
@@ -255,24 +255,25 @@ module Axial
           return
         end
 
-        running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
-        dcc.message("#{Colors.gray}|#{Colors.reset}            uhost: #{system_info.uhost}")
-        dcc.message("#{Colors.gray}|#{Colors.reset}     connected to: #{system_info.server_info}")
-        dcc.message("#{Colors.gray}|#{Colors.reset} operating system: #{system_info.os}")
-        dcc.message("#{Colors.gray}|#{Colors.reset}           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
-        dcc.message("#{Colors.gray}|#{Colors.reset}       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
-        dcc.message("#{Colors.gray}|#{Colors.reset}           memory: #{system_info.mem_total}mb (#{system_info.mem_free}mb free)")
-        dcc.message("#{Colors.gray}|#{Colors.reset}      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
+        running_since = system_info.startup_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')
+        dcc.message(Color.gray('|') + "            uhost: #{system_info.uhost}")
+        dcc.message(Color.gray('|') + "     connected to: #{system_info.server_info}")
+        dcc.message(Color.gray('|') + " operating system: #{system_info.os}")
+        dcc.message(Color.gray('|') + "           kernel: #{system_info.kernel_name} #{system_info.kernel_release} (#{system_info.kernel_machine})")
+        dcc.message(Color.gray('|') + "       processors: #{system_info.cpu_logical_processors} x #{system_info.cpu_model} (#{system_info.cpu_mhz}mhz)")
+        dcc.message(Color.gray('|') + "           memory: #{system_info.mem_total}mb (#{system_info.mem_free}mb free)")
+        dcc.message(Color.gray('|') + "      interpreter: ruby version #{system_info.ruby_version}p#{system_info.ruby_patch_level} (#{system_info.ruby_platform})")
 
         if (system_info.latest_commit.nil?)
           commit_string = 'unknown'
         else
           gc = system_info.latest_commit
-          commit_string = "#{gc.message} #{Colors.gray}|#{Colors.reset} #{gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')} #{Colors.gray}|#{Colors.reset} #{gc.author.name} #{Colors.gray}<#{Colors.reset}#{gc.author.email}#{Colors.gray}> |#{Colors.reset} #{gc.sha[0..11]}"
+          commit_string  = gc.message + Color.gray(' | ') + gc.date.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')
+          commit_string += Color.gray(' | ') + gc.author.name + Color.gray(' <') + gc.author.email + Color.gray('> | ')  + gc.sha[0..11]
         end
-        dcc.message("#{Colors.gray}|#{Colors.reset}    latest commit: #{commit_string}")
+        dcc.message(Color.gray('|') + "    latest commit: #{commit_string}")
 
-        dcc.message("#{Colors.gray}|#{Colors.reset}    running since: #{running_since} [#{TimeSpan.new(Time.now, system_info.startup_time).short_to_s}]")
+        dcc.message(Color.gray('|') + "    running since: #{running_since} [#{TimeSpan.new(Time.now, system_info.startup_time).short_to_s}]")
       end
 
       def print_full_bot_status(dcc, bot_name, max_bot_name_length, system_info)
@@ -292,9 +293,9 @@ module Axial
       end
 
       def print_brief_bot_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
-        msg  = "#{bot_name.ljust(max_bot_name_length)} #{Colors.gray}|#{Colors.reset} "
-        msg += "#{system_info.server_info.ljust(max_server_info_length)} #{Colors.gray}|#{Colors.reset} "
-        msg += "#{system_info.uhost} #{Colors.gray}|#{Colors.reset} addons: #{system_info.addons.count}"
+        msg  = bot_name.ljust(max_bot_name_length) + Color.gray(' | ')
+        msg += system_info.server_info.ljust(max_server_info_length) + Color.gray(' | ')
+        msg += system_info.uhost + Color.gray(' | ') + "addons: #{system_info.addons.count}"
 
         dcc.message(msg)
       end
@@ -348,13 +349,13 @@ module Axial
           bot_name          = handler.remote_cn
           system_info       = handler.system_info
 
-          connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)')
+          connected_since   = handler.established_time.getlocal.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')
           if (brief)
             print_brief_bot_status(dcc, bot_name, max_bot_name_length, system_info, max_server_info_length)
           else
             print_full_bot_status(dcc, bot_name, max_bot_name_length, system_info)
-            dcc.message("#{Colors.gray}|#{Colors.reset}  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
-            dcc.message("#{Colors.gray}|#{Colors.reset}        axnet lag: #{system_info.lag} seconds")
+            dcc.message(Color.gray('|') + "  connected since: #{connected_since} [#{TimeSpan.new(Time.now, handler.established_time).short_to_s}] (from #{handler.remote_address})")
+            dcc.message(Color.gray('|') + "        axnet lag: #{system_info.lag} seconds")
             print_addon_list(dcc, system_info.addons)
           end
         end
@@ -376,7 +377,7 @@ module Axial
           bot_list.delete(handler.remote_cn)
         end
 
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkred}-#{Colors.red}> #{handler.remote_cn}#{Colors.reset} disconnected from axnet.", :director)
+        dcc_broadcast(Color.red_arrow_reverse + Color.red(handler.remote_cn) + ' disconnected from axnet.', :director)
       end
 
       def rescue_orphan(handler)
@@ -443,7 +444,7 @@ module Axial
 
       def axnet_die(dcc)
         LOGGER.warn("received AXNET DIE command from #{dcc.user.pretty_name} - exiting in 5 seconds...")
-        dcc_broadcast("#{Colors.gray}*#{Colors.darkred}*#{Colors.red}* #{dcc.user.pretty_name_with_color} issued an axnet death sentence! #{Colors.red}*#{Colors.darkred}*#{Colors.gray}*", :director)
+        dcc_broadcast(Color.gray('*') + Color.darkred('*') + Color.red('* ') + "#{dcc.user.pretty_name_with_color} issued an axnet death sentence!" + Color.red(' *') + Color.darkred('*') + Color.gray('*'), :director)
         axnet.send('DIE')
         sleep 5
         server.send_raw("QUIT :Killed by #{dcc.user.pretty_name}.")
@@ -503,8 +504,9 @@ module Axial
       end
 
       def reload_axnet(dcc)
-        dcc.message("#{dcc.user.pretty_name} issuing orders to axnet nodes to update and reload the axial codebase.")
-        dcc_broadcast("#{Colors.gray}-#{Colors.darkblue}-#{Colors.blue}> #{dcc.user.pretty_name_with_color} issued an axnet reload request.", :director)
+        msg  = Color.blue_arrow + dcc.user.pretty_name_with_color
+        msg += ' issued an axnet reload request.'
+        dcc_broadcast(msg, :director)
         axnet.send('RELOAD_AXNET')
         @bot.git_pull
         @bot.reload_axnet

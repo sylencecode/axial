@@ -43,7 +43,7 @@ module Axial
       def output_article(channel, nick, article)
         if (article.found)
           link = URIUtils.shorten(article.url)
-          msg =  "#{Colors.gray}[#{Colors.red}wikipedia#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
+          msg = Color.red_prefix('wikipedia', nick.name)
           msg += article.irc_extract
           msg += " #{Colors.gray}|#{Colors.reset} "
           msg += link.to_s

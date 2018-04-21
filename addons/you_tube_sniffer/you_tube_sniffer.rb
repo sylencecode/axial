@@ -1,4 +1,5 @@
 require 'axial/addon'
+require 'axial/color'
 require 'axial/api/you_tube/v3'
 require 'axial/uri_utils'
 
@@ -72,15 +73,11 @@ module Axial
 
       def send_youtube_to_channel(channel, nick, video, video_url) # rubocop:disable Metrics/AbcSize
         link = URIUtils.shorten(video_url)
-        msg  = "#{Colors.gray}[#{Colors.red}youtube#{Colors.reset} #{Colors.gray}::#{Colors.reset} #{Colors.darkred}#{nick.name}#{Colors.gray}]#{Colors.reset} "
-        msg += video.title
-        msg += " #{Colors.gray}|#{Colors.reset} "
-        msg += video.duration.short_to_s
-        msg += " #{Colors.gray}|#{Colors.reset} "
-        msg += "#{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views"
-        msg += " #{Colors.gray}|#{Colors.reset} "
-        msg += video.irc_description
-        msg += " #{Colors.gray}|#{Colors.reset} "
+        msg  = Color.red_prefix('youtube', nick.name)
+        msg += video.title + Color.gray(' | ')
+        msg += video.duration.short_to_s + Color.gray(' | ')
+        msg += video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse + ' views' + Color.gray(' | ')
+        msg += video.irc_description + Color.gray(' | ')
         msg += link.to_s
         channel.message(msg)
       end
