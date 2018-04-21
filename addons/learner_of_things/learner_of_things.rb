@@ -56,7 +56,7 @@ module Axial
         end
       end
 
-      def parse_learn_thing(channel, nick, command)
+      def parse_thing(channel, nick, command)
         thing_hash = {}
         thing = nil
         explanation = nil
@@ -69,18 +69,17 @@ module Axial
 
         if (thing.nil? || explanation.nil?)
           channel.message("#{nick.name}: usage: #{command.command} <thing> = <explanation>")
-          return
+          return thing_hash
         end
 
         if (thing.length > 64)
           channel.message("#{nick.name}: your thing name is too long (<= 64 characters).")
-          return
         elsif (explanation.length > 255)
           channel.message("#{nick.name}: your thing explanation is too long (<= 255 characters).")
-          return
         else
           thing_hash = { thing: thing, explanation: explanation }
         end
+
         return thing_hash
       end
 
