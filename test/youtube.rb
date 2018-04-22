@@ -16,5 +16,5 @@ api = YouTube::API::VideoV3.new
 ids.each do |id|
   video = api.get_video(id)
   puts video.json
-  puts "#{video.title} | #{video.duration} | #{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views | #{video.irc_description}"
+  puts "#{video.title} | #{video.duration} | #{video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse} views | #{video.description}"
 end

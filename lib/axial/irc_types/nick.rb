@@ -17,27 +17,23 @@ module Axial
         @opped_channels       = []
       end
 
-      def set_opped(channel, toggle_value)
-        if (toggle_value)
+      def set_opped(channel, opped)
+        if (opped)
           if (!opped_on?(channel))
             @opped_channels.push(channel)
           end
-        else
-          if (opped_on?(channel))
-            @opped_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
-          end
+        elsif (opped_on?(channel))
+          @opped_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
         end
       end
 
-      def set_voiced(channel, toggle_value)
-        if (toggle_value)
+      def set_voiced(channel, voiced)
+        if (voiced)
           if (!voiced_on?(channel))
             @voiced_channels.push(channel)
           end
-        else
-          if (voiced_on?(channel))
-            @voiced_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
-          end
+        elsif (voiced_on?(channel))
+          @voiced_channels.delete_if { |tmp_channel| tmp_channel.name.casecmp(channel.name).zero? }
         end
       end
 
@@ -54,17 +50,19 @@ module Axial
       def uhost()
         if (@name.empty? || @ident.empty? || @host.empty?)
           return ''
-        else
-          return "#{@name}!#{@ident}@#{@host}"
         end
+
+        return "#{@name}!#{@ident}@#{@host}"
       end
 
       def uhost=(new_uhost)
-        if (new_uhost =~ /^(\S+)!(\S+)@(\S+)/)
-          @name = Regexp.last_match[1]
-          @ident = Regexp.last_match[2]
-          @host = Regexp.last_match[3]
+        if (new_uhost !~ /^(\S+)!(\S+)@(\S+)/)
+          return
         end
+
+        @name = Regexp.last_match[1]
+        @ident = Regexp.last_match[2]
+        @host = Regexp.last_match[3]
       end
 
       def message(text)
@@ -84,16 +82,16 @@ module Axial
       end
 
       def self.from_uhost(server_interface, uhost)
-        if (uhost =~ /^(\S+)!(\S+)@(\S+)$/)
-          name, ident, host = Regexp.last_match.captures
-          nick = new(server_interface)
-          nick.name = name
-          nick.ident = ident
-          nick.host = host
-          return nick
-        else
+        if (uhost !~ /^(\S+)!(\S+)@(\S+)$/)
           return nil
         end
+
+        name, ident, host = Regexp.last_match.captures
+        nick = new(server_interface)
+        nick.name = name
+        nick.ident = ident
+        nick.host = host
+        return nick
       end
     end
   end

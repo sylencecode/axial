@@ -16,7 +16,7 @@ module Axial
         @channel_list           = IRCTypes::ChannelList.new(self)
         @myself                 = IRCTypes::Nick.new(self)
         @trying_to_join         = {}
-        @ctcp_throttle          = 2
+        @ctcp_throttle          = 5
         @last_ctcp              = Time.now - @ctcp_throttle
         @max_modes              = 4
         @max_nick_length        = 9
@@ -67,12 +67,10 @@ module Axial
           mode.to_string_array.each do |mode_string|
             @bot.connection_handler.send_raw("MODE #{channel_name} #{mode_string}")
           end
+        elsif (mode.empty?)
+          @bot.connection_handler.send_raw("MODE #{channel_name}")
         else
-          if (mode.empty?)
-            @bot.connection_handler.send_raw("MODE #{channel_name}")
-          else
-            @bot.connection_handler.send_raw("MODE #{channel_name} #{mode}")
-          end
+          @bot.connection_handler.send_raw("MODE #{channel_name} #{mode}")
         end
       end
 
@@ -110,13 +108,15 @@ module Axial
       end
 
       def send_ctcp_reply(dest, ctcp_command, ctcp_args = '')
-        if (@last_ctcp + @ctcp_throttle <= Time.now)
-          @last_ctcp = Time.now
-          if (ctcp_args.empty?)
-            @bot.connection_handler.send_raw("NOTICE #{dest.name} :\x01#{ctcp_command}\x01")
-          else
-            @bot.connection_handler.send_raw("NOTICE #{dest.name} :\x01#{ctcp_command} #{ctcp_args}\x01")
-          end
+        if (@last_ctcp + @ctcp_throttle > Time.now)
+          return
+        end
+
+        @last_ctcp = Time.now
+        if (ctcp_args.empty?)
+          @bot.connection_handler.send_raw("NOTICE #{dest.name} :\x01#{ctcp_command}\x01")
+        else
+          @bot.connection_handler.send_raw("NOTICE #{dest.name} :\x01#{ctcp_command} #{ctcp_args}\x01")
         end
       end
 
@@ -162,21 +162,23 @@ module Axial
       end
 
       def nick_in_use(nick_name, type = :in_use)
-        if (!@bot.connection_handler.regaining_nick)
-          if (type == :erroneous)
-            LOGGER.warn("nick #{nick_name} is invalid. tryin  g a permutation.")
-          else
-            LOGGER.warn("nick #{nick_name} already in use. trying a permutation.")
-          end
+        if (@bot.connection_handler.regaining_nick)
+          return
+        end
 
-          sleep 1
-          @nick_shuffle_attempts += 1
-          if (@nick_shuffle_attempts < @bot.trying_nick.length)
-            @bot.trying_nick = rotate_nick_characters(nick_name)
-            @bot.connection_handler.try_nick
-          else
-            LOGGER.warn('unable to secure a valid nickname on the server. giving up.')
-          end
+        if (type == :erroneous)
+          LOGGER.warn("nick #{nick_name} is invalid. trying a permutation.")
+        else
+          LOGGER.warn("nick #{nick_name} already in use. trying a permutation.")
+        end
+
+        sleep 1
+        @nick_shuffle_attempts += 1
+        if (@nick_shuffle_attempts < @bot.trying_nick.length)
+          @bot.trying_nick = rotate_nick_characters(nick_name)
+          @bot.connection_handler.try_nick
+        else
+          LOGGER.warn('unable to secure a valid nickname on the server. giving up.')
         end
       end
     end

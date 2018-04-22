@@ -1,6 +1,8 @@
 class AddonError < StandardError
 end
 
+# rubocop:disable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/AbcSize
+
 module Axial
   # parent class for new addons
   class Addon
@@ -62,9 +64,11 @@ module Axial
 
     def throttle(seconds)
       @throttle_secs = seconds
-      if (@last.nil?)
-        @last = Time.now - @throttle_secs
+      if (!@last.nil?)
+        return
       end
+
+      @last = Time.now - @throttle_secs
     end
 
     def on_nick_change(*args)
@@ -480,9 +484,9 @@ module Axial
 
       if (args.empty?)
         raise(AddonError, "#{self.class}.on_dcc called without a callback method")
-      else
-        method = args.shift
       end
+
+      method = args.shift
 
       if (command.is_a?(Regexp))
         if (args.any?)
@@ -660,9 +664,9 @@ module Axial
 
       if (args.empty?)
         raise(AddonError, "#{self.class}.on_privmsg called without a callback method")
-      else
-        method = args.shift
       end
+
+      method = args.shift
 
       if (command.is_a?(Regexp))
         if (args.any?)
@@ -728,9 +732,13 @@ module Axial
     end
 
     def dcc_access_denied(source)
-      if (source.is_a?(IRCTypes::DCC))
-        source.message(Constants::ACCESS_DENIED)
+      if (!source.is_a?(IRCTypes::DCC))
+        return
       end
+
+      source.message(Constants::ACCESS_DENIED)
     end
   end
 end
+
+# rubocop:enable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/AbcSize

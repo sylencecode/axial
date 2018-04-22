@@ -15,17 +15,7 @@ module Axial
         @server_interface = @bot.server_interface
       end
 
-      def handle_who_list_entry(nick_name, uhost, channel_name, mode)
-        if (nick_name.casecmp(@bot.real_nick).zero?)
-          @server_interface.myself.uhost = uhost
-        end
-
-        channel = @server_interface.channel_list.get(channel_name)
-        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
-        if (nick.nil?)
-          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
-        end
-
+      def add_nick_to_channel(channel, nick, mode) # rubocop:disable Metrics/PerceivedComplexity
         if (mode.include?('@'))
           if (nick == @server_interface.myself)
             channel.opped = true
@@ -43,6 +33,21 @@ module Axial
         else
           channel.nick_list.add(nick)
         end
+      end
+      private :add_nick_to_channel
+
+      def handle_who_list_entry(nick_name, uhost, channel_name, mode)
+        if (nick_name.casecmp(@bot.real_nick).zero?)
+          @server_interface.myself.uhost = uhost
+        end
+
+        channel = @server_interface.channel_list.get(channel_name)
+        nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
+        if (nick.nil?)
+          nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
+        end
+
+        add_nick_to_channel(channel, nick, mode)
         @bot.bind_handler.dispatch_who_list_entry_binds(channel, nick)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -103,8 +108,10 @@ module Axial
 
         channel = @server_interface.channel_list.get_silent(channel_name)
         if (channel.nil?)
-          @bot.bind_handler.dispatch_invited_to_channel_binds(nick, channel_name)
+          return
         end
+
+        @bot.bind_handler.dispatch_invited_to_channel_binds(nick, channel_name)
       end
 
       def handle_channel_keyword(channel_name)
@@ -138,11 +145,7 @@ module Axial
 
       def dispatch_quit(uhost, reason)
         nick = IRCTypes::Nick.from_uhost(@bot.server_interface, uhost)
-        if (reason.nil?)
-          reason = ''
-        else
-          reason = reason.strip
-        end
+        reason = (reason.nil?) ? '' : reason.strip
 
         if (nick == @server_interface.myself)
           handle_self_quit(reason)
@@ -201,12 +204,10 @@ module Axial
 
         if (kicked_nick == @server_interface.myself)
           handle_self_kick(channel, kicker_nick, reason)
+        elsif (uhost == @server_interface.myself.uhost)
+          handle_kick(channel, @server_interface.myself, kicked_nick, reason)
         else
-          if (uhost == @server_interface.myself.uhost)
-            handle_kick(channel, @server_interface.myself, kicked_nick, reason)
-          else
-            handle_kick(channel, kicker_nick, kicked_nick, reason)
-          end
+          handle_kick(channel, kicker_nick, kicked_nick, reason)
         end
       end
 
@@ -226,11 +227,7 @@ module Axial
         channel = @server_interface.channel_list.get(channel_name)
         nick_name = uhost.split('!').first
 
-        if (reason.nil?)
-          reason = ''
-        else
-          reason = reason.strip
-        end
+        reason = (reason.nil?) ? '' : reason.strip
 
         if (uhost == @server_interface.myself.uhost)
           handle_self_part(channel_name, reason)
@@ -280,7 +277,7 @@ module Axial
         end
       end
 
-      def dispatch_join(uhost, channel_name)
+      def dispatch_join(uhost, channel_name) # rubocop:disable Metrics/AbcSize
         nick_name = uhost.split('!').first
         if (nick_name.casecmp(@bot.real_nick).zero?)
           @server_interface.myself.uhost = uhost
@@ -333,14 +330,20 @@ module Axial
         end
       end
 
-      def dispatch_mode(uhost, channel_name, mode_string)
+      def create_fake_nick(nick_name, uhost = '')
+        fake_server_nick = IRCTypes::Nick.new(nil)
+        fake_server_nick.name = 'server'
+        fake_server_nick.ident = 'server'
+        fake_server_nick.host = uhost
+        return fake_server_nick
+      end
+      private :create_fake_nick
+
+      def dispatch_mode(uhost, channel_name, mode_string) # rubocop:disable Metrics/AbcSize
         channel = @server_interface.channel_list.get(channel_name)
         if (uhost == @bot.server.real_address || !uhost.include?('!'))
           LOGGER.debug("server #{uhost} set #{channel_name} mode: #{mode_string}")
-          fake_server_nick = IRCTypes::Nick.new(nil)
-          fake_server_nick.name = "server"
-          fake_server_nick.ident = "server"
-          fake_server_nick.host = "#{uhost}"
+          fake_server_nick = create_fake_nick('server', uhost)
           handle_mode(fake_server_nick, channel, mode_string)
         else
           if (uhost == @server_interface.myself.uhost)
@@ -358,6 +361,95 @@ module Axial
         end
       end
 
+      def find_ops(channel, mode) # rubocop:disable Metrics/PerceivedComplexity
+        if (mode.ops.empty? || !channel.synced?)
+          return
+        end
+
+        mode.ops.each do |nick_name|
+          if (nick_name == @server_interface.myself.name)
+            if (channel.voiced?)
+              channel.voiced = false
+            end
+            channel.opped = true
+          else
+            subject_nick = channel.nick_list.get(nick_name)
+            if (subject_nick.voiced_on?(channel))
+              subject_nick.set_voiced(channel, false)
+            end
+            subject_nick.set_opped(channel, true)
+          end
+        end
+      end
+      private :find_ops
+
+      def find_deops(channel, mode)
+        if (mode.deops.empty? || !channel.synced?)
+          return
+        end
+
+        mode.deops.each do |nick_name|
+          if (nick_name == @server_interface.myself.name)
+            channel.opped = false
+          else
+            subject_nick = channel.nick_list.get(nick_name)
+            subject_nick.set_opped(channel, false)
+          end
+        end
+      end
+      private :find_deops
+
+      def find_voices(channel, mode)
+        if (mode.voices.empty? || !channel.synced?)
+          return
+        end
+
+        mode.voices.each do |nick_name|
+          if (nick_name == @server_interface.myself.name)
+            channel.voiced = true
+          else
+            subject_nick = channel.nick_list.get(nick_name)
+            subject_nick.set_voiced(channel, true)
+          end
+        end
+      end
+
+      def find_devoices(channel, mode)
+        if (mode.devoices.empty? || !channel.synced?)
+          return
+        end
+
+        mode.devoices.each do |nick_name|
+          if (nick_name == @server_interface.myself.name)
+            channel.voiced = false
+          elsif (channel.synced?)
+            subject_nick = channel.nick_list.get(nick_name)
+            subject_nick.set_voiced(channel, false)
+          end
+        end
+      end
+
+      def find_bans(channel, mode)
+        if (mode.bans.empty? || !channel.ban_list.synced?)
+          return
+        end
+
+        mode.bans.each do |mask|
+          ban = IRCTypes::ChannelBan.new(mask, nick.uhost, Time.now)
+          channel.ban_list.add(ban)
+        end
+      end
+
+      def find_unbans(channel, mode)
+        if (mode.unbans.empty? || !channel.ban_list.synced?)
+          return
+        end
+
+        mode.unbans.each do |mask|
+          channel.ban_list.remove(mask)
+        end
+      end
+
       def handle_mode(nick, channel, raw_mode_string)
         channel.mode.merge_string(raw_mode_string)
 
@@ -365,84 +457,14 @@ module Axial
         mode_string = raw_mode_string.strip
         mode.parse_string(mode_string)
 
-        if (mode.ops.any? && channel.synced?)
-          mode.ops.each do |nick_name|
-            if (nick_name == @server_interface.myself.name)
-              if (channel.voiced?)
-                channel.voiced = false
-              end
-              channel.opped = true
-            else
-              if (channel.synced?)
-                subject_nick = channel.nick_list.get(nick_name)
-                if (subject_nick.voiced_on?(channel))
-                  subject_nick.set_voiced(channel, false)
-                end
-                subject_nick.set_opped(channel, true)
-              end
-            end
-          end
-        end
+        find_ops(channel, mode)
+        find_deops(channel, mode)
 
-        if (mode.deops.any? && channel.synced?)
-          mode.deops.each do |nick_name|
-            if (nick_name == @server_interface.myself.name)
-              channel.opped = false
-            else
-              if (channel.synced?)
-                subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.set_opped(channel, false)
-              end
-            end
-          end
-        end
+        find_voices(channel, mode)
+        find_devoices(channel, mode)
 
-        if (mode.voices.any? && channel.synced?)
-          mode.voices.each do |nick_name|
-            if (nick_name == @server_interface.myself.name)
-              channel.voiced = true
-            else
-              if (channel.synced?)
-                subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.set_voiced(channel, true)
-              end
-            end
-          end
-        end
-
-        if (mode.devoices.any? && channel.synced?)
-          mode.devoices.each do |nick_name|
-            if (nick_name == @server_interface.myself.name)
-              channel.voiced = false
-            else
-              if (channel.synced?)
-                subject_nick = channel.nick_list.get(nick_name)
-                subject_nick.set_voiced(channel, false)
-              end
-            end
-          end
-        end
-
-        if (mode.unbans.any?)
-          if (channel.ban_list.synced?)
-            mode.unbans.each do |mask|
-              channel.ban_list.remove(mask)
-            end
-          else
-            LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
-          end
-        end
-
-        if (mode.bans.any?)
-          if (channel.ban_list.synced?)
-            mode.bans.each do |mask|
-              ban = IRCTypes::ChannelBan.new(mask, nick.uhost, Time.now)
-              channel.ban_list.add(ban)
-            end
-          else
-            LOGGER.debug("rejected ban on #{channel.name} because it is not synced yet.")
-          end
-        end
+        find_bans(channel, mode)
+        find_unbans(channel, mode)
 
         @bot.bind_handler.dispatch_mode_binds(channel, nick, mode)
       rescue Exception => ex
@@ -503,30 +525,29 @@ module Axial
         end
       end
 
+      def rename_nick_on_channels(old_nick_name, new_nick_name)
+        @server_interface.channel_list.all_channels.each do |channel|
+          if (!channel.synced?)
+            LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
+          elsif (channel.nick_list.include?(old_nick_name))
+            channel.nick_list.rename(old_nick_name, new_nick_name)
+          end
+        end
+      end
+
       def handle_nick_change(uhost, new_nick_name)
         nick = @server_interface.channel_list.get_any_nick_from_uhost(uhost)
-        if (!nick.nil?)
-          old_nick_name = nick.name
-        end
-
         if (nick.nil?)
           LOGGER.error("#{self.class} error: uhost '#{uhost}' changed nick to '#{new_nick_name}' but no previous record exists!")
-        else
-          @server_interface.channel_list.all_channels.each do |channel|
-            if (!channel.synced?)
-              LOGGER.debug("rejected nick change on #{channel.name} because it is not synced yet.")
-            else
-              if (channel.nick_list.include?(old_nick_name))
-                channel.nick_list.rename(old_nick_name, new_nick_name)
-              end
-            end
-          end
-
-          nick.name = new_nick_name
-
-          LOGGER.debug("#{old_nick_name} changed nick to #{new_nick_name}")
-          @bot.bind_handler.dispatch_nick_change_binds(nick, old_nick_name)
+          return
         end
+
+        old_nick_name = nick.name
+        rename_nick_on_channels(old_nick_name, new_nick_name)
+        nick.name = new_nick_name
+
+        LOGGER.debug("#{old_nick_name} changed nick to #{new_nick_name}")
+        @bot.bind_handler.dispatch_nick_change_binds(nick, old_nick_name)
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
         ex.backtrace.each do |i|
@@ -545,30 +566,29 @@ module Axial
         end
       end
 
-      def handle_channel_message(channel, nick, unstripped_text)
-        if (!channel.synced?)
-          LOGGER.debug("rejected channel message because #{channel.name} is not synced yet.")
+      def parse_channel_ctcp(captures)
+        ctcp_command, ctcp_args = captures
+        ctcp_command.delete!("\u0001")
+        ctcp_command.strip!
+        ctcp_args.delete!("\u0001")
+        ctcp_args.strip!
+      end
+      private :parse_channel_ctcp
+
+      def handle_channel_message(channel, nick, text)
+        text = text.strip
+        if (!channel.synced? || text.empty?)
           return
         end
-        text = unstripped_text.strip
 
-        if (text.empty?)
-          return
-        end
-
-        case text
-          when /^\x01ACTION/i
-            handle_channel_emote(channel, nick, text)
-          when /\x01(\S+)(.*)\x01{0,1}/
-            ctcp_command, ctcp_args = Regexp.last_match.captures
-            ctcp_command.delete!("\u0001")
-            ctcp_command.strip!
-            ctcp_args.delete!("\u0001")
-            ctcp_args.strip!
-            @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
-          else
-            LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
-            @bot.bind_handler.dispatch_channel_binds(channel, nick, text)
+        if (text =~ /^\x01ACTION/i)
+          handle_channel_emote(channel, nick, text)
+        elsif (text =~ /\x01(\S+)(.*)\x01{0,1}/)
+          ctcp_command, ctcp_args = parse_channel_ctcp(Regexp.last_match.captures)
+          @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
+        else
+          LOGGER.debug("#{channel.name} <#{nick.name}> #{text}")
+          @bot.bind_handler.dispatch_channel_binds(channel, nick, text)
         end
       rescue Exception => ex
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")

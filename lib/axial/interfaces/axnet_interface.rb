@@ -67,21 +67,25 @@ module Axial
       def relay(handler, text)
         if (@relay_object.nil? || @relay_method.nil?)
           return
-        elsif (!@relay_object.respond_to?(@relay_method))
-          raise(AxnetError, "there are no valid axnet relayers registered - #{@relay_object.class} does not respond to #{@relay_method}")
-        else
-          @relay_object.public_send(@relay_method, handler, text)
         end
+
+        if (!@relay_object.respond_to?(@relay_method))
+          raise(AxnetError, "there are no valid axnet relayers registered - #{@relay_object.class} does not respond to #{@relay_method}")
+        end
+
+        @relay_object.public_send(@relay_method, handler, text)
       end
 
       def send(text)
-        if (!@transmitter_object.nil?)
-          if (@transmitter_object.respond_to?(@transmitter_method))
-            @transmitter_object.public_send(@transmitter_method, text)
-          else
-            raise(AxnetError, 'there are no valid axnet transmitters registered')
-          end
+        if (@transmitter_object.nil?)
+          return
         end
+
+        if (!@transmitter_object.respond_to?(@transmitter_method))
+          raise(AxnetError, 'there are no valid axnet transmitters registered')
+        end
+
+        @transmitter_object.public_send(@transmitter_method, text)
       end
 
       def clear_queue()

@@ -33,7 +33,7 @@ module Axial
         on_startup            :start_ingest_timer
         on_reload             :start_ingest_timer
 
-        throttle              2
+        throttle              3
       end
 
       def stop_ingest_timer()

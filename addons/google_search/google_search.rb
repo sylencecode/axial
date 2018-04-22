@@ -29,7 +29,7 @@ module Axial
           return
         end
 
-        query = (query.length >= 80) ? query[0..79] : query
+        query = (query.length <= 80) ? query : query[0..79]
 
         LOGGER.debug("popular searches request from #{nick.uhost}: #{query}")
         phrase_result = API::Google::Complete.search(query)
@@ -57,7 +57,8 @@ module Axial
 
         if (!result.link.empty?)
           begin
-            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+            rating    = API::WebOfTrust::V04::PublicLinkJSON2.get_rating(urls.first)
+            warnings  = rating.warnings
           rescue
             warnings  = []
           end
@@ -77,6 +78,7 @@ module Axial
       def send_result_to_channel(channel, nick, request_type, result, warnings)
         msg = Color.green_prefix(request_type, nick.name)
         msg += result.title + Color.gray(' | ')
+        msg += result.snippet + Color.gray(' | ')
         if (warnings.any?)
           msg += result.link
           msg += Color.gray(' [') + Color.red("potentially #{warnings.join(', ')}") + Color.gray(']')
@@ -102,7 +104,8 @@ module Axial
         result = API::Google::CustomSearch::V1.image_search(query)
         if (!result.link.empty?)
           begin
-            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(result.link)
+            rating    = API::WebOfTrust::V04::PublicLinkJSON2.get_rating(urls.first)
+            warnings  = rating.warnings
           rescue
             warnings  = []
           end

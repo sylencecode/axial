@@ -27,7 +27,7 @@ module Axial
 
         on_join                     :explain_on_join
 
-        throttle                    2
+        throttle                    3
       end
 
       def learn(channel, nick, command)

@@ -23,36 +23,10 @@ module Axial
 
         payload   = "key=#{API::LinkPreview::API_KEY}&q=#{url}"
 
-        response  = RestClient::Request.execute(method: :post, headers: headers, payload: payload, url: rest_endpoint.to_s, verify_ssl: false)
-        json      = JSON.parse(response)
-
-        result    = API::LinkPreviewResult.new
-        if (json.key?('title'))
-          result.title = Nokogiri::HTML(json['title']).text
-        end
-
-        if (json.key?('description'))
-          result.description = Nokogiri::HTML(json['description']).text
-        end
-
-        if (json.key?('image'))
-          result.image = Nokogiri::HTML(json['image']).text
-        end
-
-        if (json.key?('url'))
-          result.url = json['url']
-        end
-
-        if (result.title.empty?)
-          result.title = '<untitled>'
-        end
-
-        if (result.description.empty?)
-          result.description = '<no description>'
-        end
-
+        json    = RestClient::Request.execute(method: :post, headers: headers, payload: payload, url: rest_endpoint.to_s, verify_ssl: false)
+        result  = API::LinkPreviewResult.from_json(json)
         return result
-      rescue Exception => ex
+      rescue Exception
         return nil
       end
     end

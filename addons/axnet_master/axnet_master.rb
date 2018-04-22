@@ -78,7 +78,7 @@ module Axial
       end
 
       def announce_bot(handler)
-        dcc_broadcast(Color.green_arrow + handler.remote_cn + ' connected to axnet.', :director)
+        dcc_broadcast(Color.green_arrow + Color.green(handler.remote_cn) + ' connected to axnet.', :director)
       end
 
       def update_bot_system_info(handler, command)

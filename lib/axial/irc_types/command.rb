@@ -13,7 +13,7 @@ module Axial
       end
 
       def one_argument()
-        if (@split.any?)
+        if (@split.any?) # rubocop:disable Style/GuardClause
           return @split.first
         else
           return ''

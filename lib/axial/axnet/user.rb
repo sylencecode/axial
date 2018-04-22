@@ -27,7 +27,7 @@ module Axial
         return (!@password.nil? && !@password.empty?)
       end
 
-      def set_password(encrypted_password)
+      def set_password(encrypted_password) # rubocop:disable Naming/AccessorMethodName
         @password = encrypted_password
       end
 

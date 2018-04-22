@@ -47,19 +47,21 @@ module Axial
       end
 
       def get(channel_name)
-        if (@channel_list.key?(channel_name.downcase))
-          channel = @channel_list[channel_name.downcase]
-          return channel
-        else
+        if (!@channel_list.key?(channel_name.downcase))
           raise(ChannelListError, "channel '#{channel_name}' does not exist")
         end
+
+        channel = @channel_list[channel_name.downcase]
+        return channel
       end
 
       def get_silent(channel_name)
         channel = nil
+
         if (@channel_list.key?(channel_name.downcase))
           channel = @channel_list[channel_name.downcase]
         end
+
         return channel
       end
 
@@ -71,11 +73,11 @@ module Axial
           key = channel_or_name.downcase
         end
 
-        if (@channel_list.key?(key))
-          @channel_list.delete(key)
-        else
+        if (!@channel_list.key?(key))
           raise(ChannelListError, "attempted to delete non-existent channel '#{channel_name}")
         end
+
+        @channel_list.delete(key)
       end
 
       def clear()

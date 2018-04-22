@@ -37,10 +37,12 @@ module Axial
         possible_users = []
         Models::User.all.each do |user_model|
           user_model.masks.each do |mask|
-            if (MaskUtils.masks_overlap?(mask.mask, in_mask))
-              if (!possible_users.include?(user_model))
-                possible_users.push(user_model)
-              end
+            if (!MaskUtils.masks_overlap?(mask.mask, in_mask))
+              next
+            end
+
+            if (!possible_users.include?(user_model))
+              possible_users.push(user_model)
             end
           end
         end
@@ -51,10 +53,12 @@ module Axial
         possible_users = []
         Models::User.all.each do |user_model|
           user_model.masks.each do |mask|
-            if (MaskUtils.masks_match?(mask.mask, in_mask))
-              if (!possible_users.include?(user_model))
-                possible_users.push(user_model)
-              end
+            if (!MaskUtils.masks_match?(mask.mask, in_mask))
+              next
+            end
+
+            if (!possible_users.include?(user_model))
+              possible_users.push(user_model)
             end
           end
         end
@@ -64,12 +68,12 @@ module Axial
       def self.get_user_from_mask(in_mask)
         possible_users = get_users_from_mask(in_mask)
         if (possible_users.count > 1)
-          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect { |user| user.pretty_name }.join(', ')}")
+          raise(DuplicateUserError, "mask #{in_mask} returns more than one user: #{possible_users.collect(&:pretty_name).join(', ')}")
         end
         return possible_users.first
       end
 
-      def set_password(plaintext_password)
+      def set_password(plaintext_password) # rubocop:disable Naming/AccessorMethodName
         encrypted_password = BCrypt::Password.create(plaintext_password)
         self.update(password: encrypted_password)
       end

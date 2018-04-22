@@ -4,7 +4,7 @@ require 'axial/irc_types/nick'
 module Axial
   module IRCTypes
     class Mode
-      attr_reader   :bans, :unbans, :ops, :deops, :voices, :devoices
+      attr_reader :ops, :deops, :voices, :devoices
 
       def initialize(max_modes)
         @max_modes            = max_modes || 4
@@ -23,7 +23,7 @@ module Axial
         @devoices             = []
       end
 
-      def channel_modes()
+      def channel_modes() # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         list = []
         list.push(:bans) if (@bans.any?)
         list.push(:unbans) if (@unbans.any?)
@@ -42,11 +42,7 @@ module Axial
       end
 
       def topic_ops_only=(value)
-        if (value)
-          @topic_ops_only = :set
-        else
-          @topic_ops_only = :unset
-        end
+        @topic_ops_only = (value) ? :set : :unset
       end
 
       def topic_ops_only?
@@ -54,11 +50,7 @@ module Axial
       end
 
       def no_outside_messages=(value)
-        if (value)
-          @no_outside_messages = :set
-        else
-          @no_outside_messages = :unset
-        end
+        @no_outside_messages = (value) ? :set : :unset
       end
 
       def no_outside_messages?
@@ -66,11 +58,7 @@ module Axial
       end
 
       def invite_only=(value)
-        if (value)
-          @invite_only = :set
-        else
-          @invite_only = :unset
-        end
+        @invite_only = (value) ? :set : :unset
       end
 
       def invite_only?
@@ -78,11 +66,7 @@ module Axial
       end
 
       def moderated=(value)
-        if (value)
-          @moderated = :set
-        else
-          @moderated = :unset
-        end
+        @moderated = (value) ? :set : :unset
       end
 
       def moderated?
@@ -90,11 +74,7 @@ module Axial
       end
 
       def secret=(value)
-        if (value)
-          @secret = :set
-        else
-          @secret = :unset
-        end
+        @secret = (value) ? :set : :unset
       end
 
       def secret?
@@ -113,7 +93,7 @@ module Axial
         return retval
       end
 
-      def set_keyword(keyword)
+      def set_keyword(keyword) # rubocop:disable Naming/AccessorMethodName
         @keyword = { type: :set, value: keyword }
       end
 
@@ -138,47 +118,27 @@ module Axial
       end
 
       def limit=(limit)
-        if (limit < 1)
-          @limit = { type: :unset, value: '' }
-        else
-          @limit = { type: :set, value: limit }
-        end
+        @limit = (limit < 1) ? { type: :unset, value: '' } : { type: :set, value: limit }
       end
 
       def op(nick_or_name)
-        if (nick_or_name.is_a?(IRCTypes::Nick))
-          nickname = nick_or_name.name
-        else
-          nickname = nick_or_name
-        end
-        @ops.push(nickname)
+        nick_name = (nick_or_name.is_a?(IRCTypes::Nick)) ? nick_or_name.name : nick_or_name
+        @ops.push(nick_name)
       end
 
       def deop(nick_or_name)
-        if (nick_or_name.is_a?(IRCTypes::Nick))
-          nickname = nick_or_name.name
-        else
-          nickname = nick_or_name
-        end
-        @deops.push(nickname)
+        nick_name = (nick_or_name.is_a?(IRCTypes::Nick)) ? nick_or_name.name : nick_or_name
+        @deops.push(nick_name)
       end
 
       def voice(nick_or_name)
-        if (nick_or_name.is_a?(IRCTypes::Nick))
-          nickname = nick_or_name.name
-        else
-          nickname = nick_or_name
-        end
-        @voices.push(nickname)
+        nick_name = (nick_or_name.is_a?(IRCTypes::Nick)) ? nick_or_name.name : nick_or_name
+        @voices.push(nick_name)
       end
 
       def devoice(nick_or_name)
-        if (nick_or_name.is_a?(IRCTypes::Nick))
-          nickname = nick_or_name.name
-        else
-          nickname = nick_or_name
-        end
-        @devoices.push(nickname)
+        nick_name = (nick_or_name.is_a?(IRCTypes::Nick)) ? nick_or_name.name : nick_or_name
+        @devoices.push(nick_name)
       end
 
       def bans()
@@ -186,9 +146,11 @@ module Axial
       end
 
       def ban(mask)
-        if (!@bans.include?(mask))
-          @bans.push(mask)
+        if (@bans.include?(mask))
+          return
         end
+
+        @bans.push(mask)
       end
 
       def unbans()
@@ -199,12 +161,12 @@ module Axial
         @unbans.push(mask)
       end
 
-      def parse_string(raw_mode)
-        if (raw_mode =~ /(\S+)(.*)/)
-          modes_string, values_string = Regexp.last_match.captures
-        else
+      def parse_string(raw_mode) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+        if (raw_mode !~ /(\S+)(.*)/)
           return self
         end
+
+        modes_string, values_string = Regexp.last_match.captures
 
         unsets = []
         sets = []
@@ -245,20 +207,14 @@ module Axial
           end
 
           if (action == :set)
-            if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.any?)
-              unsets.delete_if { |i| i[:mode] == letter && i[:value] == who }
-            else
-              if (sets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
-                sets.push(mode: letter, value: who)
-              end
+            unsets.delete_if { |i| i[:mode] == letter && i[:value] == who }
+            if (sets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
+              sets.push(mode: letter, value: who)
             end
           else
-            if (sets.select { |i| i[:mode] == letter && i[:value] == who }.any?)
-              sets.delete_if { |i| i[:mode] == letter && i[:value] == who }
-            else
-              if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
-                unsets.push(mode: letter, value: who)
-              end
+            sets.delete_if { |i| i[:mode] == letter && i[:value] == who }
+            if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
+              unsets.push(mode: letter, value: who)
             end
           end
         end
@@ -314,12 +270,12 @@ module Axial
         end
       end
 
-      def merge_string(raw_mode)
-        if (raw_mode =~ /(\S+)(.*)/)
-          modes_string, values_string = Regexp.last_match.captures
-        else
+      def merge_string(raw_mode) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+        if (raw_mode !~ /(\S+)(.*)/)
           return self
         end
+
+        modes_string, values_string = Regexp.last_match.captures
 
         unsets = []
         sets = []
@@ -360,20 +316,14 @@ module Axial
           end
 
           if (action == :set)
-            if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.any?)
-              unsets.delete_if { |i| i[:mode] == letter && i[:value] == who }
-            else
-              if (sets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
-                sets.push(mode: letter, value: who)
-              end
+            unsets.delete_if { |i| i[:mode] == letter && i[:value] == who }
+            if (sets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
+              sets.push(mode: letter, value: who)
             end
           else
-            if (sets.select { |i| i[:mode] == letter && i[:value] == who }.any?)
-              sets.delete_if { |i| i[:mode] == letter && i[:value] == who }
-            else
-              if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
-                unsets.push(mode: letter, value: who)
-              end
+            sets.delete_if { |i| i[:mode] == letter && i[:value] == who }
+            if (unsets.select { |i| i[:mode] == letter && i[:value] == who }.empty?)
+              unsets.push(mode: letter, value: who)
             end
           end
         end
@@ -425,14 +375,14 @@ module Axial
         return to_string_array.any?
       end
 
-      def to_string_array()
+      def to_string_array() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         sets = []
         unsets = []
         @bans.each do |value|
-          sets.push({ mode: 'b', value: value })
+          sets.push(mode: 'b', value: value)
         end
         @unbans.each do |value|
-          unsets.push({ mode: 'b', value: value })
+          unsets.push(mode: 'b', value: value)
         end
 
         if (@invite_only == :set)
@@ -509,7 +459,7 @@ module Axial
           mode_string += set[:mode]
           values_string += set[:value].empty? ? '' : "#{set[:value]} "
 
-          if (counter == @max_modes)
+          if (counter < @max_modes) # rubocop:disable Style/Next
             out_string = "#{mode_string.strip}#{values_string.empty? ? '' : ' '}#{values_string.strip}"
             out.push(out_string)
             out_string = ''
@@ -534,7 +484,7 @@ module Axial
           mode_string += unset[:mode]
           values_string += unset[:value].empty? ? '' : "#{unset[:value]} "
 
-          if (counter == @max_modes)
+          if (counter == @max_modes) # rubocop:disable Style/Next
             out_string = "#{mode_string.strip}#{values_string.empty? ? '' : ' '}#{values_string.strip}"
             out.push(out_string)
             out_string = ''

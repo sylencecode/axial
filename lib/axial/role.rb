@@ -40,22 +40,18 @@ module Axial
     def self.from_possible_name(role_name)
       if (!@numerics.key?(role_name.to_sym))
         return nil
-      else
-        return new(role_name)
       end
+
+      return new(role_name)
     end
 
     def initialize(role_name)
       @name       = role_name
-      if (role_name.nil? || role_name == 'bot')
-        @numeric = nil
-      else
-        @numeric  = Role.numerics[role_name.to_sym]
-      end
+      @numeric    = (role_name.nil? || role_name == 'bot') ? nil : Role.numerics[role_name.to_sym]
     end
 
     def ==(other)
-      if (other.is_a?(Symbol))
+      if (other.is_a?(Symbol)) # rubocop:disable Style/GuardClause
         return self.numeric == Role.numerics[other]
       else
         return self.numeric == other.numeric
@@ -63,7 +59,7 @@ module Axial
     end
 
     def <(other)
-      if (other.is_a?(Symbol))
+      if (other.is_a?(Symbol)) # rubocop:disable Style/GuardClause
         return self.numeric < Role.numerics[other]
       else
         return self.numeric < other.numeric
@@ -71,7 +67,7 @@ module Axial
     end
 
     def <=(other)
-      if (other.is_a?(Symbol))
+      if (other.is_a?(Symbol)) # rubocop:disable Style/GuardClause
         return self.numeric <= Role.numerics[other]
       else
         return self.numeric <= other.numeric
@@ -79,7 +75,7 @@ module Axial
     end
 
     def >(other)
-      if (other.is_a?(Symbol))
+      if (other.is_a?(Symbol)) # rubocop:disable Style/GuardClause
         return self.numeric > Role.numerics[other]
       else
         return self.numeric > other.numeric
@@ -87,7 +83,7 @@ module Axial
     end
 
     def >=(other)
-      if (other.is_a?(Symbol))
+      if (other.is_a?(Symbol)) # rubocop:disable Style/GuardClause
         return self.numeric >= Role.numerics[other]
       else
         return self.numeric >= other.numeric
@@ -109,13 +105,15 @@ module Axial
         when 'basic'
           role_color = Color.gray
       end
+
+      return role_color
     end
 
     def name_with_color()
       return "#{self.color}#{@name}#{Color.reset}"
     end
 
-    def plural_name_with_color()
+    def plural_name_with_color() # rubocop:disable Metrics/MethodLength
       case @name
         when 'root'
           role_color = Color.red
@@ -150,10 +148,15 @@ module Axial
       end
     end
 
+    def respond_to_missing?(method, include_private = false)
+      role_methods = %i[root? director? manager? op? friend? basic? bot?]
+      return role_methods.include?(method)
+    end
+
     def method_missing(method, *args, &block)
       case method
         when :root?, :director?, :manager?, :op?, :friend?, :basic?
-          if (self.name == 'bot')
+          if (self.name == 'bot') # rubocop:disable Style/GuardClause
             return false
           else
             return self >= method.to_s.gsub(/\?$/, '').to_sym

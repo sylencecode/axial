@@ -24,24 +24,21 @@ module Axial
           return
         end
         LOGGER.debug("wikipedia request from #{nick.uhost}: #{query}")
-        begin
-          if (query.length > 79)
-            query = query[0..79]
-          end
 
-          article = API::Wikipedia::W.search(query)
-          output_article(channel, nick, article)
-        rescue Exception => ex
-          channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
-          LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-          ex.backtrace.each do |i|
-            LOGGER.error(i)
-          end
+        query = (query.length <= 80) ? query : query[0..79]
+
+        article = API::Wikipedia::W.search(query)
+        output_article(channel, nick, article)
+      rescue Exception => ex
+        channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
         end
       end
 
       def output_article(channel, nick, article)
-        if (article.found)
+        if (article.found?)
           link = URIUtils.shorten(article.url)
           msg = Color.red_prefix('wikipedia', nick.name)
           msg += article.irc_extract

@@ -1,6 +1,8 @@
 require 'axial/irc_types/command'
 require 'axial/irc_types/dcc'
 
+# rubocop:disable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/AbcSize,Metrics/BlockNesting
+# rubocop:disable Metrics/PerceivedComplexity,Metrics/BlockLength
 module Axial
   module Handlers
     class BindHandler
@@ -1174,3 +1176,6 @@ module Axial
     end
   end
 end
+
+# rubocop:enable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/AbcSize,Metrics/BlockNesting
+# rubocop:enable Metrics/PerceivedComplexity,Metrics/BlockLength

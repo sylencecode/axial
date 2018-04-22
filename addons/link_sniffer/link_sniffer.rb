@@ -6,6 +6,7 @@ require 'axial/api/web_of_trust/v0_4/public_link_json2'
 module Axial
   module Addons
     class LinkSniffer < Axial::Addon
+      # rubocop:disable Style/PercentLiteralDelimiters,Style/RegexpLiteral
       def initialize(bot)
         super
 
@@ -19,7 +20,9 @@ module Axial
         @restrict_to_channels = %w[ #lulz ]
 
         on_channel_leftover   %r[https{0,1}://\S+],   :sniff_link
+        on_channel_leftover      %r[www\.\S+\.\S+],   :sniff_link
       end
+      # rubocop:enable Style/PercentLiteralDelimiters,Style/RegexpLiteral
 
       def sniff_link(channel, nick, text)
         if (@restrict_to_channels.any? && !@restrict_to_channels.include?(channel.name.downcase))
@@ -29,7 +32,8 @@ module Axial
         urls = URIUtils.extract(text)
         if (urls.any?)
           begin
-            warnings  = API::WebOfTrust::V0_4::PublicLinkJSON2.get_rating(urls.first)
+            rating    = API::WebOfTrust::V04::PublicLinkJSON2.get_rating(urls.first)
+            warnings  = rating.warnings
           rescue
             warnings  = []
           end
@@ -52,7 +56,7 @@ module Axial
       def send_link_preview_to_channel(channel, nick, warnings, preview)
         msg = Color.green_prefix('link', nick.name)
         msg += preview.title + Color.gray(' | ')
-        msg += preview.short_description + Color.gray(' | ')
+        msg += preview.description + Color.gray(' | ')
         if (warnings.any?) # rubocop:disable Style/ConditionalAssignment
           msg += preview.url + " #{Color.gray}[#{Color.red}potentially #{warnings.join(', ')}#{Color.gray(']')}"
         else

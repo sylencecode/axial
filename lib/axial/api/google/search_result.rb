@@ -6,25 +6,27 @@ module Axial
     module Google
       class SearchResult
         attr_accessor :link, :snippet, :title
-        def initialize()
-          @link     = ''
-          @snippet  = ''
-          @title    = ''
-        end
 
         def self.from_json(json)
-          json_hash             = JSON.parse(json)
-          result                = new
-          result.link           = json_hash.dig('items')&.first&.dig('link') || 'no link found'
+          json_hash         = JSON.parse(json)
+          result            = new
 
-          twitter_description   = json_hash.dig('items')&.first&.dig('pagemap', 'metatags')&.first&.dig('twitter:description')
-          default_snippet       = json_hash.dig('items')&.first&.dig('snippet') || 'no description'
-          long_snippet_html     = twitter_description || default_snippet
-          long_snippet          = URIUtils.strip_html(long_snippet_html)
-          result.snippet        = (long_snippet.length <= 319) ? long_snippet : long_snippet[0..316] + '...'
+          item              = json_hash.dig('items')&.first
+          if (item.nil?)
+            return result
+          end
 
-          page_title            = json_hash.dig('items')&.first&.dig('title') || 'untitled'
-          result.title          = (page_title.length <= 127) ? page_title : page_title[0..127]
+          meta_tags         = item.dig('pagemap', 'metatags')&.first
+
+          long_snippet      = meta_tags&.dig('twitter:description') || item.dig('snippet')
+          snippet           = URIUtils.strip_html(long_snippet)
+          result.snippet    = (snippet.length <= 280) ? snippet : snippet[0..276] + '...'
+
+          long_title        = item.dig('title') || 'untitled'
+          title             = URIUtils.strip_html(long_title)
+          result.title      = (title.length <= 120) ? title : title[0..116] + '...'
+
+          result.link       = item.dig('link') || 'no link found'
 
           return result
         end

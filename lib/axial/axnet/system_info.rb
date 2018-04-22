@@ -10,6 +10,7 @@ module Axial
       attr_accessor :startup_time, :addons, :latest_commit, :server_info, :uhost, :lag
 
       def initialize(data_hash)
+        set_defaults
         @os                       = data_hash[:os]
         @cpu_model                = data_hash[:cpu][:model]
         @cpu_mhz                  = data_hash[:cpu][:mhz]
@@ -19,6 +20,9 @@ module Axial
         @kernel_name              = data_hash[:kernel][:name]
         @kernel_release           = data_hash[:kernel][:release]
         @kernel_machine           = data_hash[:kernel][:machine]
+      end
+
+      def set_defaults()
         @ruby_version             = RUBY_VERSION
         @ruby_patch_level         = RUBY_PATCHLEVEL
         @ruby_platform            = RUBY_PLATFORM
@@ -46,7 +50,7 @@ module Axial
       end
 
       def self.convert_memory_to_mb(memory_string)
-        case memory_string.to_s
+        case memory_string.to_s # rubocop:disable Style/ConditionalAssignment
           when /(\d+)kb/i
             parsed = (Regexp.last_match[1].to_f / 1024).round(0)
           when /(\d+)mb/i
@@ -63,13 +67,9 @@ module Axial
 
       def self.parse_cpu(cpu_hash)
         model_name    = 'unknown'
-        total         = 'unknown'
         mhz           = 'unknown'
-        if (cpu_hash.key?('total'))
-          total       = cpu_hash['total'].to_i
-        else
-          total       = 1
-        end
+        total         = (cpu_hash.key?('total')) ? cpu_hash['total'].to_i : 1
+
         if (cpu_hash.key?('0'))
           mhz         = cpu_hash['0']['mhz'].to_i
           model_name  = cpu_hash['0']['model_name']
@@ -82,7 +82,7 @@ module Axial
       end
 
       def self.get_os_string(ohai_hash)
-        if (ohai_hash.key?('hostnamectl') && ohai_hash['hostnamectl'].key?('operating_system'))
+        if (ohai_hash.key?('hostnamectl') && ohai_hash['hostnamectl'].key?('operating_system')) # rubocop:disable Style/ConditionalAssignment
           os_string = (ohai_hash['hostnamectl']['operating_system']).to_s
         elsif (ohai_hash.key?('hardware') && ohai_hash['hardware'].key?('operating_system'))
           os_string = "#{ohai_hash['hardware']['operating_system']} #{ohai_hash['hardware']['operating_system_version']}"
@@ -94,11 +94,7 @@ module Axial
 
       def self.parse_memory(memory_hash)
         total = convert_memory_to_mb(memory_hash['total'])
-        if (memory_hash.key?('available'))
-          free = convert_memory_to_mb(memory_hash['available'])
-        else
-          free = convert_memory_to_mb(memory_hash['free'])
-        end
+        free = (memory_hash.key?('available')) ? convert_memory_to_mb(memory_hash['available']) : convert_memory_to_mb(memory_hash['free'])
         new_memory_hash = { free: free, total: total }
         return new_memory_hash
       end

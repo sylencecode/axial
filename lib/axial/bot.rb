@@ -47,11 +47,13 @@ module Axial
     end
 
     def check_version()
-      major, minor, release = RUBY_VERSION.split('.').collect(&:to_i)
-      if (major != 2 || minor < 5)
-        puts "#{Constants::AXIAL_NAME} has only been tested on Ruby 2.5."
-        exit 1
+      major, minor, _release = RUBY_VERSION.split('.').collect(&:to_i)
+      if (major == 2 && minor >= 5)
+        return
       end
+
+      puts "#{Constants::AXIAL_NAME} has only been tested on Ruby 2.5."
+      exit! 1
     end
 
     def notify_startup()
@@ -132,15 +134,15 @@ module Axial
       @bind_handler.dispatch_reload_binds
     end
 
-    def load_addons()
+    def load_addons() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/PerceivedComplexity
       if (@addon_list.empty?)
         LOGGER.debug('No addons specified.')
       else
-        @addon_list.each do |addon|
+        @addon_list.each do |addon| # rubocop:disable Metrics/BlockLength
           begin
             load File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', '..')), 'addons', addon.underscore, "#{addon.underscore}.rb")
             addon_object = Object.const_get("Axial::Addons::#{addon}").new(self)
-            @addons.push({ name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object })
+            @addons.push(name: addon_object.name, version: addon_object.version, author: addon_object.author, object: addon_object)
             addon_object.binds.each do |bind|
               if (bind[:type] == :mode)
                 @binds.push(type: bind[:type], object: addon_object, method: bind[:method], modes: bind[:modes], silent: bind[:silent])
@@ -150,12 +152,10 @@ module Axial
                 else
                   @binds.push(type: bind[:type], object: addon_object, text: bind[:text], method: bind[:method], silent: bind[:silent])
                 end
+              elsif (bind.key?(:args) && bind[:args].any?)
+                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
               else
-                if (bind.key?(:args) && bind[:args].any?)
-                  @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], args: bind[:args], silent: bind[:silent])
-                else
-                  @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
-                end
+                @binds.push(type: bind[:type], object: addon_object, command: bind[:command], method: bind[:method], silent: bind[:silent])
               end
             end
           rescue Exception => ex
@@ -184,7 +184,7 @@ module Axial
 
       classes_to_unload.each do |class_name|
         LOGGER.debug("removing class definition for #{class_name}")
-        if (Object.constants.include?(:Axial))
+        if (Object.constants.include?(:Axial)) # rubocop:disable Style/GuardClause,Style/Next
           if (Axial.constants.include?(:Addons))
             if (Axial::Addons.constants.include?(class_name.to_sym))
               Axial::Addons.send(:remove_const, class_name.to_sym)
@@ -201,9 +201,11 @@ module Axial
     end
 
     def git_pull()
-      if (!@git.nil?)
-        @git.pull
+      if (@git.nil?)
+        return
       end
+
+      @git.pull
     end
 
     def auto_join_channels()
@@ -245,7 +247,7 @@ module Axial
     end
     private :save_config
 
-    def load_config()
+    def load_config() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
       @config                     = YAML.load_file(@config_yaml)
       @addon_list                 = @config['addons']                    || []
       @nick                       = @config['bot']['nick']               || 'unnamed'
@@ -255,10 +257,12 @@ module Axial
       @dcc_command_character      = @config['dcc_command_character']     || '.'
       @channel_command_character  = @config['channel_command_character'] || '?'
       @trying_nick                = @config['bot']['nick']               || 'unnamed'
+
       if (!@config.key?('channels') || @config['channels'].empty?)
         @config['channels'] = []
       end
-      if (@config.key?('version_reply') && !@config['version_reply'].empty?)
+
+      if (@config.key?('version_reply') && !@config['version_reply'].empty?) # rubocop:disable Style/ConditionalAssignment
         @custom_ctcp_version_reply = @config['version_reply']
       else
         @custom_ctcp_version_reply = ''
@@ -274,7 +278,7 @@ module Axial
 
     def add_channel(channel_name, password = '')
       @config['channels'].delete_if { |channel_hash| channel_hash['name'].casecmp(channel_name).zero? }
-      @config['channels'].push({ 'name' => channel_name, 'password' => password })
+      @config['channels'].push('name' => channel_name, 'password' => password)
       save_config
     end
 

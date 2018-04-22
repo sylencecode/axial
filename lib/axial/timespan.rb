@@ -11,6 +11,28 @@ module Axial
       return timespan
     end
 
+    def self.from_pt_string(pt_string)
+      timespan = empty
+
+      if (pt_string =~ /^pt(.*)/)
+        raw_duration = Regexp.last_match[1]
+
+        if (raw_duration =~ /(\d+)h/)
+          timespan.hours = Regexp.last_match[1].to_i
+        end
+
+        if (raw_duration =~ /(\d+)m/)
+          timespan.minutes = Regexp.last_match[1].to_i
+        end
+
+        if (raw_duration =~ /(\d+)s/)
+          timespan.seconds = Regexp.last_match[1].to_i
+        end
+      end
+
+      return timespan
+    end
+
     def initialize(left_time, right_time)
       if (left_time > right_time)
         now = left_time
@@ -24,7 +46,6 @@ module Axial
       hour = minute * 60
       day = 24 * hour
 
-      remaining = 0
       @days = total_seconds / day
       remaining = total_seconds % day
       @hours = remaining / hour
@@ -48,27 +69,19 @@ module Axial
       return elapsed
     end
 
-    def approximate_to_s()
+    def approximate_to_s() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # order largest to smallest
       elapsed = ''
       if (@days == 1)
-        if (@hours >= 12)
-          elapsed = 'about 2 days'
-        else
-          elapsed = 'about a day'
-        end
+        elapsed = (@hours >= 12) ? 'about 2 days' : 'about a day'
       elsif (@days > 1)
-        if (@days <= 3)
-          if (@hours >= 12)
-            elapsed = "around #{@days + 1} days"
-          else
-            elapsed = "around #{@days} days"
-          end
+        if (@days <= 3) # rubocop:disable Style/ConditionalAssignment
+          elapsed = (@hours >= 12) ? "about #{@days + 1} days" : "about #{@days} days"
         else
           elapsed = "#{@days} days"
         end
       elsif (@hours == 1)
-        if (@minutes >= 40)
+        if (@minutes >= 40) # rubocop:disable Style/ConditionalAssignment
           elapsed = 'about 2 hours'
         elsif (@minutes > 15)
           elapsed = 'about an hour and a half'
@@ -76,11 +89,7 @@ module Axial
           elapsed = 'about an hour'
         end
       elsif (@hours > 1)
-        if (@minutes > 30)
-          elapsed = "about #{@hours + 1} hours"
-        else
-          elapsed = "about #{@hours} hours"
-        end
+        elapsed = (@minutes > 30) ? "about #{@hours + 1} hours" : "about #{@hours} hours"
       elsif (@minutes >= 45)
         elapsed = 'about an hour'
       elsif (@minutes > 37)

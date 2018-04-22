@@ -32,7 +32,7 @@ module Axial
         on_quit                               :update_seen_quit
         on_kick                               :update_seen_kick
 
-        throttle                              2
+        throttle                              3
       end
 
       def populate_last_spoke(channel, nick)
@@ -43,33 +43,8 @@ module Axial
         end
       end
 
-      def update_last_spoke(channel, nick, text)
-        if (nick.last_spoke.nil?)
-          nick.last_spoke = {}
-        end
-        nick.last_spoke[channel.name] = { time: Time.now, text: text }
-      end
-
-      def seen(source, user, nick, command)
-        subject_nick_name = command.first_argument
-        if (subject_nick_name.empty?)
-          reply(source, nick, "usage: #{command.command} <nick>")
-          return
-        elsif (subject_nick_name.casecmp(nick.name.downcase).zero?)
-          reply(source, nick, 'trying to find yourself?')
-          return
-        elsif (subject_nick_name.casecmp(myself.name.downcase).zero?)
-          reply(source, nick, "i'm one handsome guy.")
-          return
-        end
-
-        scan_channels = source.is_a?(IRCTypes::Channel) ? [ source ] : channel_list.all_channels
-
-        subject_model = Models::User[name: subject_nick_name.downcase]
-
-        on_channels = {}
-
-        scan_channels.each do |channel|
+      def scan_channels(channels_to_scan, subject_model, subject_nick_name) # rubocop:disable Metrics/AbcSize
+        channels_to_scan.each do |channel|
           if (!subject_model.nil?)
             channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
               # check for nicks associated with a known user
@@ -92,10 +67,38 @@ module Axial
           end
         end
 
+        return on_channels
+      end
+
+      def update_last_spoke(channel, nick, text)
+        if (nick.last_spoke.nil?)
+          nick.last_spoke = {}
+        end
+        nick.last_spoke[channel.name] = { time: Time.now, text: text }
+      end
+
+      def seen(source, _user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength
+        subject_nick_name = command.first_argument
+        if (subject_nick_name.empty?)
+          reply(source, nick, "usage: #{command.command} <nick>")
+          return
+        elsif (subject_nick_name.casecmp(nick.name.downcase).zero?)
+          reply(source, nick, 'trying to find yourself?')
+          return
+        elsif (subject_nick_name.casecmp(myself.name.downcase).zero?)
+          reply(source, nick, "i'm one handsome guy.")
+          return
+        end
+
+        channels_to_scan = source.is_a?(IRCTypes::Channel) ? [ source ] : channel_list.all_channels
+        subject_model = Models::User[name: subject_nick_name.downcase]
+
+        on_channels = scan_channels(channels_to_scan, subject_model, subject_nick_name)
+
         if (on_channels.any?)
           seen_name = (subject_model.nil?) ? subject_nick_name : subject_model.pretty_name_with_color
 
-          on_channels.each do |channel, tmp_nicks|
+          on_channels.each do |channel, tmp_nicks| # rubocop:disable Metrics/BlockLength
             latest_message = nil
             seen_nick_names = []
             tmp_nicks.each do |tmp_nick|

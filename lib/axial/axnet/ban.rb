@@ -4,6 +4,7 @@ module Axial
   module Axnet
     class Ban
       attr_reader :mask, :user_name, :reason, :set_at
+
       def initialize(in_mask, user, reason, set_at)
         @mask = MaskUtils.ensure_wildcard(in_mask)
         if (user.nil?)
@@ -16,17 +17,8 @@ module Axial
           @user_name = 'someone'
         end
 
-        if (reason.nil?)
-          @reason = 'banned.'
-        else
-          @reason = reason
-        end
-
-        if (set_at.nil?)
-          @set_at = Time.now
-        else
-          @set_at = set_at
-        end
+        @reason = (reason.nil?) ? 'banned.' : reason
+        @set_at = (set_at.nil?) ? Time.now : set_at
       end
 
       def long_reason()

@@ -10,14 +10,26 @@ module Axial
     attr_writer     :expired, :repeat
 
     def initialize(repeat, interval, *args, &block)
-      if (interval < 0.5)
-        @interval         = 0.5
-      else
-        @interval         = interval
-      end
+      set_defaults
 
-      @uuid               = SecureRandom.uuid
+      @interval           = (interval < 0.5) ? 0.5 : interval
       @repeat             = repeat
+      @args               = *args
+
+      if (block_given?)
+        @type             = :block
+        @block            = block
+        @args             = *args # rubocop:disable Style/IdenticalConditionalBranches
+      else
+        @type             = :callback
+        @callback_object  = args.shift
+        @callback_method  = args.shift
+        @args             = *args # rubocop:disable Style/IdenticalConditionalBranches
+      end
+    end
+
+    def set_defaults()
+      @uuid               = SecureRandom.uuid
       @last               = Time.now
       @callback_object    = nil
       @callback_method    = nil
@@ -26,17 +38,7 @@ module Axial
       @block              = nil
       @thread             = nil
       @running            = false
-
-      if (block_given?)
-        @type             = :block
-        @block            = block
-        @args             = *args
-      else
-        @type             = :callback
-        @callback_object  = args.shift
-        @callback_method  = args.shift
-        @args             = *args
-      end
+      @expired            = false
     end
 
     def running?()
@@ -51,27 +53,39 @@ module Axial
       return @repeat
     end
 
+    def execute_as_block()
+      if (@args.count > 1)
+        @block.call(*@args)
+      elsif (@args.count == 1)
+        @block.call(@args[0])
+      else
+        @block.call
+      end
+    end
+    private :execute_as_block
+
+    def execute_as_callback()
+      if (@args.count > 1)
+        @callback_object.public_send(@callback_method.to_sym, *@args)
+      elsif (@args.count == 1)
+        @callback_object.public_send(@callback_method.to_sym, @args[0])
+      else
+        @callback_object.public_send(@callback_method.to_sym)
+      end
+    end
+    private :execute_as_callback
+
     def execute()
       @running = true
+
       if (@type == :block)
-        if (@args.count > 1)
-          @block.call(*@args)
-        elsif (@args.count == 1)
-          @block.call(@args[0])
-        else
-          @block.call
-        end
+        execute_as_block
       elsif (@type == :callback)
-        if (@args.count > 1)
-          @callback_object.public_send(@callback_method.to_sym, *@args)
-        elsif (@args.count == 1)
-          @callback_object.public_send(@callback_method.to_sym, @args[0])
-        else
-          @callback_object.public_send(@callback_method.to_sym)
-        end
+        execute_as_callback
       else
         raise(TimerError, "no idea how to handle response type #{@type}")
       end
+
       @running = false
     rescue Exception => ex
       @running = false

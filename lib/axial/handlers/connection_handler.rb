@@ -38,23 +38,30 @@ module Axial
         @bot.bind_handler.dispatch_server_disconnect_binds
       end
 
-      def connect()
-        @bot.server_interface.myself = IRCTypes::Nick.new(@bot.server_interface)
-        @bot.server_interface.myself.name = @bot.real_nick
-        @raw_consumer.start
-        @chat_consumer.start
-        LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
+      def try_server()
         Timeout.timeout(@server_connect_timeout) do
           if (@server.ssl?)
             context = OpenSSL::SSL::SSLContext.new
             context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-            tcp_socket = ::TCPSocket.new(@server.address, @server.port)
+            tcp_socket = TCPSocket.new(@server.address, @server.port)
             @conn = OpenSSL::SSL::SSLSocket.new(tcp_socket, context)
             @conn.connect
           else
             @conn = TCPSocket.new(@server.address, @server.port)
           end
         end
+      end
+
+      def connect() # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+        @bot.server_interface.myself = IRCTypes::Nick.new(@bot.server_interface)
+        @bot.server_interface.myself.name = @bot.real_nick
+        @raw_consumer.start
+        @chat_consumer.start
+
+        LOGGER.info("connecting to #{@server.address}:#{@server.port} (ssl: #{@server.ssl?})")
+
+        try_server
+
         LOGGER.info("established tcp connection with #{@server.address}:#{@server.port}")
       rescue OpenSSL::SSL::SSLError => ex
         LOGGER.error("cannot connect to #{@server.address} via ssl: #{ex.class}: #{ex.message}")
@@ -122,24 +129,30 @@ module Axial
       end
       private :pong
 
-      def dispatch(raw)
+      def dispatch(raw) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         if (raw =~ /^:(\S+)\s+001\s+(#{@bot.trying_nick})/)
           @server.real_address = Regexp.last_match[1]
           @server.connected = true
+
           if (!@bot.trying_nick.casecmp(@bot.nick).zero?)
             @regaining_nick = true
             @nick_regain_timer = @bot.timer.every_30_seconds(@bot.server_interface, :send_ison)
           end
+
           @bot.real_nick = @bot.trying_nick
           @bot.server_interface.myself.name = @bot.real_nick
+
           LOGGER.info("actual nick: #{@bot.real_nick}")
           LOGGER.info("actual server host: #{@server.real_address}")
+
           @bot.server_consumer.send(raw)
+
           @uhost_timer = @bot.timer.every_minute do
             if (@bot.server_interface.myself.uhost.empty?)
               @bot.server_interface.whois_myself
             end
           end
+
           @auto_join_timer = @bot.timer.every_30_seconds(@bot.server_interface, :retry_joins)
           @bot.bind_handler.dispatch_server_connect_binds
         elsif (raw =~ /^PING\s+(.*)/)

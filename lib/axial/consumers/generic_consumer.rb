@@ -43,7 +43,7 @@ module Axial
       end
 
       def consume()
-        raise(RuntimeError, "No 'consume' method defined for #{self.class}")
+        raise("No 'consume' method defined for #{self.class}")
       end
 
       def stop()

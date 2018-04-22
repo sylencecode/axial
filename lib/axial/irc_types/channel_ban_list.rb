@@ -10,6 +10,7 @@ module Axial
         @channel  = channel
         @ban_list = []
         @synced   = false
+        @monitor  = Monitor.new
       end
 
       def all_bans()
@@ -17,7 +18,9 @@ module Axial
       end
 
       def clear()
-        @ban_list.clear
+        @monitor.synchronize do
+          @ban_list.clear
+        end
       end
 
       def synced?()
@@ -29,16 +32,23 @@ module Axial
       end
 
       def add(ban)
-        if (!include?(ban.mask))
+        if (include?(ban.mask))
+          return
+        end
+        @monitor.synchronize do
           @ban_list.push(ban)
         end
       end
 
       def remove(ban)
         if (ban.is_a?(String))
-          @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban).zero? }
+          @monitor.synchronize do
+            @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban).zero? }
+          end
         else
-          @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban.mask).zero? }
+          @monitor.synchronize do
+            @ban_list.delete_if { |tmp_ban| tmp_ban.mask.casecmp(ban.mask).zero? }
+          end
         end
       end
     end

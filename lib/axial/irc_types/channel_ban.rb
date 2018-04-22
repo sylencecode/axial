@@ -6,7 +6,7 @@ module Axial
         @mask     = mask
         @set_by   = set_by
 
-        if (set_at.is_a?(String))
+        if (set_at.is_a?(String)) # rubocop:disable Style/ConditionalAssignment
           @set_at = Time.at(set_at.to_i)
         elsif (set_at.is_a?(Integer))
           @set_at = Time.at(set_at)

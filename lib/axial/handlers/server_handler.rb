@@ -6,12 +6,14 @@ module Axial
       end
 
       def handle_ison_reply(nicks)
-        nick_names = nicks.split(/\s+/)
-        if (!nick_names.include?(@bot.nick))
-          LOGGER.debug("nick '#{@bot.nick}' appears to be available. attempting nick change.")
-          @bot.trying_nick = @bot.nick
-          @bot.connection_handler.try_nick
+        online_nick_names = nicks.split(/\s+/)
+        if (online_nick_names.include?(@bot.nick))
+          return
         end
+
+        LOGGER.debug("nick '#{@bot.nick}' appears to be available. attempting nick change.")
+        @bot.trying_nick = @bot.nick
+        @bot.connection_handler.try_nick
       end
 
       def handle_whois_uhost(nick_name, ident, host)

@@ -12,7 +12,7 @@ module Axial
         @author                 = 'sylence <sylence@sylence.org>'
         @version                = '1.1.0'
 
-        throttle                2
+        throttle                3
 
         on_channel 'arabic',      :translate_arabic
         on_channel 'chinese',     :translate_chinese
@@ -104,9 +104,9 @@ module Axial
         if (text.empty?)
           channel.message("#{nick.name}: please provide source text.")
           return nil
-        elsif (text.length > 319)
-          text = text[0..319]
         end
+
+        text = (text.length <= 400) ? text : text[0..399]
         return text
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -118,7 +118,7 @@ module Axial
 
       def send_translation_to_channel(channel, nick, translation)
         target_text = translation.target_text
-        target_text = (target_text.length >= 329) ? target_text[0..319] : target_text
+        target_text = (target_text.length <= 300) ? target_text : target_text[0..296] + '...'
 
         msg = Color.magenta_prefix("#{translation.source_language.downcase} -> #{translation.target_language.downcase}", nick.name)
         msg += target_text

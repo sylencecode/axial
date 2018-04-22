@@ -3,7 +3,7 @@ module Axial
   end
 
   class MaskUtils
-    def self.ensure_wildcard(in_mask)
+    def self.ensure_wildcard(in_mask) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
       mask = in_mask.strip
       if (mask =~ /^(\S+)!(\S+)@(\S+)/)
         nick = Regexp.last_match[1]

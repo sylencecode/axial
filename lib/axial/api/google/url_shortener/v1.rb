@@ -3,42 +3,49 @@ require 'rest-client'
 require 'uri'
 require 'json'
 
-$google_api_key = 'AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs'
-
 module Axial
   module API
     module Google
       module URLShortener
         class V1
-          @google_rest_api = 'https://www.googleapis.com/urlshortener/v1/url'
+          @rest_api = 'https://www.googleapis.com/urlshortener/v1/url'
+          @api_key  = 'AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs'
+
+          def self.default_headers()
+            headers = {
+                content_type: 'application/json',
+                accept: 'application/json'
+            }
+
+            return headers
+          end
+
+          def self.default_params()
+            params = {
+                fields: 'id',
+                key: @api_key
+            }
+
+            return params
+          end
 
           def self.shorten(long_url)
-            rest_endpoint = URI.parse(@google_rest_api)
+            headers = default_headers
+            params  = default_params
 
-            params = {
-              fields: 'id',
-                 key: $google_api_key
-            }
+            rest_endpoint = URI.parse(@rest_api)
             rest_endpoint.query  = URI.encode_www_form(params)
-
-            headers = {
-              content_type: 'application/json',
-                    accept: 'application/json'
-            }
 
             payload = {
               longUrl: long_url.to_s
             }
 
-            response = RestClient::Request.execute(method: :post, headers: headers, payload: payload.to_json, url: rest_endpoint.to_s, verify_ssl: false)
-            json = JSON.parse(response)
+            json = RestClient::Request.execute(method: :post, headers: headers, payload: payload.to_json, url: rest_endpoint.to_s, verify_ssl: false)
+            json_hash = JSON.parse(json)
 
-            short_url = nil
-            if (json.key?('id'))
-              short_url = json['id']
-            end
+            short_uri = (json_hash.key?('id')) ? URI.parse(json_hash['id']) : nil
 
-            return URI.parse(short_url)
+            return short_uri
           rescue RestClient::Exception
             return nil
           end

@@ -17,8 +17,28 @@ module Axial
         @author                                 = 'sylence <sylence@sylence.org>'
         @version                                = '1.1.0'
 
-        throttle                                2
+        throttle                                3
 
+        @foreign_tables = {
+            DB_CONNECTION[:rss_feeds] => { model: Models::RssFeed, set_unknown: true },
+            DB_CONNECTION[:things]    => { model: Models::Thing, set_unknown: true },
+            DB_CONNECTION[:bans]      => { model: Models::Ban, set_unknown: true },
+            DB_CONNECTION[:seens]     => { model: Models::Seen, set_unknown: false },
+            DB_CONNECTION[:masks]     => { model: Models::Mask, set_unknown: false }
+        }
+
+        load_binds
+      end
+
+      def load_binds()
+        load_channel_binds
+        load_dcc_binds
+        load_privmsg_binds
+        load_reload_binds
+        load_startup_binds
+      end
+
+      def load_channel_binds()
         on_channel                   'addmask', :dcc_wrapper, :add_mask
         on_channel                   'adduser', :dcc_wrapper, :add_user
         on_channel        'delmask|deletemask', :dcc_wrapper, :delete_mask
@@ -27,11 +47,9 @@ module Axial
         on_channel                       'ban', :dcc_wrapper, :ban
         on_channel                     'unban', :dcc_wrapper, :unban
         on_channel               'who|whofrom', :dcc_wrapper, :who_from
+      end
 
-        on_privmsg             'pass|password', :silent, :dcc_wrapper, :set_password
-        on_privmsg       'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
-        on_privmsg   'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
-
+      def load_dcc_binds()
         on_dcc                 'addmask|+mask', :dcc_wrapper, :add_mask
         on_dcc                 'adduser|+user', :dcc_wrapper, :add_user
         on_dcc      'delmask|deletemask|-mask', :dcc_wrapper, :delete_mask
@@ -48,19 +66,22 @@ module Axial
         on_dcc                'userlist|users', :dcc_user_list
         on_dcc                         'whois', :dcc_whois
         on_dcc                      'password', :silent, :dcc_wrapper, :set_password
+      end
 
+      def load_privmsg_binds()
+        on_privmsg             'pass|password', :silent, :dcc_wrapper, :set_password
+        on_privmsg       'setpass|setpassword', :silent, :dcc_wrapper, :set_other_user_password
+        on_privmsg   'clearpass|clearpassword', :dcc_wrapper, :clear_other_user_password
+      end
+
+      def load_reload_binds()
         on_reload                               :update_user_list
         on_reload                               :update_ban_list
+      end
+
+      def load_startup_binds()
         on_startup                              :update_user_list
         on_startup                              :update_ban_list
-
-        @foreign_tables = {
-            DB_CONNECTION[:rss_feeds] => { model: Models::RssFeed, set_unknown: true },
-            DB_CONNECTION[:things]    => { model: Models::Thing, set_unknown: true },
-            DB_CONNECTION[:bans]      => { model: Models::Ban, set_unknown: true },
-            DB_CONNECTION[:seens]     => { model: Models::Seen, set_unknown: false },
-            DB_CONNECTION[:masks]     => { model: Models::Mask, set_unknown: false }
-        }
       end
 
       def who_from(source, user, nick, command)
@@ -70,7 +91,7 @@ module Axial
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask>")
         else
-          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect { |user| user.pretty_name_with_color }.join(', ')
+          possible_user_names = Models::User.get_users_from_overlap(subject_mask).collect(&:pretty_name_with_color).join(', ')
           if (users.any?)
             reply(source, nick, "possible users for '#{subject_mask}': #{possible_user_names}")
           else
@@ -118,24 +139,30 @@ module Axial
         return complex_password
       end
 
-      def set_note(source, user, nick, command)
-        subject_nickname, note = command.one_plus
+      def set_note(source, user, nick, command) # rubocop:disable Metrics/AbcSize
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (subject_nickname.empty?)
-          reply(source, nick, "usage: #{command.command} <user> <note> (an empty note will erase the user's note)")
-        else
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (can_modify?(source, user, nick, subject_nickname, subject_model, true, true))
-            if (note.empty?)
-              subject_model.update(note: '')
-              reply(source, nick, "erased note for #{subject_model.pretty_name_with_color}.")
-            else
-              subject_model.update(note: note)
-              reply(source, nick, "updated note for #{subject_model.pretty_name_with_color}.")
-            end
-          end
+          return
         end
+
+        subject_nickname, note = command.one_plus
+        if (subject_nickname.empty?)
+          reply(source, nick, "usage: #{command.command} <user> [note]")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model, true, true))
+          return
+        end
+
+        if (note.empty?)
+          reply(source, nick, "note for #{subject_model.pretty_name_with_color}: #{subject_model.note }.")
+          return
+        end
+
+        subject_model.update(note: note)
+        reply(source, nick, "updated note for #{subject_model.pretty_name_with_color}.")
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -144,25 +171,68 @@ module Axial
         end
       end
 
-      def clear_other_user_password(source, user, nick, command)
+      def clear_other_user_password(source, user, nick, command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         subject_nickname = command.first_argument
         if (user.nil? || !user.role.director?)
           dcc_access_denied(source)
-        else
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            reply(source, nick, "user '#{subject_nickname}' does not exist.")
-          else
-            if (can_modify?(source, user, nick, subject_nickname, subject_model))
-              if (subject_model.password_set?)
-                subject_model.update(password: '')
-                update_user_list
-                reply(source, nick, "password for #{subject_model.pretty_name_with_color} cleared. please instruct the user to reset their password as soon as possible.")
-              else
-                reply(source, nick, "#{subject_model.pretty_name_with_color} does not have a password set.")
-              end
-            end
-          end
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' does not exist.")
+          return
+        end
+
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model))
+          return
+        end
+
+        if (!subject_model.password_set?)
+          reply(source, nick, "#{subject_model.pretty_name_with_color} does not have a password set.")
+          return
+        end
+
+        subject_model.update(password: '')
+        update_user_list
+        reply(source, nick, "password for #{subject_model.pretty_name_with_color} cleared. please instruct the user to reset their password as soon as possible.")
+      rescue Exception => ex
+        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
+        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
+        ex.backtrace.each do |i|
+          LOGGER.error(i)
+        end
+      end
+
+      def set_other_user_password(source, user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+        if (user.nil? || !user.role.op?)
+          dcc_access_denied(source)
+          return
+        end
+
+        subject_nickname, new_password = command.two_arguments
+        if (new_password.empty?)
+          reply(source, nick, "usage: #{command.command} <user> <new_password>")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' does not exist.")
+          return
+        end
+
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model, true, false))
+          dcc_broadcast(Color.red_arrow + user.pretty_name_with_color + " tried to change password for user #{subject_model.pretty_name_with_color}.", :director)
+          LOGGER.warn(user.pretty_name + " tried to change password for user #{subject_model.pretty_name_with_color}.")
+          return
+        end
+
+        if (complex_password?(source, nick, new_password))
+          subject_model.set_password(new_password)
+          update_user_list
+          reply(source, nick, "password for #{subject_model.pretty_name_with_color} changed.")
+          dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + " has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -172,69 +242,54 @@ module Axial
         end
       end
 
-      def set_other_user_password(source, user, nick, command)
-        subject_nickname, new_password = command.two_arguments
-        if (user.nil? || !user.role.op?)
-          dcc_access_denied(source)
-        elsif (new_password.empty?)
-          reply(source, nick, "usage: #{command.command} <user> <new_password>")
-        else
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            reply(source, nick, "user '#{subject_nickname}' does not exist.")
-          else
-            if (can_modify?(source, user, nick, subject_nickname, subject_model, true, false))
-              if (complex_password?(source, nick, new_password))
-                subject_model.set_password(new_password)
-                update_user_list
-                reply(source, nick, "password for #{subject_model.pretty_name_with_color} changed.")
-                dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + " has changed the password for user #{subject_model.pretty_name_with_color}.", :director)
-              end
-            else
-              dcc_broadcast(Color.red_arrow + user.pretty_name_with_color + " tried to change password for user #{subject_model.pretty_name_with_color}.", :director)
-            end
-          end
+      def set_initial_user_password(user_model, source, nick, command)
+        new_password = command.first_argument
+        if (new_password.empty?)
+          reply(source, nick, "usage: #{command.command} <new_password>")
+          return
         end
-      rescue Exception => ex
-        reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
-        LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
-        ex.backtrace.each do |i|
-          LOGGER.error(i)
+
+        if (!complex_password?(source, nick, new_password))
+          return
         end
+
+        user_model.set_password(new_password)
+        update_user_list
+        reply(source, nick, 'password set.')
+        dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + ' has set an initial password.', :director)
+      end
+
+      def set_user_password(user_model, source, nick, command)
+        if (!user_model.password?(old_password))
+          reply(source, nick, 'old password is incorrect.')
+          dcc_broadcast(Color.red_arrow + " failed password change attempt from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
+          return
+        end
+
+        if (!complex_password?(source, nick, new_password))
+          return
+        end
+
+        user_model.set_password(new_password)
+        update_user_list
+        reply(source, nick, 'password changed.')
+        dcc_broadcast(Color.blue_arrow + " #{user.pretty_name_with_color} has changed his/her password.", :director)
       end
 
       def set_password(source, user, nick, command)
         user_model = Models::User[id: user.id]
         if (user_model.password.nil? || user_model.password.empty?)
-          new_password = command.first_argument
-          if (new_password.empty?)
-            reply(source, nick, "usage: #{command.command} <new_password>")
-          else
-            if (complex_password?(source, nick, new_password))
-              user_model.set_password(new_password)
-              update_user_list
-              reply(source, nick, 'password set.')
-              dcc_broadcast(Color.blue_arrow + user.pretty_name_with_color + ' has set an initial password.', :director)
-            end
-          end
-        else
-          old_password, new_password = command.two_arguments
-          if (new_password.empty?)
-            reply(source, nick, "usage: #{command.command} <old_password> <new_password>")
-          else
-            if (user_model.password?(old_password))
-              if (complex_password?(source, nick, new_password))
-                user_model.set_password(new_password)
-                update_user_list
-                reply(source, nick, 'password changed.')
-                dcc_broadcast(Color.blue_arrow + " #{user.pretty_name_with_color} has changed his/her password.", :director)
-              end
-            else
-              reply(source, nick, 'old password is incorrect.')
-              dcc_broadcast(Color.red_arrow + " failed password change attempt from #{dcc.user.pretty_name_with_color}#{Colors.reset}.", :director)
-            end
-          end
+          set_initial_user_password(user_model, source, nick, command)
+          return
         end
+
+        old_password, new_password = command.two_arguments # rubocop:disable Lint/UselessAssignment
+        if (new_password.empty?)
+          reply(source, nick, "usage: #{command.command} <old_password> <new_password>")
+          return
+        end
+
+        set_user_password(user_model, source, nick, command)
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
         LOGGER.error("#{self.class} error: #{ex.class}: #{ex.message}")
@@ -247,25 +302,29 @@ module Axial
         counter = 0
         conflicts.each do |subject_model, masks|
           counter += 1
-          reply(source, nick, "mask '#{subject_mask}' conflicts with: #{subject_model.pretty_name_with_color} (#{masks.collect { |mask| mask.mask }.join(', ')})")
-          if (counter == 3)
-            if (!source.is_a?(IRCTypes::DCC))
-              reply(source, nick, "... and #{conflicts.count - 3} more. review the rest via dcc or provide a more specific mask.")
-              break
-            end
+          msg  = "mask '#{subject_mask}' conflicts with: " + subject_model.pretty_name_with_color + ' '
+          msg += '(' + masks.collect(&:mask).join(', ') + ')'
+          reply(source, nick, msg)
+          if (counter < 3)
+            next
+          end
+
+          if (!source.is_a?(IRCTypes::DCC))
+            reply(source, nick, "... and #{conflicts.count - 3} more. review the rest via dcc or provide a more specific mask.")
+            break
           end
         end
       end
 
       def get_mask_user_conflicts(subject_mask)
         conflicting_masks = {}
-        subject_mask      = MaskUtils.ensure_wildcard(subject_mask)
-        subject_models    = Models::User.get_users_from_mask(subject_mask)
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        subject_models = Models::User.get_users_from_mask(subject_mask)
 
         if (subject_models.any?)
           subject_models.each do |subject_model|
             conflicting_masks[subject_model] = []
-            masks                            = subject_model.get_masks_from_overlap(subject_mask)
+            masks = subject_model.get_masks_from_overlap(subject_mask)
             masks.each do |mask|
               conflicting_masks[subject_model].push(mask)
             end
@@ -274,28 +333,32 @@ module Axial
         return conflicting_masks
       end
 
-      def add_user(source, user, nick, command)
+      def add_user(source, user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         subject_nickname, subject_mask = command.two_arguments
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (subject_mask.empty?)
-          reply(source, nick, "usage: #{command.command} <username> <mask>")
-        else
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (!subject_model.nil?)
-            reply(source, nick, "user #{subject_model.pretty_name_with_color} already exists.")
-            return
-          end
+          return
+        end
 
-          conflicts = get_mask_user_conflicts(subject_mask)
-          if (conflicts.any?)
-            output_mask_user_conflicts(source, nick, subject_mask, conflicts)
-          else
-            subject_model = Models::User.create_from_nickname_mask(user.pretty_name, subject_nickname, subject_mask)
-            update_user_list
-            wildcard_mask = MaskUtils.ensure_wildcard(subject_mask)
-            reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{wildcard_mask}' and the role of #{Role.basic.name_with_color}.")
-          end
+        if (subject_mask.empty?)
+          reply(source, nick, "usage: #{command.command} <username> <mask>")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (!subject_model.nil?)
+          reply(source, nick, "user #{subject_model.pretty_name_with_color} already exists.")
+          return
+        end
+
+        conflicts = get_mask_user_conflicts(subject_mask)
+        if (conflicts.any?)
+          output_mask_user_conflicts(source, nick, subject_mask, conflicts)
+        else
+          subject_model = Models::User.create_from_nickname_mask(user.pretty_name, subject_nickname, subject_mask)
+          update_user_list
+          wildcard_mask = MaskUtils.ensure_wildcard(subject_mask)
+          reply(source, nick, "user #{subject_model.pretty_name} created with mask '#{wildcard_mask}' and the role of #{Role.basic.name_with_color}.")
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -317,6 +380,7 @@ module Axial
         end
       end
 
+      # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/ParameterLists
       def can_modify?(source, user, nick, subject_nickname, subject_model, can_change_self = false, can_root_change_root = false)
         can_modify = false
         if (subject_model.nil?)
@@ -328,6 +392,7 @@ module Axial
             can_modify = true
           else
             reply(source, nick, 'you may not modify your own attributes.')
+            return
           end
         elsif (subject_model.role.root?)
           if (can_root_change_root)
@@ -342,8 +407,10 @@ module Axial
         else
           can_modify = true
         end
+
         return can_modify
       end
+      # rubocop:enable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/ParameterLists
 
       def db_delete_user(subject_model)
         deleted_user_name = nil
@@ -378,45 +445,49 @@ module Axial
       end
 
       def db_destroy_collection(collection)
-        collection.each do |model|
-          model.destroy
-        end
+        collection.each(&:destroy)
       end
 
+      # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength
       def delete_mask(source, user, nick, command)
-        force                                         = false
         subject_nickname, subject_mask, force_command = command.three_arguments
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
+          return
         elsif (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask> [-force]")
+          return
+        end
+
+        force = (force_command.casecmp('-force').zero?) ? true : false
+        subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' not found.")
+          return
+        end
+
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model))
+          return
+        end
+
+        mask_models = subject_model.get_masks_from_overlap(subject_mask)
+        if (mask_models.empty?)
+          reply(source, nick, "'#{subject_model.pretty_name}' doesn't include mask '#{subject_mask}'.")
+          return
+        end
+
+        if (mask_models.count == 1)
+          old_mask = mask_models.first.mask
+          db_destroy_collection(mask_models)
+          update_user_list
+          reply(source, nick, "mask '#{old_mask}' removed from #{subject_model.pretty_name_with_color}.")
+        elsif (mask_models.count > 1 && !force)
+          output_mask_conflicts(source, user, nick, mask_models, subject_mask)
         else
-          if (force_command.casecmp('-force').zero?)
-            force = true
-          end
-          subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            reply(source, nick, "user '#{subject_nickname}' not found.")
-          else
-            if (can_modify?(source, user, nick, subject_nickname, subject_model))
-              mask_models = subject_model.get_masks_from_overlap(subject_mask)
-              if (mask_models.empty?)
-                reply(source, nick, "'#{subject_model.pretty_name}' doesn't include mask '#{subject_mask}'.")
-              elsif (mask_models.count == 1)
-                old_mask = mask_models.first.mask
-                db_destroy_collection(mask_models)
-                update_user_list
-                reply(source, nick, "mask '#{old_mask}' removed from #{subject_model.pretty_name_with_color}.")
-              elsif (mask_models.count > 1 && !force)
-                output_mask_conflicts(source, user, nick, mask_models, subject_mask)
-              else
-                db_destroy_collection(mask_models)
-                update_user_list
-                reply(source, nick, "#{mask_models.count} masks matching '#{subject_mask}' were removed from #{subject_model.pretty_name_with_color}.")
-              end
-            end
-          end
+          db_destroy_collection(mask_models)
+          update_user_list
+          reply(source, nick, "#{mask_models.count} masks matching '#{subject_mask}' were removed from #{subject_model.pretty_name_with_color}.")
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -425,30 +496,38 @@ module Axial
           LOGGER.error(i)
         end
       end
+      # rubocop:enable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength
 
-      def add_mask(source, user, nick, command)
+      def add_mask(source, user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         subject_nickname, subject_mask = command.two_arguments
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (subject_mask.empty?)
+          return
+        end
+
+        if (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <username> <mask>")
+          return
+        end
+
+        subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' not found.")
+          return
+        end
+
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model))
+          return
+        end
+
+        conflicts = get_mask_user_conflicts(subject_mask)
+        if (conflicts.any?)
+          output_mask_user_conflicts(source, nick, subject_mask, conflicts)
         else
-          subject_mask  = MaskUtils.ensure_wildcard(subject_mask)
-          subject_model = Models::User.get_from_nickname(subject_nickname)
-          if (subject_model.nil?)
-            reply(source, nick, "user '#{subject_nickname}' not found.")
-          else
-            if (can_modify?(source, user, nick, subject_nickname, subject_model))
-              conflicts = get_mask_user_conflicts(subject_mask)
-              if (conflicts.any?)
-                output_mask_user_conflicts(source, nick, subject_mask, conflicts)
-              else
-                mask_model = Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
-                update_user_list
-                reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name_with_color}.")
-              end
-            end
-          end
+          Models::Mask.create(mask: subject_mask, user_id: subject_model.id)
+          update_user_list
+          reply(source, nick, "mask '#{subject_mask}' added to #{subject_model.pretty_name_with_color}.")
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -459,27 +538,31 @@ module Axial
       end
 
       def output_mask_conflicts(source, user, nick, subject_collection, subject_mask)
+        if (subject_collection.count > 1)
+          reply(source, nick, "provide a more specific mask or use the -force switch to remove all masks overlapping '#{subject_mask}'.")
+          return
+        end
+
         counter = 0
         subject_collection.each do |mask_model|
           counter += 1
           reply(source, nick, "mask '#{subject_mask}' overlaps with: #{mask_model.mask})")
-          if (counter == 3)
-            if (!source.is_a?(IRCTypes::DCC))
-              reply(source, nick, "... and #{mask_models.count - 3} more. review the rest via dcc or provide a more specific mask.")
-              if (user.role.manager?)
-                reply(source, nick, "alternatively, use the -force switch to remove all masks overlapping '#{subject_mask}'.")
-              end
-              break
-            end
+          if (counter < 3)
+            next
           end
-        end
-        if (subject_collection.count > 1)
-          reply(source, nick, "provide a more specific mask or use the -force switch to remove all masks overlapping '#{subject_mask}'.")
+
+          if (!source.is_a?(IRCTypes::DCC)) # rubocop:disable Style/Next
+            reply(source, nick, "... and #{mask_models.count - 3} more. review the rest via dcc or provide a more specific mask.")
+            if (user.role.manager?)
+              reply(source, nick, "alternatively, use the -force switch to remove all masks overlapping '#{subject_mask}'.")
+            end
+            break
+          end
         end
       end
 
-      def can_unban?(source, user, nick, ban_models, subject_mask, force)
-        can_unban     = false
+      def can_unban?(source, user, nick, subject_mask, force) # rubocop:disable Metrics/PerceivedComplexity
+        can_unban = false
         possible_bans = Models::Ban.get_bans_from_overlap(subject_mask)
         if (possible_bans.empty?)
           can_unban = true
@@ -500,43 +583,49 @@ module Axial
           end
           if (restricted_ban_masks.empty?)
             can_unban = true
+          elsif (force)
+            reply(source, nick, "cannot force unban of mask '#{subject_mask}' on the following masks due to access controls: #{restricted_ban_masks.join(', ')}. use a more specific mask.")
           else
-            if (force)
-              reply(source, nick, "cannot force unban of mask '#{subject_mask}' on the following masks due to access controls: #{restricted_ban_masks.join(', ')}. use a more specific mask.")
-            else
-              reply(source, nick, "unbanning '#{subject_mask}' would remove multiple bans: #{restricted_ban_masks.join(', ')} - either use a more specific mask or apply the -force switch.")
-            end
+            reply(source, nick, "unbanning '#{subject_mask}' would remove multiple bans: #{restricted_ban_masks.join(', ')} - either use a more specific mask or apply the -force switch.")
           end
         end
         return can_unban
       end
 
-      def unban(source, user, nick, command)
-        force                       = false
+      def unban(source, user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         subject_mask, force_command = command.two_arguments
+
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (subject_mask.empty?)
+          return
+        end
+
+        if (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask> [-force]")
+          return
+        end
+
+        force = (force_command.casecmp('-force').zero?) ? true : false
+
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
+        if (ban_models.empty?)
+          reply(source, nick, "no bans found matching '#{subject_mask}'.")
+          return
+        end
+
+        if (!can_unban?(source, user, nick, subject_mask, force))
+          return
+        end
+
+        db_destroy_collection(ban_models)
+        update_ban_list
+        if (ban_models.count == 1)
+          reply(source, nick, "mask '#{ban_models.first.mask}' removed from ban list.")
         else
-          if (force_command.casecmp('-force').zero?)
-            force = true
-          end
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
-          if (ban_models.empty?)
-            reply(source, nick, "no bans found matching '#{subject_mask}'.")
-          else
-            if (can_unban?(source, user, nick, ban_models, subject_mask, force))
-              db_destroy_collection(ban_models)
-              update_ban_list
-              if (ban_models.count == 1)
-                reply(source, nick, "mask '#{ban_models.first.mask}' removed from ban list.")
-              else
-                reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were removed from ban list: #{ban_models.collect { |ban| ban.mask }.join(', ')}")
-              end
-            end
-          end
+          msg  = ban_models.count + ' bans matching ' + subject_mask + ' were removed from ban list: '
+          msg += ban_models.collect(&mask).join(', ')
+          reply(source, nick, msg)
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -546,8 +635,8 @@ module Axial
         end
       end
 
-      def can_ban?(source, user, nick, subject_mask, force)
-        can_ban        = false
+      def can_ban?(source, user, nick, subject_mask, force) # rubocop:disable Metrics/PerceivedComplexity,Metrics/MethodLength
+        can_ban = false
         if (myself.match_mask?(subject_mask))
           reply(source, nick, "please don't ask me to ban myself.")
           return false
@@ -558,7 +647,7 @@ module Axial
           can_ban = true
         else
           protected_user_names = []
-          possible_users.sort_by { |user| user.role.numeric }.reverse.each do |possible_user|
+          possible_users.sort_by { |tmp_user| tmp_user.role.numeric }.reverse.each do |possible_user|
             # roles are sorted highest to lowest for this comparison loop
             if (!user.role.root?)
               if (user.role <= possible_user.role)
@@ -571,52 +660,58 @@ module Axial
           end
           if (protected_user_names.empty?)
             can_ban = true
+          elsif (force)
+            reply(source, nick, "forcing a ban of mask '#{subject_mask}' would still ban protected users: #{protected_user_names.join(', ')}. use a more specific mask.")
           else
-            if (force)
-              reply(source, nick, "forcing a ban of mask '#{subject_mask}' would still ban protected users: #{protected_user_names.join(', ')}. use a more specific mask.")
-            else
-              reply(source, nick, "mask '#{subject_mask}' would ban users: #{protected_user_names.join(', ')} - either use a more specific mask or apply the -force switch.")
-            end
+            reply(source, nick, "mask '#{subject_mask}' would ban users: #{protected_user_names.join(', ')} - either use a more specific mask or apply the -force switch.")
           end
         end
         return can_ban
       end
 
+      # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength
       def ban(source, user, nick, command)
-        force                = false
+        force = false
         subject_mask, reason = command.one_plus
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (subject_mask.empty?)
+          return
+        end
+
+        if (subject_mask.empty?)
           reply(source, nick, "usage: #{command.command} <mask> <reason> [-force]")
+          return
+        end
+
+        if (reason.empty?)
+          reason = 'banned.'
+        elsif (reason.casecmp('-force').zero?)
+          reason = 'banned.'
+          force  = true
+        elsif (reason =~ / -force$/i)
+          reason.gsub(/ -force$/i, '')
+          force = true
+        end
+
+        subject_mask = MaskUtils.ensure_wildcard(subject_mask)
+        ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
+
+        if (!can_ban?(source, user, nick, subject_mask, force))
+          return
+        end
+
+        # purposely looping twice here so that the user is not notified if the ban creation fails
+        if (ban_models.any?)
+          db_destroy_collection(ban_models)
+        end
+
+        ban_model = Models::Ban.create(mask: subject_mask, reason: reason, user_id: user.id, set_at: Time.now)
+        update_ban_list
+
+        if (ban_models.any?)
+          reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were replaced by '#{ban_mask.mask}'.")
         else
-          if (reason.empty?)
-            reason = 'banned.'
-          elsif (reason.casecmp('-force').zero?)
-            reason = 'banned.'
-            force  = true
-          elsif (reason =~ / -force$/i)
-            reason.gsub(/ -force$/i, '')
-            force = true
-          end
-
-          subject_mask = MaskUtils.ensure_wildcard(subject_mask)
-          ban_models   = Models::Ban.get_bans_from_overlap(subject_mask)
-          if (can_ban?(source, user, nick, subject_mask, force))
-            # purposely looping twice here so that the user is not notified if the ban creation fails
-            if (ban_models.any?)
-              db_destroy_collection(ban_models)
-            end
-
-            ban_model = Models::Ban.create(mask: subject_mask, reason: reason, user_id: user.id, set_at: Time.now)
-            update_ban_list
-
-            if (ban_models.any?)
-              reply(source, nick, "#{ban_models.count} bans matching '#{subject_mask}' were replaced by '#{ban_mask.mask}'.")
-            else
-              reply(source, nick, "ban '#{ban_model.mask}' added to ban list.")
-            end
-          end
+          reply(source, nick, "ban '#{ban_model.mask}' added to ban list.")
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")
@@ -625,83 +720,88 @@ module Axial
           LOGGER.error(i)
         end
       end
+      # rubocop:enable Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/MethodLength
 
-      def dcc_whois(dcc, command)
+      def dcc_whois(dcc, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
         subject_nickname = command.first_argument
         if (subject_nickname.empty?)
           dcc.message("usage: #{command.command} <username>")
-        else
-          user_model = Models::User.get_from_nickname(subject_nickname)
-          if (user_model.nil?)
-            dcc.message("no user named '#{command.args}' was found.")
+          return
+        end
+
+        user_model = Models::User.get_from_nickname(subject_nickname)
+        if (user_model.nil?)
+          dcc.message("no user named '#{command.args}' was found.")
+          return
+        end
+
+        dcc.message("user: #{user_model.pretty_name}")
+        dcc.message("role: #{user_model.role.name_with_color}")
+        dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime('%A, %B %-d, %Y at %l:%M%p (%Z)').gsub(/\s+/, ' ')}")
+
+        on_channels = {}
+
+        channel_list.all_channels.each do |channel|
+          channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
+            possible_user = user_list.get_from_nick_object(subject_nick)
+            if (possible_user.nil? || possible_user.id != user_model.id)
+              next
+            end
+
+            if (!on_channels.key?(channel))
+              on_channels[channel] = []
+            end
+            on_channels[channel].push(subject_nick)
+          end
+        end
+
+        if (dcc.user.role.op?)
+          dcc.message('')
+          dcc.message('associated masks:')
+          dcc.message('')
+          mask_length   = user_model.masks.collect { |mask_model| mask_model.mask.length }.max + 2
+          user_model.masks.each do |mask_model|
+            dcc.message("  #{mask_model.mask.ljust(mask_length)} - added #{mask_model.created.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')}")
+          end
+        end
+
+        dcc.message('')
+
+        if (on_channels.empty?)
+          if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
+            dcc.message('never seen before.')
           else
-            dcc.message("user: #{user_model.pretty_name}")
-            dcc.message("role: #{user_model.role.name_with_color}")
-            dcc.message("created by #{user_model.created_by} on #{user_model.created.strftime('%A, %B %-d, %Y at %l:%M%p (%Z)').gsub(/\s+/, ' ')}")
-
-            on_channels = {}
-
-            channel_list.all_channels.each do |channel|
-              channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
-                possible_user = user_list.get_from_nick_object(subject_nick)
-                if (!possible_user.nil? && possible_user.id == user_model.id)
-                  if (!on_channels.key?(channel))
-                    on_channels[channel] = []
-                  end
-                  on_channels[channel].push(subject_nick)
-                end
-              end
-            end
-
-            if (dcc.user.role.op?)
-              dcc.message('')
-              dcc.message('associated masks:')
-              dcc.message('')
-              mask_length   = user_model.masks.collect { |mask_model| mask_model.mask.length }.max + 2
-              user_model.masks.each do |mask_model|
-                dcc.message("  #{mask_model.mask.ljust(mask_length)} - added #{mask_model.created.strftime('%Y-%m-%d %l:%M:%S%p (%Z)').gsub(/\s+/, ' ')}")
-              end
-            end
-
-            if (on_channels.any?)
-              dcc.message('')
-              dcc.message('currently active on:')
-              dcc.message('')
-              on_channels_output = []
-              on_channels.each do |channel, nicks|
-                nicks.each do |nick|
-                  if (!nick.last_spoke.nil?)
-                    if (!nick.last_spoke.key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
-                      last_spoke = TimeSpan.new(channel.joined_at, Time.now)
-                      on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle since I joined #{last_spoke.approximate_to_s} ago")
-                    else
-                      last_spoke = TimeSpan.new(nick.last_spoke[channel.name][:time], Time.now)
-                      on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle for #{last_spoke.approximate_to_s}")
-                    end
-                  else
-                    on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: '- status unknown')
-                  end
-                end
-              end
-              channel_string_length = on_channels_output.collect { |left_right| left_right[:left].length }.max + 2
-              on_channels_output.each do |left_right|
-                dcc.message("#{left_right[:left].ljust(channel_string_length)}#{left_right[:right].nil? ? '' : ' ' + left_right[:right]}")
-              end
-            else
-              dcc.message('')
-              if (user_model.seen.nil? || user_model.seen.status =~ /^for the first time/i)
-                dcc.message('never seen before.')
+            dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+          end
+        else
+          dcc.message('currently active on:')
+          dcc.message('')
+          on_channels_output = []
+          on_channels.each do |channel, nicks|
+            nicks.each do |nick|
+              if (nick.last_spoke.nil?)
+                on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: '- status unknown')
+                next
+              elsif (!nick.last_spoke.key?(channel.name) || nick.last_spoke[channel.name][:time].nil?)
+                last_spoke = TimeSpan.new(channel.joined_at, Time.now)
+                on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle since I joined #{last_spoke.approximate_to_s} ago")
               else
-                dcc.message("last seen #{user_model.seen.status} #{TimeSpan.new(Time.now, user_model.seen.last).approximate_to_s} ago")
+                last_spoke = TimeSpan.new(nick.last_spoke[channel.name][:time], Time.now)
+                on_channels_output.push(left: "  #{channel.name} as #{nick.name}", right: "- idle for #{last_spoke.approximate_to_s}")
               end
             end
+          end
 
-            if (!user_model.note.nil? && !user_model.note.empty?)
-              if (dcc.user.role >= user_model.role)
-                dcc.message('')
-                dcc.message("note: #{user_model.note}")
-              end
-            end
+          channel_string_length = on_channels_output.collect { |left_right| left_right[:left].length }.max + 2
+          on_channels_output.each do |left_right|
+            dcc.message("#{left_right[:left].ljust(channel_string_length)}#{left_right[:right].nil? ? '' : ' ' + left_right[:right]}")
+          end
+        end
+
+        if (!user_model.note.nil? && !user_model.note.empty?)
+          if (dcc.user.role >= user_model.role)
+            dcc.message('')
+            dcc.message("note: #{user_model.note}")
           end
         end
       rescue Exception => ex
@@ -712,7 +812,7 @@ module Axial
         end
       end
 
-      def dcc_user_list(dcc, command)
+      def dcc_user_list(dcc, _command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
         if (!dcc.user.role.op?)
           dcc.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
@@ -734,7 +834,7 @@ module Axial
 
         seen_length = 0
 
-        user_models.each do |user_model|
+        user_models.each do |user_model| # rubocop:disable Metrics/BlockLength
           if (user_model.name == 'unknown')
             next
           end
@@ -745,7 +845,8 @@ module Axial
           user[:pretty_name] = user_model.pretty_name
           user[:role]        = user_model.role.name
           user[:role_color]  = user_model.role.color
-          if (user_model.note.nil?)
+
+          if (user_model.note.nil?) # rubocop:disable Style/ConditionalAssignment
             user[:note] = ''
           elsif (dcc.user.role < user_model.role)
             user[:note] = ''
@@ -758,17 +859,19 @@ module Axial
           channel_list.all_channels.each do |channel|
             channel.nick_list.all_nicks.reject { |tmp_nick| tmp_nick == myself }.each do |subject_nick|
               possible_user = user_list.get_from_nick_object(subject_nick)
-              if (!possible_user.nil? && possible_user.id == user_model.id)
-                if (!on_channels.key?(channel))
-                  on_channels[channel] = []
-                end
-                on_channels[channel].push(subject_nick)
+              if (possible_user.nil? || possible_user.id != user_model.id)
+                next
               end
+
+              if (!on_channels.key?(channel))
+                on_channels[channel] = []
+              end
+              on_channels[channel].push(subject_nick)
             end
           end
 
-          if (on_channels.any?)
-            user[:seen] = "active (#{on_channels.keys.collect { |channel| channel.name }.join(', ')})"
+          if (on_channels.any?) # rubocop:disable Style/ConditionalAssignment
+            user[:seen] = "active (#{on_channels.keys.collect(&:name).join(', ')})"
           elsif (user_model.seen.nil?)
             user[:seen] = 'never'
           elsif (user_model.seen.status =~ /^for the first time/i)
@@ -784,16 +887,8 @@ module Axial
           users.push(user)
         end
 
-        if (seen_length < 8)
-          seen_length = 8
-        else
-          seen_length += 2
-        end
-        if (note_length < 8)
-          note_length = 8
-        else
-          note_length += 2
-        end
+        seen_length = (seen_length < 8) ? 8 : seen_length + 2
+        note_length = (note_length < 8) ? 8 : note_length + 2
 
         top_bar    = "#{Colors.gray}.#{'-' * (pretty_name_length + 2)}.#{'-' * (role_length + 2)}.#{'-' * (created_length + 2)}.#{'-' * (seen_length + 2)}.#{'-' * (note_length + 2)}.#{Colors.reset}"
         middle_bar = "#{Colors.gray}|#{'-' * (pretty_name_length + 2)}+#{'-' * (role_length + 2)}+#{'-' * (created_length + 2)}+#{'-' * (seen_length + 2)}+#{'-' * (note_length + 2)}|#{Colors.reset}"
@@ -808,7 +903,7 @@ module Axial
           dcc.message(middle_bar)
           %w[root director manager op friend basic].each do |role|
             users.select { |tmp_user| tmp_user[:role].downcase == role }.sort_by { |tmp_user| tmp_user[:created] }.each do |user|
-              case user[:seen]
+              case user[:seen] # rubocop:disable Style/ConditionalAssignment
                 when /^active/
                   seen_color = Colors.green
                 when 'never'
@@ -829,7 +924,7 @@ module Axial
         end
       end
 
-      def dcc_ban_list(dcc, command)
+      def dcc_ban_list(dcc, _command) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
         if (!dcc.user.role.op?)
           dcc.message("#{nick.name}: #{Constants::ACCESS_DENIED}")
           return
@@ -904,34 +999,42 @@ module Axial
         end
       end
 
-      def set_role(source, user, nick, command)
+      def set_role(source, user, nick, command) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
         subject_nickname, new_role_name = command.two_arguments
-        new_role_name                   = new_role_name.downcase
+        new_role_name = new_role_name.downcase
         if (user.nil? || !user.role.op?)
           dcc_access_denied(source)
-        elsif (new_role_name.empty?)
+          return
+        end
+
+        if (new_role_name.empty?)
           reply(source, nick, "usage: #{command.command} <username> <#{Role.basic.name_with_color}|#{Role.friend.name_with_color}|#{Role.op.name_with_color}|#{Role.manager.name_with_color}|#{Role.director.name_with_color}>")
+          return
+        end
+
+        new_role = Role.from_possible_name(new_role_name)
+        if (new_role.nil?)
+          reply(source, nick, "'#{subject_nickname}' is not a valid role name.")
+          return
+        end
+
+        subject_model = Models::User.get_from_nickname(subject_nickname)
+        if (subject_model.nil?)
+          reply(source, nick, "user '#{subject_nickname}' not found.")
+          return
+        end
+
+        if (!can_modify?(source, user, nick, subject_nickname, subject_model))
+          return
+        end
+
+        if (subject_model.role == new_role)
+          reply(source, nick, "#{subject_model.pretty_name} has already been assigned the role of #{subject_model.role.name}.")
         else
-          new_role = Role.from_possible_name(new_role_name)
-          if (new_role.nil?)
-            reply(source, nick, "'#{subject_nickname}' is not a valid role name.")
-          else
-            subject_model = Models::User.get_from_nickname(subject_nickname)
-            if (subject_model.nil?)
-              reply(source, nick, "user '#{subject_nickname}' not found.")
-            else
-              if (can_modify?(source, user, nick, subject_nickname, subject_model))
-                if (subject_model.role == new_role)
-                  reply(source, nick, "#{subject_model.pretty_name} has already been assigned the role of #{subject_model.role.name}.")
-                else
-                  old_role = subject_model.role
-                  subject_model.update(role_name: new_role.name)
-                  update_user_list
-                  reply(source, nick, "user '#{subject_model.pretty_name}' has been assigned the role of #{new_role.name_with_color}. (was: #{old_role.name_with_color})")
-                end
-              end
-            end
-          end
+          old_role = subject_model.role
+          subject_model.update(role_name: new_role.name)
+          update_user_list
+          reply(source, nick, "user '#{subject_model.pretty_name}' has been assigned the role of #{new_role.name_with_color}. (was: #{old_role.name_with_color})")
         end
       rescue Exception => ex
         reply(source, nick, "#{self.class} error: #{ex.class}: #{ex.message}")

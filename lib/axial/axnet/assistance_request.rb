@@ -10,10 +10,9 @@ module Axial
 
         if (!@request_types.include?(type))
           raise(AxnetError, "valid request types are: #{request_types.join(', ')}")
-        else
-          @type           = type
         end
 
+        @type           = type
         @bot_nick         = bot_nick
         @channel_name     = channel_name
       end

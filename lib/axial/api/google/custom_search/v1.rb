@@ -4,9 +4,6 @@ require 'rest-client'
 require 'nokogiri'
 require 'uri'
 require 'axial/api/google/search_result'
-require 'axial/api/web_of_trust/v0_4/public_link_json2'
-
-$google_api_key = 'AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs'
 
 module Axial
   module API
@@ -14,13 +11,14 @@ module Axial
       module CustomSearch
         class V1
           @rest_api = 'https://www.googleapis.com/customsearch/v1'
+          @api_key  = 'AIzaSyBP76C0JnapGJK_OlTKEv6FkJ5ReKQ5ajs'
           @custom_search_engine = '017601080673594609581:eywkykmajmc'
 
           @default_params = {
             cx:       @custom_search_engine,
             filter:   1,
             num:      1,
-            key:      $google_api_key
+            key:      @api_key
           }
 
           def self.image_search(query)

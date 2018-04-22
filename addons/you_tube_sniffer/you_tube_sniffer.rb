@@ -42,7 +42,7 @@ module Axial
         end
 
         video = API::YouTube::V3.get_video(youtube_id)
-        if (!video.found)
+        if (!video.found?)
           return
         end
 
@@ -71,13 +71,13 @@ module Axial
         return youtube_id
       end
 
-      def send_youtube_to_channel(channel, nick, video, video_url) # rubocop:disable Metrics/AbcSize
+      def send_youtube_to_channel(channel, nick, video, video_url)
         link = URIUtils.shorten(video_url)
         msg  = Color.red_prefix('youtube', nick.name)
         msg += video.title + Color.gray(' | ')
         msg += video.duration.short_to_s + Color.gray(' | ')
         msg += video.view_count.to_s.reverse.gsub(/...(?=.)/, '\&,').reverse + ' views' + Color.gray(' | ')
-        msg += video.irc_description + Color.gray(' | ')
+        msg += video.description + Color.gray(' | ')
         msg += link.to_s
         channel.message(msg)
       end

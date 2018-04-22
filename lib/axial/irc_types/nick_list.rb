@@ -18,7 +18,9 @@ module Axial
 
         if (!@nick_list.key?(old_key))
           raise(NickListError, "attempted to rename non-existent nick '#{old_key}' on #{@channel.name}, but did have: #{@nick_list.keys.inspect}")
-        elsif (@nick_list.key?(new_key))
+        end
+
+        if (@nick_list.key?(new_key))
           return
         end
 
@@ -49,7 +51,7 @@ module Axial
 
       def get_from_uhost(uhost)
         nick = nil
-        @nick_list.each do |key, possible_nick|
+        @nick_list.values.each do |possible_nick|
           if (possible_nick.uhost == uhost)
             nick = possible_nick
             break
@@ -75,12 +77,12 @@ module Axial
           key = nick_or_name.downcase
         end
 
-        if (@nick_list.key?(key))
-          nick = @nick_list[key]
-          return nick
-        else
+        if (!@nick_list.key?(key))
           raise(NickListError, "nick '#{nick_or_name}' does not exist")
         end
+
+        nick = @nick_list[key]
+        return nick
       end
 
       def count()
@@ -108,7 +110,7 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
-        
+
         if (key.nil? || !@nick_list.key?(key))
           raise(NickListError, "attempted to delete non-existent nick '#{key}' from #{@channel.name}")
         end
@@ -128,7 +130,7 @@ module Axial
         elsif (nick_or_name.is_a?(String))
           key = nick_or_name.downcase
         end
-        
+
         if (key.nil? || !@nick_list.key?(key))
           return
         end

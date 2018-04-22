@@ -1,3 +1,4 @@
+require 'json'
 require 'uri'
 require 'axial/uri_utils'
 
@@ -7,34 +8,50 @@ module Axial
       WIKIPEDIA_PUBLIC_URL = 'https://en.wikipedia.org/'.freeze
 
       class Article
-        attr_accessor :id, :extract, :found
+        attr_accessor :id, :extract
+        attr_writer :found
 
         def initialize()
-          @id = ''
           @found = false
-          @extract = ''
-          @irc_extract = ''
-          @url = ''
+        end
+
+        def found?()
+          return @id.empty?
         end
 
         def irc_extract()
-          short_extract = URIUtils.strip_html(@extract)
-          if (short_extract.length > 319)
-            short_extract = short_extract[0..319] + '...'
-          end
+          short_extract = (@extract.length <= 300) ? @extract : @extract[0..296] + '...'
           return short_extract
         end
 
         def url()
-          if (@id == '')
+          if (!found?)
             return ''
-          else
-            params = {}
-            params[:curid] = @id.to_s
-            url = URI.parse(WIKIPEDIA_PUBLIC_URL)
-            url.query = URI.encode_www_form(params)
-            return url.to_s
           end
+
+          params = {
+            curid: @id.to_s
+          }
+
+          url = URI.parse(WIKIPEDIA_PUBLIC_URL)
+          url.query = URI.encode_www_form(params)
+
+          return url.to_s
+        end
+
+        def self.from_json(json)
+          json_hash         = JSON.parse(json)
+          article           = new
+
+          pages             = json_hash.dig('query', 'pages') || []
+          page              = pages.is_a?(Hash) ? pages.values.first : {}
+
+          article.id        = page.dig('pageid').to_s || ''
+
+          extract           = page.dig('extract') || ''
+          article.extract   = URIUtils.strip_html(extract)
+
+          return article
         end
       end
     end

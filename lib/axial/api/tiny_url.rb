@@ -23,7 +23,7 @@ module Axial
         end
 
         return URI.parse(short_url)
-      rescue RestClient::Exception => ex
+      rescue RestClient::Exception
         return nil
       end
     end

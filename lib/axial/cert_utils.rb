@@ -28,7 +28,7 @@ module Axial
       return [ private_key, public_key ]
     end
 
-    def self.get_cert_cn()
+    def self.get_cert_cn() # rubocop:disable Naming/AccessorMethodName
       cert              = OpenSSL::X509::Certificate.new(File.read("#{@key_path}/axnet.crt"))
       x509_array  = cert.subject.to_a
       x509_fragments = x509_array.select { |subject_fragment| subject_fragment[0] == 'CN' }.flatten
@@ -36,7 +36,7 @@ module Axial
       return x509_cn_fragment
     end
 
-    def self.get_context()
+    def self.get_context() # rubocop:disable Naming/AccessorMethodName
       key                     = OpenSSL::PKey::EC.new(File.read("#{@key_path}/axnet.key"))
       cert                    = OpenSSL::X509::Certificate.new(File.read("#{@key_path}/axnet.crt"))
 
@@ -63,12 +63,12 @@ module Axial
       return OpenSSL::X509::Name.parse(@ca_dn)
     end
 
-    def self.get_ca_cert
+    def self.get_ca_cert # rubocop:disable Naming/AccessorMethodName
       ca_cert = OpenSSL::X509::Certificate.new(File.read("#{@ca_path}/ca.crt"))
       return ca_cert.to_pem
     end
 
-    def self.create_ca()
+    def self.create_ca() # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
       private_key, public_key                 = generate_key_pair
 
       ca_cert                                 = OpenSSL::X509::Certificate.new

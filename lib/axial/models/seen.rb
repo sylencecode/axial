@@ -9,19 +9,17 @@ module Axial
       many_to_one :user
 
       def self.delete_or_unknown(user_id)
-        unknown_user = Models::User[name: 'unknown']
-        if (!unknown_user.nil?)
-          unknown_user_id = unknown_user.id
-        else
-          unknown_user_id = 0
+        if (DB_CONNECTION[:seens].nil?)
+          return
         end
 
-        if (!DB_CONNECTION[:seens].nil?)
-          if (unknown_user_id.zero?)
-            DB_CONNECTION[:seens].where(user_id: user_id).delete
-          else
-            DB_CONNECTION[:seens].where(user_id: user_id).update(user_id: unknown_user_id)
-          end
+        unknown_user = Models::User[name: 'unknown']
+        unknown_user_id = (unknown_user.nil?) ? 0 : unknown_user.id
+
+        if (unknown_user_id.zero?)
+          DB_CONNECTION[:seens].where(user_id: user_id).delete
+        else
+          DB_CONNECTION[:seens].where(user_id: user_id).update(user_id: unknown_user_id)
         end
       end
 

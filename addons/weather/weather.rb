@@ -12,7 +12,7 @@ module Axial
         @author                   = 'sylence <sylence@sylence.org>'
         @version                  = '1.1.0'
 
-        throttle                  2
+        throttle                  3
 
         on_channel  'weather|w',  :handle_weather
       end
@@ -51,11 +51,15 @@ module Axial
           return
         end
 
-        query = (query.length >= 64) ? query[0..63] : query
+        query = (query.length <= 64) ? query : query[0..63]
 
         location = zip_or_geonames(query)
-        conditions = API::WUnderground::Q.get_current_conditions(location)
+        if (location.nil?)
+          channel.message("#{nick.name}: could not find a location named '#{query}'.")
+          return
+        end
 
+        conditions = API::WUnderground::Q.get_current_conditions(location)
         send_conditions_to_channel(channel, nick, conditions)
       rescue Exception => ex
         channel.message("#{self.class} error: #{ex.class}: #{ex.message}")

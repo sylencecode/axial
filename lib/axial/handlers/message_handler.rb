@@ -9,8 +9,17 @@ module Axial
         @server_interface = @bot.server_interface
       end
 
-      def dispatch_notice(uhost, dest, text)
-        # hack for notices from implementations like ratbox that may not have an initial server prefix
+      def parse_ctcp(captures)
+        ctcp_command, ctcp_args = captures
+        ctcp_command.delete!("\u0001")
+        ctcp_command.strip!
+        ctcp_args.delete!("\u0001")
+        ctcp_args.strip!
+      end
+      private :parse_ctcp
+
+      def dispatch_notice(uhost, dest, text) # rubocop:disable Metrics/AbcSize,Metrics/PerceivedComplexity
+        # HACK: notices from implementations like ratbox may not have an initial server prefix
         if (dest.nil? || dest.empty?)
           @bot.server_handler.handle_server_notice(uhost)
         elsif (uhost.casecmp(@bot.server.real_address).zero? || !uhost.include?('!'))
@@ -23,11 +32,7 @@ module Axial
         else
           nick = IRCTypes::Nick.from_uhost(@server_interface, uhost)
           if (text =~ /\x01(\S+)(.*)\x01{0,1}/)
-            ctcp_command, ctcp_args = Regexp.last_match.captures
-            ctcp_command.delete!("\u0001")
-            ctcp_command.strip!
-            ctcp_args.delete!("\u0001")
-            ctcp_args.strip!
+            ctcp_command, ctcp_args = parse_ctcp(Regexp.last_match.captures)
             @server_interface.handle_ctcp_reply(nick, ctcp_command, ctcp_args)
           else
             handle_private_notice(nick, text)
@@ -49,22 +54,20 @@ module Axial
 
       def handle_private_message(nick, text)
         if (text =~ /\x01(\S+)(.*)\x01{0,1}/)
-          ctcp_command, ctcp_args = Regexp.last_match.captures
-          ctcp_command.delete!("\u0001")
-          ctcp_command.strip!
-          ctcp_args.delete!("\u0001")
-          ctcp_args.strip!
+          ctcp_command, ctcp_args = parse_ctcp(Regexp.last_match.captures)
           @server_interface.handle_ctcp(nick, ctcp_command, ctcp_args)
         else
           dispatched_commands = @bot.bind_handler.dispatch_privmsg_binds(nick, text)
           if (dispatched_commands.any?)
             dispatched_commands.each do |dispatched_command|
-              if (!dispatched_command[:silent])
-                msg  = Color.blue_arrow + Color.cyan(nick.uhost)
-                msg += " executed privmsg command: #{text}"
-                dcc_broadcast(msg, :director)
-                LOGGER.info("privmsg command: #{nick.uhost}: #{text}")
+              if (dispatched_command[:silent])
+                next
               end
+
+              msg  = Color.blue_arrow + Color.cyan(nick.uhost)
+              msg += " executed privmsg command: #{text}"
+              dcc_broadcast(msg, :director)
+              LOGGER.info("privmsg command: #{nick.uhost}: #{text}")
             end
           else
             LOGGER.info("#{nick.name} PRIVMSG: #{text}")

@@ -5,11 +5,11 @@ module Axial
     def initialize(dest)
       @monitor = Monitor.new
       @logger = ::Logger.new(dest)
-      @file_logger = ::Logger.new(File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'axial.log')), 7, 5242880)
-      @logger.formatter = proc do |severity, time, unused, message|
+      @file_logger = ::Logger.new(File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'axial.log')), 7, 5_242_880)
+      @logger.formatter = proc do |severity, time, _unused, message|
         "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}\n"
       end
-      @file_logger.formatter = proc do |severity, time, unused, message|
+      @file_logger.formatter = proc do |severity, time, _unused, message|
         "#{time.strftime('%m/%d/%y %H:%M:%S')} [#{severity.center(8)}] #{message}\n"
       end
     end

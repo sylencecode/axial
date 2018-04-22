@@ -23,11 +23,10 @@ module Axial
         @joined_at            = Time.now
         @uuid                 = SecureRandom.uuid
         @created              = Time.now
-        # lock this for an update
         @ban_list             = IRCTypes::ChannelBanList.new(self)
       end
 
-      def set_topic(topic)
+      def set_topic(topic) # rubocop:disable Naming/AccessorMethodName
         @server_interface.set_channel_topic(@name, topic)
       end
 
@@ -103,12 +102,15 @@ module Axial
         @server_interface.send_raw("INVITE #{nick_name} #{@name}")
       end
 
-      def set_mode(mode)
+      def set_mode(mode) # rubocop:disable Naming/AccessorMethodName
         if (!mode.is_a?(IRCTypes::Mode))
           raise(ChannelError, "#{self.class}.set_channel_mode must be invoked with an Axial::IRCTypes::Mode object.")
-        elsif (mode.empty?)
+        end
+
+        if (mode.empty?)
           return
         end
+
         if (opped?)
           @server_interface.set_channel_mode(@name, mode)
         else

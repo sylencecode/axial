@@ -5,13 +5,12 @@ require 'json'
 
 require 'axial/api/wunderground/conditions'
 
-$wunderground_api_key = 'a584b01d4dbd0159'
-
 module Axial
   module API
     module WUnderground
       class Q
-        @rest_api = "http://api.wunderground.com/api/#{$wunderground_api_key}/conditions/q"
+        @api_key = 'a584b01d4dbd0159'
+        @rest_api = 'http://api.wunderground.com/api/' + @api_key + '/conditions/q'
 
         def self.get_current_conditions(in_location)
           if (!in_location.is_a?(String) || in_location.strip.empty?)
@@ -22,84 +21,44 @@ module Axial
           location.tr!(' ', '_')
 
           rest_endpoint = URI.parse(@rest_api + '/' + location + '.json')
-          response = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
+          json = RestClient::Request.execute(method: :get, url: rest_endpoint.to_s, verify_ssl: false)
 
-          orig_json = JSON.parse(response)
-          new_json = ''
+          json_hash = parse_with_redirects(json)
 
-          if (orig_json.key?('response') && !orig_json.key?('current_observation'))
-            response = orig_json['response']
-            if (response.key?('results') && response['results'].is_a?(Array))
-              results = response['results']
-              if (results.any?)
-                result = results[0]
-                if (result.key?('l'))
-                  redirect = result['l'].gsub(/^\/q\//, '')
-                  new_uri = URI.parse(@rest_api + '/' + redirect + '.json')
-                  new_response = RestClient::Request.execute(method: :get, url: new_uri.to_s, verify_ssl: false)
-                  new_json = JSON.parse(new_response)
-                end
-              end
-            end
-          end
-
-          if (!new_json.empty?)
-            json = new_json
-          else
-            json = orig_json
-          end
-
-          conditions = WUnderground::Conditions.new
-
-          if (json.key?('current_observation'))
-            observation = json['current_observation']
-            if (observation.count > 1)
-              conditions.found = true
-            end
-            if (observation.key?('feelslike_c'))
-              conditions.feels_like_c = observation['feelslike_c'].to_i
-            end
-            if (observation.key?('feelslike_f'))
-              conditions.feels_like_f = observation['feelslike_f'].to_i
-            end
-            if (observation.key?('display_location'))
-              display_location = observation['display_location']
-              if (display_location.key?('full'))
-                conditions.location = display_location['full']
-              end
-            end
-            if (observation.key?('relative_humidity'))
-              if (observation['relative_humidity'] =~ /(\d+)/)
-                conditions.relative_humidity = Regexp.last_match[1].to_i
-              end
-            end
-            if (observation.key?('temp_c'))
-              conditions.temp_c = observation['temp_c'].to_i
-            end
-            if (observation.key?('temp_f'))
-              conditions.temp_f = observation['temp_f'].to_i
-            end
-            if (observation.key?('visibility_mi'))
-              conditions.visibility_mi = observation['visibility_mi'].to_i
-            end
-            if (observation.key?('weather'))
-              conditions.weather = observation['weather']
-            end
-            if (observation.key?('weather'))
-              if (observation['wind_dir'].downcase == 'variable')
-                conditions.wind_dir = 'various directions'
-              else
-                conditions.wind_dir = "the #{observation['wind_dir']}"
-              end
-            end
-            if (observation.key?('wind_gust_mph'))
-              conditions.wind_gust_mph = observation['wind_gust_mph'].to_i
-            end
-            if (observation.key?('wind_mph'))
-              conditions.wind_mph = observation['wind_mph'].to_i
-            end
-          end
+          conditions = WUnderground::Conditions.from_json_hash(json_hash)
           return conditions
+        end
+
+        def self.parse_with_redirects(json)
+          json_hash = JSON.parse(json)
+          if (!json_hash.key?('response'))
+            return {}
+          end
+
+          if (!json_hash.key?('current_observation'))
+            json_hash = follow_redirect(json_hash)
+          end
+
+          return json_hash
+        end
+
+        def self.follow_redirect(json_hash)
+          redirect_array = json_hash.dig('response', 'results')
+          if (redirect_array.empty?)
+            return json_hash
+          end
+
+          redirect_element = redirect_array.first
+          if (!redirect_element.key?('l'))
+            return json_hash
+          end
+
+          new_location = redirect_element.dig('l').delete_prefix('/q/')
+          new_uri = URI.parse(@rest_api + '/' + new_location + '.json')
+
+          new_response = RestClient::Request.execute(method: :get, url: new_uri.to_s, verify_ssl: false)
+          new_json_hash = JSON.parse(new_response)
+          return new_json_hash
         end
       end
     end
